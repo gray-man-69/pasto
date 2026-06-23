@@ -1,0 +1,81 @@
+name,name_en,category,kcal,protein_g,carbs_g,sugars_g,fat_g,saturated_g,fiber_g
+Pasta di semola cruda,Durum wheat pasta (dry),Cereali e derivati,353,10.9,79.1,3.4,1.4,0.3,2.9
+Riso brillato crudo,White rice (raw),Cereali e derivati,332,6.7,80.4,0.2,0.4,0.1,1.0
+Pane comune,Bread (common),Cereali e derivati,275,8.1,59.0,2.0,0.5,0.1,3.8
+Pane integrale,Wholemeal bread,Cereali e derivati,224,7.5,48.5,1.8,1.3,0.3,6.5
+Farina di frumento tipo 00,Wheat flour type 00,Cereali e derivati,340,11.0,76.9,1.6,0.7,0.2,2.2
+Fiocchi di avena,Oat flakes,Cereali e derivati,367,12.6,67.0,1.2,7.0,1.2,8.3
+Fette biscottate,Rusks,Cereali e derivati,408,11.3,82.0,6.0,6.0,1.0,3.5
+Pollo petto senza pelle crudo,Chicken breast skinless (raw),Carni,100,23.3,0.0,0.0,0.8,0.2,0.0
+Tacchino petto crudo,Turkey breast (raw),Carni,107,24.0,0.0,0.0,1.2,0.4,0.0
+Manzo magro crudo,Lean beef (raw),Carni,103,21.3,0.0,0.0,1.8,0.7,0.0
+Prosciutto crudo magro,Cured ham (lean),Carni,159,25.9,0.0,0.0,6.4,2.1,0.0
+Bresaola,Bresaola,Carni,151,32.0,0.4,0.4,2.6,1.0,0.0
+Uovo di gallina intero,Whole hen egg,Uova,128,12.4,0.0,0.0,8.7,3.2,0.0
+Tonno fresco crudo,Fresh tuna (raw),Pesci,159,21.5,0.0,0.0,8.1,2.0,0.0
+Tonno sott'olio sgocciolato,Canned tuna in oil (drained),Pesci,192,25.2,0.0,0.0,8.0,1.5,0.0
+Salmone fresco crudo,Fresh salmon (raw),Pesci,185,18.4,0.0,0.0,12.0,2.3,0.0
+Merluzzo fresco crudo,Cod (raw),Pesci,71,17.0,0.0,0.0,0.3,0.1,0.0
+Gamberi crudi,Prawns (raw),Pesci,71,13.6,0.0,0.0,0.6,0.2,0.0
+Latte parzialmente scremato,Semi-skimmed milk,Latte e derivati,46,3.3,5.0,5.0,1.5,1.0,0.0
+Parmigiano Reggiano,Parmigiano Reggiano,Latte e derivati,392,33.5,0.0,0.0,28.1,19.5,0.0
+Mozzarella di vacca,Cow's milk mozzarella,Latte e derivati,253,18.7,0.7,0.7,19.5,11.5,0.0
+Ricotta vaccina,Cow's milk ricotta,Latte e derivati,146,8.8,3.5,3.5,10.9,7.0,0.0
+Yogurt greco intero,Greek yogurt (whole),Latte e derivati,115,6.4,4.0,4.0,8.0,5.2,0.0
+Yogurt magro naturale,Plain low-fat yogurt,Latte e derivati,36,3.3,4.3,4.3,0.9,0.6,0.0
+Lenticchie secche crude,Lentils (dry),Legumi,291,22.7,51.1,1.8,1.0,0.2,13.8
+Ceci secchi crudi,Chickpeas (dry),Legumi,316,20.9,46.9,2.4,6.3,0.7,13.6
+Fagioli borlotti secchi,Borlotti beans (dry),Legumi,291,23.6,49.8,2.5,2.0,0.3,17.5
+Pomodori maturi,Ripe tomatoes,Ortaggi,19,1.0,3.5,3.5,0.2,0.0,1.2
+Zucchine,Courgettes,Ortaggi,11,1.3,1.4,1.4,0.1,0.0,1.2
+Spinaci crudi,Spinach (raw),Ortaggi,31,3.4,2.9,0.4,0.7,0.1,1.9
+Lattuga,Lettuce,Ortaggi,19,1.8,2.2,2.2,0.4,0.1,1.5
+Patate,Potatoes,Ortaggi,85,2.1,18.0,0.4,1.0,0.3,1.6
+Broccoli crudi,Broccoli (raw),Ortaggi,27,3.0,3.0,1.5,0.4,0.1,3.0
+Carote,Carrots,Ortaggi,33,1.1,7.6,7.0,0.2,0.0,3.1
+Mela,Apple,Frutta,53,0.2,13.7,12.6,0.1,0.0,2.6
+Banana,Banana,Frutta,89,1.2,22.8,12.0,0.3,0.1,1.8
+Arancia,Orange,Frutta,47,0.7,11.8,8.2,0.2,0.0,1.6
+Fragole,Strawberries,Frutta,32,0.9,5.3,5.3,0.4,0.0,1.6
+Olio extravergine di oliva,Extra virgin olive oil,Oli e grassi,899,0.0,0.0,0.0,99.9,14.5,0.0
+Burro,Butter,Oli e grassi,758,0.8,1.1,1.1,83.4,50.0,0.0
+Mandorle,Almonds,Frutta secca,603,22.0,4.6,3.7,55.3,4.7,12.7
+Noci,Walnuts,Frutta secca,689,14.3,5.1,3.1,68.1,6.3,6.2
+Zucchero,Sugar,Dolci,387,0.0,99.8,99.8,0.0,0.0,0.0
+Miele,Honey,Dolci,304,0.6,80.3,80.0,0.0,0.0,0.0
+Cioccolato fondente,Dark chocolate,Dolci,542,6.8,49.7,48.0,33.6,19.7,8.0
+Peperoni,Peppers,Ortaggi,22,0.9,4.2,4.2,0.3,0.0,1.9
+Cipolle,Onions,Ortaggi,26,1.0,5.7,5.7,0.1,0.0,1.0
+Aglio,Garlic,Ortaggi,41,0.9,8.4,1.0,0.6,0.1,3.1
+Melanzane,Aubergine,Ortaggi,18,1.1,2.6,2.6,0.1,0.0,2.6
+Finocchi,Fennel,Ortaggi,9,1.2,1.0,1.0,0.0,0.0,2.2
+Zucca,Pumpkin,Ortaggi,18,1.1,3.5,2.5,0.1,0.0,0.5
+Cavolfiore,Cauliflower,Ortaggi,25,3.2,2.7,2.4,0.2,0.0,2.4
+Piselli freschi,Peas,Ortaggi,76,5.5,6.5,4.0,0.6,0.1,6.3
+Fagiolini,Green beans,Ortaggi,18,2.1,2.4,2.0,0.1,0.0,2.9
+Cetrioli,Cucumber,Ortaggi,14,0.7,1.8,1.8,0.2,0.0,0.8
+Funghi champignon,Button mushrooms,Ortaggi,22,3.7,0.8,0.5,0.2,0.0,2.3
+Rucola,Rocket,Ortaggi,28,2.6,3.7,2.0,0.7,0.1,0.9
+Radicchio,Radicchio,Ortaggi,13,1.4,1.6,1.0,0.2,0.0,3.0
+Pasta integrale cruda,Wholewheat pasta (dry),Cereali e derivati,350,13.0,66.0,3.0,2.5,0.5,9.0
+Riso integrale crudo,Brown rice (raw),Cereali e derivati,337,7.5,77.0,1.0,2.2,0.5,1.9
+Couscous secco,Couscous (dry),Cereali e derivati,358,12.8,72.4,0.0,0.6,0.1,5.0
+Prosciutto cotto,Cooked ham,Carni,215,19.8,0.6,0.6,14.7,5.0,0.0
+Salame Milano,Salami,Carni,392,25.4,1.5,0.5,31.0,11.0,0.0
+Mortadella,Mortadella,Carni,317,15.0,1.5,0.5,28.1,10.0,0.0
+Maiale lonza cruda,Pork loin (raw),Carni,146,21.3,0.0,0.0,7.0,2.5,0.0
+Latte intero,Whole milk,Latte e derivati,64,3.3,4.9,4.9,3.6,2.3,0.0
+Grana Padano,Grana Padano,Latte e derivati,384,33.0,0.0,0.0,28.0,18.0,0.0
+Pecorino romano,Pecorino romano,Latte e derivati,387,26.0,0.0,0.0,31.0,20.0,0.0
+Pera,Pear,Frutta,35,0.3,8.8,8.8,0.1,0.0,3.8
+Pesca,Peach,Frutta,27,0.8,6.1,6.1,0.1,0.0,1.6
+Uva,Grapes,Frutta,61,0.5,15.6,15.6,0.1,0.0,1.5
+Kiwi,Kiwi,Frutta,44,1.2,9.0,9.0,0.4,0.0,2.2
+Ananas,Pineapple,Frutta,40,0.5,10.0,10.0,0.0,0.0,1.0
+Anguria,Watermelon,Frutta,16,0.4,3.7,3.7,0.0,0.0,0.2
+Melone,Melon,Frutta,33,0.8,7.4,7.4,0.0,0.0,0.7
+Avocado,Avocado,Frutta,160,2.0,1.8,0.7,14.7,2.1,3.3
+Tofu,Tofu,Legumi,115,12.0,1.5,0.5,7.0,1.0,1.0
+Nocciole,Hazelnuts,Frutta secca,628,13.8,6.1,4.0,57.9,4.5,8.1
+Pistacchi,Pistachios,Frutta secca,608,18.1,8.1,6.0,56.1,7.0,10.6
+Arachidi,Peanuts,Frutta secca,598,29.0,8.5,4.0,50.0,8.0,8.5

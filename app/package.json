@@ -1,0 +1,32 @@
+{
+  "name": "app",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "eslint",
+    "test": "node --test --experimental-strip-types src/lib/macros.test.ts"
+  },
+  "dependencies": {
+    "daisyui": "^5.5.23",
+    "dexie": "^4.4.4",
+    "dexie-react-hooks": "^4.4.0",
+    "fuse.js": "^7.4.2",
+    "next": "16.2.9",
+    "react": "19.2.4",
+    "react-dom": "19.2.4"
+  },
+  "devDependencies": {
+    "@tailwindcss/postcss": "^4",
+    "@types/node": "^20",
+    "@types/react": "^19",
+    "@types/react-dom": "^19",
+    "eslint": "^9",
+    "eslint-config-next": "16.2.9",
+    "playwright-core": "^1.61.0",
+    "tailwindcss": "^4",
+    "typescript": "^5"
+  }
+}

@@ -1,0 +1,12 @@
+{
+  "name": "Pasto — Italian macro tracker",
+  "short_name": "Pasto",
+  "description": "Track macros against your goals with reliable Italian (CREA) nutritional values.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#e9f5f3",
+  "theme_color": "#009485",
+  "icons": [
+    { "src": "/icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable" }
+  ]
+}

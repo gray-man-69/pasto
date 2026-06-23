@@ -1,0 +1,47 @@
+@import "tailwindcss";
+@plugin "daisyui";
+
+/* Minimal mono theme: near-white surfaces, near-black ink, flat (no depth),
+   generously rounded. Colour is reserved for the rings/status, not the chrome. */
+@plugin "daisyui/theme" {
+  name: "pasto";
+  default: true;
+  prefersdark: false;
+  color-scheme: light;
+  --color-base-100: oklch(100% 0 0);
+  --color-base-200: oklch(97% 0 0);
+  --color-base-300: oklch(91% 0 0);
+  --color-base-content: oklch(24% 0 0);
+  --color-primary: oklch(25% 0 0);
+  --color-primary-content: oklch(100% 0 0);
+  --color-secondary: oklch(55% 0 0);
+  --color-secondary-content: oklch(100% 0 0);
+  --color-accent: oklch(60% 0 0);
+  --color-accent-content: oklch(100% 0 0);
+  --color-neutral: oklch(24% 0 0);
+  --color-neutral-content: oklch(100% 0 0);
+  --color-info: oklch(72% 0.1 235);
+  --color-success: oklch(72% 0.15 150);
+  --color-warning: oklch(82% 0.15 80);
+  --color-error: oklch(64% 0.2 25);
+  --radius-selector: 1rem;
+  --radius-field: 0.75rem;
+  --radius-box: 1.25rem;
+  --size-selector: 0.25rem;
+  --size-field: 0.25rem;
+  --border: 1px;
+  --depth: 0;
+  --noise: 0;
+}
+
+html {
+  -webkit-tap-highlight-color: transparent;
+}
+
+body {
+  /* System font = San Francisco on Apple devices: clean, native, no fetch. */
+  font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont,
+    "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  /* clear the fixed bottom navigation */
+  padding-bottom: 5.5rem;
+}

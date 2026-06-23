@@ -1,0 +1,1208 @@
+{
+  "source": "CREA - Tabelle di Composizione degli Alimenti (curated bootstrap)",
+  "source_url": "https://www.alimentinutrizione.it",
+  "unit": "per 100 g edible portion",
+  "count": 80,
+  "foods": [
+    {
+      "id": "crea-bresaola",
+      "name": "Bresaola",
+      "name_en": "Bresaola",
+      "category": "Carni",
+      "per100g": {
+        "kcal": 151.0,
+        "protein_g": 32.0,
+        "carbs_g": 0.4,
+        "sugars_g": 0.4,
+        "fat_g": 2.6,
+        "saturated_g": 1.0,
+        "fiber_g": 0.0
+      }
+    },
+    {
+      "id": "crea-maiale-lonza-cruda",
+      "name": "Maiale lonza cruda",
+      "name_en": "Pork loin (raw)",
+      "category": "Carni",
+      "per100g": {
+        "kcal": 146.0,
+        "protein_g": 21.3,
+        "carbs_g": 0.0,
+        "sugars_g": 0.0,
+        "fat_g": 7.0,
+        "saturated_g": 2.5,
+        "fiber_g": 0.0
+      }
+    },
+    {
+      "id": "crea-manzo-magro-crudo",
+      "name": "Manzo magro crudo",
+      "name_en": "Lean beef (raw)",
+      "category": "Carni",
+      "per100g": {
+        "kcal": 103.0,
+        "protein_g": 21.3,
+        "carbs_g": 0.0,
+        "sugars_g": 0.0,
+        "fat_g": 1.8,
+        "saturated_g": 0.7,
+        "fiber_g": 0.0
+      }
+    },
+    {
+      "id": "crea-mortadella",
+      "name": "Mortadella",
+      "name_en": "Mortadella",
+      "category": "Carni",
+      "per100g": {
+        "kcal": 317.0,
+        "protein_g": 15.0,
+        "carbs_g": 1.5,
+        "sugars_g": 0.5,
+        "fat_g": 28.1,
+        "saturated_g": 10.0,
+        "fiber_g": 0.0
+      }
+    },
+    {
+      "id": "crea-pollo-petto-senza-pelle-crudo",
+      "name": "Pollo petto senza pelle crudo",
+      "name_en": "Chicken breast skinless (raw)",
+      "category": "Carni",
+      "per100g": {
+        "kcal": 100.0,
+        "protein_g": 23.3,
+        "carbs_g": 0.0,
+        "sugars_g": 0.0,
+        "fat_g": 0.8,
+        "saturated_g": 0.2,
+        "fiber_g": 0.0
+      }
+    },
+    {
+      "id": "crea-prosciutto-cotto",
+      "name": "Prosciutto cotto",
+      "name_en": "Cooked ham",
+      "category": "Carni",
+      "per100g": {
+        "kcal": 215.0,
+        "protein_g": 19.8,
+        "carbs_g": 0.6,
+        "sugars_g": 0.6,
+        "fat_g": 14.7,
+        "saturated_g": 5.0,
+        "fiber_g": 0.0
+      }
+    },
+    {
+      "id": "crea-prosciutto-crudo-magro",
+      "name": "Prosciutto crudo magro",
+      "name_en": "Cured ham (lean)",
+      "category": "Carni",
+      "per100g": {
+        "kcal": 159.0,
+        "protein_g": 25.9,
+        "carbs_g": 0.0,
+        "sugars_g": 0.0,
+        "fat_g": 6.4,
+        "saturated_g": 2.1,
+        "fiber_g": 0.0
+      }
+    },
+    {
+      "id": "crea-salame-milano",
+      "name": "Salame Milano",
+      "name_en": "Salami",
+      "category": "Carni",
+      "per100g": {
+        "kcal": 392.0,
+        "protein_g": 25.4,
+        "carbs_g": 1.5,
+        "sugars_g": 0.5,
+        "fat_g": 31.0,
+        "saturated_g": 11.0,
+        "fiber_g": 0.0
+      }
+    },
+    {
+      "id": "crea-tacchino-petto-crudo",
+      "name": "Tacchino petto crudo",
+      "name_en": "Turkey breast (raw)",
+      "category": "Carni",
+      "per100g": {
+        "kcal": 107.0,
+        "protein_g": 24.0,
+        "carbs_g": 0.0,
+        "sugars_g": 0.0,
+        "fat_g": 1.2,
+        "saturated_g": 0.4,
+        "fiber_g": 0.0
+      }
+    },
+    {
+      "id": "crea-couscous-secco",
+      "name": "Couscous secco",
+      "name_en": "Couscous (dry)",
+      "category": "Cereali e derivati",
+      "per100g": {
+        "kcal": 358.0,
+        "protein_g": 12.8,
+        "carbs_g": 72.4,
+        "sugars_g": 0.0,
+        "fat_g": 0.6,
+        "saturated_g": 0.1,
+        "fiber_g": 5.0
+      }
+    },
+    {
+      "id": "crea-farina-di-frumento-tipo-00",
+      "name": "Farina di frumento tipo 00",
+      "name_en": "Wheat flour type 00",
+      "category": "Cereali e derivati",
+      "per100g": {
+        "kcal": 340.0,
+        "protein_g": 11.0,
+        "carbs_g": 76.9,
+        "sugars_g": 1.6,
+        "fat_g": 0.7,
+        "saturated_g": 0.2,
+        "fiber_g": 2.2
+      }
+    },
+    {
+      "id": "crea-fette-biscottate",
+      "name": "Fette biscottate",
+      "name_en": "Rusks",
+      "category": "Cereali e derivati",
+      "per100g": {
+        "kcal": 408.0,
+        "protein_g": 11.3,
+        "carbs_g": 82.0,
+        "sugars_g": 6.0,
+        "fat_g": 6.0,
+        "saturated_g": 1.0,
+        "fiber_g": 3.5
+      }
+    },
+    {
+      "id": "crea-fiocchi-di-avena",
+      "name": "Fiocchi di avena",
+      "name_en": "Oat flakes",
+      "category": "Cereali e derivati",
+      "per100g": {
+        "kcal": 367.0,
+        "protein_g": 12.6,
+        "carbs_g": 67.0,
+        "sugars_g": 1.2,
+        "fat_g": 7.0,
+        "saturated_g": 1.2,
+        "fiber_g": 8.3
+      }
+    },
+    {
+      "id": "crea-pane-comune",
+      "name": "Pane comune",
+      "name_en": "Bread (common)",
+      "category": "Cereali e derivati",
+      "per100g": {
+        "kcal": 275.0,
+        "protein_g": 8.1,
+        "carbs_g": 59.0,
+        "sugars_g": 2.0,
+        "fat_g": 0.5,
+        "saturated_g": 0.1,
+        "fiber_g": 3.8
+      }
+    },
+    {
+      "id": "crea-pane-integrale",
+      "name": "Pane integrale",
+      "name_en": "Wholemeal bread",
+      "category": "Cereali e derivati",
+      "per100g": {
+        "kcal": 224.0,
+        "protein_g": 7.5,
+        "carbs_g": 48.5,
+        "sugars_g": 1.8,
+        "fat_g": 1.3,
+        "saturated_g": 0.3,
+        "fiber_g": 6.5
+      }
+    },
+    {
+      "id": "crea-pasta-di-semola-cruda",
+      "name": "Pasta di semola cruda",
+      "name_en": "Durum wheat pasta (dry)",
+      "category": "Cereali e derivati",
+      "per100g": {
+        "kcal": 353.0,
+        "protein_g": 10.9,
+        "carbs_g": 79.1,
+        "sugars_g": 3.4,
+        "fat_g": 1.4,
+        "saturated_g": 0.3,
+        "fiber_g": 2.9
+      }
+    },
+    {
+      "id": "crea-pasta-integrale-cruda",
+      "name": "Pasta integrale cruda",
+      "name_en": "Wholewheat pasta (dry)",
+      "category": "Cereali e derivati",
+      "per100g": {
+        "kcal": 350.0,
+        "protein_g": 13.0,
+        "carbs_g": 66.0,
+        "sugars_g": 3.0,
+        "fat_g": 2.5,
+        "saturated_g": 0.5,
+        "fiber_g": 9.0
+      }
+    },
+    {
+      "id": "crea-riso-brillato-crudo",
+      "name": "Riso brillato crudo",
+      "name_en": "White rice (raw)",
+      "category": "Cereali e derivati",
+      "per100g": {
+        "kcal": 332.0,
+        "protein_g": 6.7,
+        "carbs_g": 80.4,
+        "sugars_g": 0.2,
+        "fat_g": 0.4,
+        "saturated_g": 0.1,
+        "fiber_g": 1.0
+      }
+    },
+    {
+      "id": "crea-riso-integrale-crudo",
+      "name": "Riso integrale crudo",
+      "name_en": "Brown rice (raw)",
+      "category": "Cereali e derivati",
+      "per100g": {
+        "kcal": 337.0,
+        "protein_g": 7.5,
+        "carbs_g": 77.0,
+        "sugars_g": 1.0,
+        "fat_g": 2.2,
+        "saturated_g": 0.5,
+        "fiber_g": 1.9
+      }
+    },
+    {
+      "id": "crea-cioccolato-fondente",
+      "name": "Cioccolato fondente",
+      "name_en": "Dark chocolate",
+      "category": "Dolci",
+      "per100g": {
+        "kcal": 542.0,
+        "protein_g": 6.8,
+        "carbs_g": 49.7,
+        "sugars_g": 48.0,
+        "fat_g": 33.6,
+        "saturated_g": 19.7,
+        "fiber_g": 8.0
+      }
+    },
+    {
+      "id": "crea-miele",
+      "name": "Miele",
+      "name_en": "Honey",
+      "category": "Dolci",
+      "per100g": {
+        "kcal": 304.0,
+        "protein_g": 0.6,
+        "carbs_g": 80.3,
+        "sugars_g": 80.0,
+        "fat_g": 0.0,
+        "saturated_g": 0.0,
+        "fiber_g": 0.0
+      }
+    },
+    {
+      "id": "crea-zucchero",
+      "name": "Zucchero",
+      "name_en": "Sugar",
+      "category": "Dolci",
+      "per100g": {
+        "kcal": 387.0,
+        "protein_g": 0.0,
+        "carbs_g": 99.8,
+        "sugars_g": 99.8,
+        "fat_g": 0.0,
+        "saturated_g": 0.0,
+        "fiber_g": 0.0
+      }
+    },
+    {
+      "id": "crea-ananas",
+      "name": "Ananas",
+      "name_en": "Pineapple",
+      "category": "Frutta",
+      "per100g": {
+        "kcal": 40.0,
+        "protein_g": 0.5,
+        "carbs_g": 10.0,
+        "sugars_g": 10.0,
+        "fat_g": 0.0,
+        "saturated_g": 0.0,
+        "fiber_g": 1.0
+      }
+    },
+    {
+      "id": "crea-anguria",
+      "name": "Anguria",
+      "name_en": "Watermelon",
+      "category": "Frutta",
+      "per100g": {
+        "kcal": 16.0,
+        "protein_g": 0.4,
+        "carbs_g": 3.7,
+        "sugars_g": 3.7,
+        "fat_g": 0.0,
+        "saturated_g": 0.0,
+        "fiber_g": 0.2
+      }
+    },
+    {
+      "id": "crea-arancia",
+      "name": "Arancia",
+      "name_en": "Orange",
+      "category": "Frutta",
+      "per100g": {
+        "kcal": 47.0,
+        "protein_g": 0.7,
+        "carbs_g": 11.8,
+        "sugars_g": 8.2,
+        "fat_g": 0.2,
+        "saturated_g": 0.0,
+        "fiber_g": 1.6
+      }
+    },
+    {
+      "id": "crea-avocado",
+      "name": "Avocado",
+      "name_en": "Avocado",
+      "category": "Frutta",
+      "per100g": {
+        "kcal": 160.0,
+        "protein_g": 2.0,
+        "carbs_g": 1.8,
+        "sugars_g": 0.7,
+        "fat_g": 14.7,
+        "saturated_g": 2.1,
+        "fiber_g": 3.3
+      }
+    },
+    {
+      "id": "crea-banana",
+      "name": "Banana",
+      "name_en": "Banana",
+      "category": "Frutta",
+      "per100g": {
+        "kcal": 89.0,
+        "protein_g": 1.2,
+        "carbs_g": 22.8,
+        "sugars_g": 12.0,
+        "fat_g": 0.3,
+        "saturated_g": 0.1,
+        "fiber_g": 1.8
+      }
+    },
+    {
+      "id": "crea-fragole",
+      "name": "Fragole",
+      "name_en": "Strawberries",
+      "category": "Frutta",
+      "per100g": {
+        "kcal": 32.0,
+        "protein_g": 0.9,
+        "carbs_g": 5.3,
+        "sugars_g": 5.3,
+        "fat_g": 0.4,
+        "saturated_g": 0.0,
+        "fiber_g": 1.6
+      }
+    },
+    {
+      "id": "crea-kiwi",
+      "name": "Kiwi",
+      "name_en": "Kiwi",
+      "category": "Frutta",
+      "per100g": {
+        "kcal": 44.0,
+        "protein_g": 1.2,
+        "carbs_g": 9.0,
+        "sugars_g": 9.0,
+        "fat_g": 0.4,
+        "saturated_g": 0.0,
+        "fiber_g": 2.2
+      }
+    },
+    {
+      "id": "crea-mela",
+      "name": "Mela",
+      "name_en": "Apple",
+      "category": "Frutta",
+      "per100g": {
+        "kcal": 53.0,
+        "protein_g": 0.2,
+        "carbs_g": 13.7,
+        "sugars_g": 12.6,
+        "fat_g": 0.1,
+        "saturated_g": 0.0,
+        "fiber_g": 2.6
+      }
+    },
+    {
+      "id": "crea-melone",
+      "name": "Melone",
+      "name_en": "Melon",
+      "category": "Frutta",
+      "per100g": {
+        "kcal": 33.0,
+        "protein_g": 0.8,
+        "carbs_g": 7.4,
+        "sugars_g": 7.4,
+        "fat_g": 0.0,
+        "saturated_g": 0.0,
+        "fiber_g": 0.7
+      }
+    },
+    {
+      "id": "crea-pera",
+      "name": "Pera",
+      "name_en": "Pear",
+      "category": "Frutta",
+      "per100g": {
+        "kcal": 35.0,
+        "protein_g": 0.3,
+        "carbs_g": 8.8,
+        "sugars_g": 8.8,
+        "fat_g": 0.1,
+        "saturated_g": 0.0,
+        "fiber_g": 3.8
+      }
+    },
+    {
+      "id": "crea-pesca",
+      "name": "Pesca",
+      "name_en": "Peach",
+      "category": "Frutta",
+      "per100g": {
+        "kcal": 27.0,
+        "protein_g": 0.8,
+        "carbs_g": 6.1,
+        "sugars_g": 6.1,
+        "fat_g": 0.1,
+        "saturated_g": 0.0,
+        "fiber_g": 1.6
+      }
+    },
+    {
+      "id": "crea-uva",
+      "name": "Uva",
+      "name_en": "Grapes",
+      "category": "Frutta",
+      "per100g": {
+        "kcal": 61.0,
+        "protein_g": 0.5,
+        "carbs_g": 15.6,
+        "sugars_g": 15.6,
+        "fat_g": 0.1,
+        "saturated_g": 0.0,
+        "fiber_g": 1.5
+      }
+    },
+    {
+      "id": "crea-arachidi",
+      "name": "Arachidi",
+      "name_en": "Peanuts",
+      "category": "Frutta secca",
+      "per100g": {
+        "kcal": 598.0,
+        "protein_g": 29.0,
+        "carbs_g": 8.5,
+        "sugars_g": 4.0,
+        "fat_g": 50.0,
+        "saturated_g": 8.0,
+        "fiber_g": 8.5
+      }
+    },
+    {
+      "id": "crea-mandorle",
+      "name": "Mandorle",
+      "name_en": "Almonds",
+      "category": "Frutta secca",
+      "per100g": {
+        "kcal": 603.0,
+        "protein_g": 22.0,
+        "carbs_g": 4.6,
+        "sugars_g": 3.7,
+        "fat_g": 55.3,
+        "saturated_g": 4.7,
+        "fiber_g": 12.7
+      }
+    },
+    {
+      "id": "crea-nocciole",
+      "name": "Nocciole",
+      "name_en": "Hazelnuts",
+      "category": "Frutta secca",
+      "per100g": {
+        "kcal": 628.0,
+        "protein_g": 13.8,
+        "carbs_g": 6.1,
+        "sugars_g": 4.0,
+        "fat_g": 57.9,
+        "saturated_g": 4.5,
+        "fiber_g": 8.1
+      }
+    },
+    {
+      "id": "crea-noci",
+      "name": "Noci",
+      "name_en": "Walnuts",
+      "category": "Frutta secca",
+      "per100g": {
+        "kcal": 689.0,
+        "protein_g": 14.3,
+        "carbs_g": 5.1,
+        "sugars_g": 3.1,
+        "fat_g": 68.1,
+        "saturated_g": 6.3,
+        "fiber_g": 6.2
+      }
+    },
+    {
+      "id": "crea-pistacchi",
+      "name": "Pistacchi",
+      "name_en": "Pistachios",
+      "category": "Frutta secca",
+      "per100g": {
+        "kcal": 608.0,
+        "protein_g": 18.1,
+        "carbs_g": 8.1,
+        "sugars_g": 6.0,
+        "fat_g": 56.1,
+        "saturated_g": 7.0,
+        "fiber_g": 10.6
+      }
+    },
+    {
+      "id": "crea-grana-padano",
+      "name": "Grana Padano",
+      "name_en": "Grana Padano",
+      "category": "Latte e derivati",
+      "per100g": {
+        "kcal": 384.0,
+        "protein_g": 33.0,
+        "carbs_g": 0.0,
+        "sugars_g": 0.0,
+        "fat_g": 28.0,
+        "saturated_g": 18.0,
+        "fiber_g": 0.0
+      }
+    },
+    {
+      "id": "crea-latte-intero",
+      "name": "Latte intero",
+      "name_en": "Whole milk",
+      "category": "Latte e derivati",
+      "per100g": {
+        "kcal": 64.0,
+        "protein_g": 3.3,
+        "carbs_g": 4.9,
+        "sugars_g": 4.9,
+        "fat_g": 3.6,
+        "saturated_g": 2.3,
+        "fiber_g": 0.0
+      }
+    },
+    {
+      "id": "crea-latte-parzialmente-scremato",
+      "name": "Latte parzialmente scremato",
+      "name_en": "Semi-skimmed milk",
+      "category": "Latte e derivati",
+      "per100g": {
+        "kcal": 46.0,
+        "protein_g": 3.3,
+        "carbs_g": 5.0,
+        "sugars_g": 5.0,
+        "fat_g": 1.5,
+        "saturated_g": 1.0,
+        "fiber_g": 0.0
+      }
+    },
+    {
+      "id": "crea-mozzarella-di-vacca",
+      "name": "Mozzarella di vacca",
+      "name_en": "Cow's milk mozzarella",
+      "category": "Latte e derivati",
+      "per100g": {
+        "kcal": 253.0,
+        "protein_g": 18.7,
+        "carbs_g": 0.7,
+        "sugars_g": 0.7,
+        "fat_g": 19.5,
+        "saturated_g": 11.5,
+        "fiber_g": 0.0
+      }
+    },
+    {
+      "id": "crea-parmigiano-reggiano",
+      "name": "Parmigiano Reggiano",
+      "name_en": "Parmigiano Reggiano",
+      "category": "Latte e derivati",
+      "per100g": {
+        "kcal": 392.0,
+        "protein_g": 33.5,
+        "carbs_g": 0.0,
+        "sugars_g": 0.0,
+        "fat_g": 28.1,
+        "saturated_g": 19.5,
+        "fiber_g": 0.0
+      }
+    },
+    {
+      "id": "crea-pecorino-romano",
+      "name": "Pecorino romano",
+      "name_en": "Pecorino romano",
+      "category": "Latte e derivati",
+      "per100g": {
+        "kcal": 387.0,
+        "protein_g": 26.0,
+        "carbs_g": 0.0,
+        "sugars_g": 0.0,
+        "fat_g": 31.0,
+        "saturated_g": 20.0,
+        "fiber_g": 0.0
+      }
+    },
+    {
+      "id": "crea-ricotta-vaccina",
+      "name": "Ricotta vaccina",
+      "name_en": "Cow's milk ricotta",
+      "category": "Latte e derivati",
+      "per100g": {
+        "kcal": 146.0,
+        "protein_g": 8.8,
+        "carbs_g": 3.5,
+        "sugars_g": 3.5,
+        "fat_g": 10.9,
+        "saturated_g": 7.0,
+        "fiber_g": 0.0
+      }
+    },
+    {
+      "id": "crea-yogurt-greco-intero",
+      "name": "Yogurt greco intero",
+      "name_en": "Greek yogurt (whole)",
+      "category": "Latte e derivati",
+      "per100g": {
+        "kcal": 115.0,
+        "protein_g": 6.4,
+        "carbs_g": 4.0,
+        "sugars_g": 4.0,
+        "fat_g": 8.0,
+        "saturated_g": 5.2,
+        "fiber_g": 0.0
+      }
+    },
+    {
+      "id": "crea-yogurt-magro-naturale",
+      "name": "Yogurt magro naturale",
+      "name_en": "Plain low-fat yogurt",
+      "category": "Latte e derivati",
+      "per100g": {
+        "kcal": 36.0,
+        "protein_g": 3.3,
+        "carbs_g": 4.3,
+        "sugars_g": 4.3,
+        "fat_g": 0.9,
+        "saturated_g": 0.6,
+        "fiber_g": 0.0
+      }
+    },
+    {
+      "id": "crea-ceci-secchi-crudi",
+      "name": "Ceci secchi crudi",
+      "name_en": "Chickpeas (dry)",
+      "category": "Legumi",
+      "per100g": {
+        "kcal": 316.0,
+        "protein_g": 20.9,
+        "carbs_g": 46.9,
+        "sugars_g": 2.4,
+        "fat_g": 6.3,
+        "saturated_g": 0.7,
+        "fiber_g": 13.6
+      }
+    },
+    {
+      "id": "crea-fagioli-borlotti-secchi",
+      "name": "Fagioli borlotti secchi",
+      "name_en": "Borlotti beans (dry)",
+      "category": "Legumi",
+      "per100g": {
+        "kcal": 291.0,
+        "protein_g": 23.6,
+        "carbs_g": 49.8,
+        "sugars_g": 2.5,
+        "fat_g": 2.0,
+        "saturated_g": 0.3,
+        "fiber_g": 17.5
+      }
+    },
+    {
+      "id": "crea-lenticchie-secche-crude",
+      "name": "Lenticchie secche crude",
+      "name_en": "Lentils (dry)",
+      "category": "Legumi",
+      "per100g": {
+        "kcal": 291.0,
+        "protein_g": 22.7,
+        "carbs_g": 51.1,
+        "sugars_g": 1.8,
+        "fat_g": 1.0,
+        "saturated_g": 0.2,
+        "fiber_g": 13.8
+      }
+    },
+    {
+      "id": "crea-tofu",
+      "name": "Tofu",
+      "name_en": "Tofu",
+      "category": "Legumi",
+      "per100g": {
+        "kcal": 115.0,
+        "protein_g": 12.0,
+        "carbs_g": 1.5,
+        "sugars_g": 0.5,
+        "fat_g": 7.0,
+        "saturated_g": 1.0,
+        "fiber_g": 1.0
+      }
+    },
+    {
+      "id": "crea-burro",
+      "name": "Burro",
+      "name_en": "Butter",
+      "category": "Oli e grassi",
+      "per100g": {
+        "kcal": 758.0,
+        "protein_g": 0.8,
+        "carbs_g": 1.1,
+        "sugars_g": 1.1,
+        "fat_g": 83.4,
+        "saturated_g": 50.0,
+        "fiber_g": 0.0
+      }
+    },
+    {
+      "id": "crea-olio-extravergine-di-oliva",
+      "name": "Olio extravergine di oliva",
+      "name_en": "Extra virgin olive oil",
+      "category": "Oli e grassi",
+      "per100g": {
+        "kcal": 899.0,
+        "protein_g": 0.0,
+        "carbs_g": 0.0,
+        "sugars_g": 0.0,
+        "fat_g": 99.9,
+        "saturated_g": 14.5,
+        "fiber_g": 0.0
+      }
+    },
+    {
+      "id": "crea-aglio",
+      "name": "Aglio",
+      "name_en": "Garlic",
+      "category": "Ortaggi",
+      "per100g": {
+        "kcal": 41.0,
+        "protein_g": 0.9,
+        "carbs_g": 8.4,
+        "sugars_g": 1.0,
+        "fat_g": 0.6,
+        "saturated_g": 0.1,
+        "fiber_g": 3.1
+      }
+    },
+    {
+      "id": "crea-broccoli-crudi",
+      "name": "Broccoli crudi",
+      "name_en": "Broccoli (raw)",
+      "category": "Ortaggi",
+      "per100g": {
+        "kcal": 27.0,
+        "protein_g": 3.0,
+        "carbs_g": 3.0,
+        "sugars_g": 1.5,
+        "fat_g": 0.4,
+        "saturated_g": 0.1,
+        "fiber_g": 3.0
+      }
+    },
+    {
+      "id": "crea-carote",
+      "name": "Carote",
+      "name_en": "Carrots",
+      "category": "Ortaggi",
+      "per100g": {
+        "kcal": 33.0,
+        "protein_g": 1.1,
+        "carbs_g": 7.6,
+        "sugars_g": 7.0,
+        "fat_g": 0.2,
+        "saturated_g": 0.0,
+        "fiber_g": 3.1
+      }
+    },
+    {
+      "id": "crea-cavolfiore",
+      "name": "Cavolfiore",
+      "name_en": "Cauliflower",
+      "category": "Ortaggi",
+      "per100g": {
+        "kcal": 25.0,
+        "protein_g": 3.2,
+        "carbs_g": 2.7,
+        "sugars_g": 2.4,
+        "fat_g": 0.2,
+        "saturated_g": 0.0,
+        "fiber_g": 2.4
+      }
+    },
+    {
+      "id": "crea-cetrioli",
+      "name": "Cetrioli",
+      "name_en": "Cucumber",
+      "category": "Ortaggi",
+      "per100g": {
+        "kcal": 14.0,
+        "protein_g": 0.7,
+        "carbs_g": 1.8,
+        "sugars_g": 1.8,
+        "fat_g": 0.2,
+        "saturated_g": 0.0,
+        "fiber_g": 0.8
+      }
+    },
+    {
+      "id": "crea-cipolle",
+      "name": "Cipolle",
+      "name_en": "Onions",
+      "category": "Ortaggi",
+      "per100g": {
+        "kcal": 26.0,
+        "protein_g": 1.0,
+        "carbs_g": 5.7,
+        "sugars_g": 5.7,
+        "fat_g": 0.1,
+        "saturated_g": 0.0,
+        "fiber_g": 1.0
+      }
+    },
+    {
+      "id": "crea-fagiolini",
+      "name": "Fagiolini",
+      "name_en": "Green beans",
+      "category": "Ortaggi",
+      "per100g": {
+        "kcal": 18.0,
+        "protein_g": 2.1,
+        "carbs_g": 2.4,
+        "sugars_g": 2.0,
+        "fat_g": 0.1,
+        "saturated_g": 0.0,
+        "fiber_g": 2.9
+      }
+    },
+    {
+      "id": "crea-finocchi",
+      "name": "Finocchi",
+      "name_en": "Fennel",
+      "category": "Ortaggi",
+      "per100g": {
+        "kcal": 9.0,
+        "protein_g": 1.2,
+        "carbs_g": 1.0,
+        "sugars_g": 1.0,
+        "fat_g": 0.0,
+        "saturated_g": 0.0,
+        "fiber_g": 2.2
+      }
+    },
+    {
+      "id": "crea-funghi-champignon",
+      "name": "Funghi champignon",
+      "name_en": "Button mushrooms",
+      "category": "Ortaggi",
+      "per100g": {
+        "kcal": 22.0,
+        "protein_g": 3.7,
+        "carbs_g": 0.8,
+        "sugars_g": 0.5,
+        "fat_g": 0.2,
+        "saturated_g": 0.0,
+        "fiber_g": 2.3
+      }
+    },
+    {
+      "id": "crea-lattuga",
+      "name": "Lattuga",
+      "name_en": "Lettuce",
+      "category": "Ortaggi",
+      "per100g": {
+        "kcal": 19.0,
+        "protein_g": 1.8,
+        "carbs_g": 2.2,
+        "sugars_g": 2.2,
+        "fat_g": 0.4,
+        "saturated_g": 0.1,
+        "fiber_g": 1.5
+      }
+    },
+    {
+      "id": "crea-melanzane",
+      "name": "Melanzane",
+      "name_en": "Aubergine",
+      "category": "Ortaggi",
+      "per100g": {
+        "kcal": 18.0,
+        "protein_g": 1.1,
+        "carbs_g": 2.6,
+        "sugars_g": 2.6,
+        "fat_g": 0.1,
+        "saturated_g": 0.0,
+        "fiber_g": 2.6
+      }
+    },
+    {
+      "id": "crea-patate",
+      "name": "Patate",
+      "name_en": "Potatoes",
+      "category": "Ortaggi",
+      "per100g": {
+        "kcal": 85.0,
+        "protein_g": 2.1,
+        "carbs_g": 18.0,
+        "sugars_g": 0.4,
+        "fat_g": 1.0,
+        "saturated_g": 0.3,
+        "fiber_g": 1.6
+      }
+    },
+    {
+      "id": "crea-peperoni",
+      "name": "Peperoni",
+      "name_en": "Peppers",
+      "category": "Ortaggi",
+      "per100g": {
+        "kcal": 22.0,
+        "protein_g": 0.9,
+        "carbs_g": 4.2,
+        "sugars_g": 4.2,
+        "fat_g": 0.3,
+        "saturated_g": 0.0,
+        "fiber_g": 1.9
+      }
+    },
+    {
+      "id": "crea-piselli-freschi",
+      "name": "Piselli freschi",
+      "name_en": "Peas",
+      "category": "Ortaggi",
+      "per100g": {
+        "kcal": 76.0,
+        "protein_g": 5.5,
+        "carbs_g": 6.5,
+        "sugars_g": 4.0,
+        "fat_g": 0.6,
+        "saturated_g": 0.1,
+        "fiber_g": 6.3
+      }
+    },
+    {
+      "id": "crea-pomodori-maturi",
+      "name": "Pomodori maturi",
+      "name_en": "Ripe tomatoes",
+      "category": "Ortaggi",
+      "per100g": {
+        "kcal": 19.0,
+        "protein_g": 1.0,
+        "carbs_g": 3.5,
+        "sugars_g": 3.5,
+        "fat_g": 0.2,
+        "saturated_g": 0.0,
+        "fiber_g": 1.2
+      }
+    },
+    {
+      "id": "crea-radicchio",
+      "name": "Radicchio",
+      "name_en": "Radicchio",
+      "category": "Ortaggi",
+      "per100g": {
+        "kcal": 13.0,
+        "protein_g": 1.4,
+        "carbs_g": 1.6,
+        "sugars_g": 1.0,
+        "fat_g": 0.2,
+        "saturated_g": 0.0,
+        "fiber_g": 3.0
+      }
+    },
+    {
+      "id": "crea-rucola",
+      "name": "Rucola",
+      "name_en": "Rocket",
+      "category": "Ortaggi",
+      "per100g": {
+        "kcal": 28.0,
+        "protein_g": 2.6,
+        "carbs_g": 3.7,
+        "sugars_g": 2.0,
+        "fat_g": 0.7,
+        "saturated_g": 0.1,
+        "fiber_g": 0.9
+      }
+    },
+    {
+      "id": "crea-spinaci-crudi",
+      "name": "Spinaci crudi",
+      "name_en": "Spinach (raw)",
+      "category": "Ortaggi",
+      "per100g": {
+        "kcal": 31.0,
+        "protein_g": 3.4,
+        "carbs_g": 2.9,
+        "sugars_g": 0.4,
+        "fat_g": 0.7,
+        "saturated_g": 0.1,
+        "fiber_g": 1.9
+      }
+    },
+    {
+      "id": "crea-zucca",
+      "name": "Zucca",
+      "name_en": "Pumpkin",
+      "category": "Ortaggi",
+      "per100g": {
+        "kcal": 18.0,
+        "protein_g": 1.1,
+        "carbs_g": 3.5,
+        "sugars_g": 2.5,
+        "fat_g": 0.1,
+        "saturated_g": 0.0,
+        "fiber_g": 0.5
+      }
+    },
+    {
+      "id": "crea-zucchine",
+      "name": "Zucchine",
+      "name_en": "Courgettes",
+      "category": "Ortaggi",
+      "per100g": {
+        "kcal": 11.0,
+        "protein_g": 1.3,
+        "carbs_g": 1.4,
+        "sugars_g": 1.4,
+        "fat_g": 0.1,
+        "saturated_g": 0.0,
+        "fiber_g": 1.2
+      }
+    },
+    {
+      "id": "crea-gamberi-crudi",
+      "name": "Gamberi crudi",
+      "name_en": "Prawns (raw)",
+      "category": "Pesci",
+      "per100g": {
+        "kcal": 71.0,
+        "protein_g": 13.6,
+        "carbs_g": 0.0,
+        "sugars_g": 0.0,
+        "fat_g": 0.6,
+        "saturated_g": 0.2,
+        "fiber_g": 0.0
+      }
+    },
+    {
+      "id": "crea-merluzzo-fresco-crudo",
+      "name": "Merluzzo fresco crudo",
+      "name_en": "Cod (raw)",
+      "category": "Pesci",
+      "per100g": {
+        "kcal": 71.0,
+        "protein_g": 17.0,
+        "carbs_g": 0.0,
+        "sugars_g": 0.0,
+        "fat_g": 0.3,
+        "saturated_g": 0.1,
+        "fiber_g": 0.0
+      }
+    },
+    {
+      "id": "crea-salmone-fresco-crudo",
+      "name": "Salmone fresco crudo",
+      "name_en": "Fresh salmon (raw)",
+      "category": "Pesci",
+      "per100g": {
+        "kcal": 185.0,
+        "protein_g": 18.4,
+        "carbs_g": 0.0,
+        "sugars_g": 0.0,
+        "fat_g": 12.0,
+        "saturated_g": 2.3,
+        "fiber_g": 0.0
+      }
+    },
+    {
+      "id": "crea-tonno-fresco-crudo",
+      "name": "Tonno fresco crudo",
+      "name_en": "Fresh tuna (raw)",
+      "category": "Pesci",
+      "per100g": {
+        "kcal": 159.0,
+        "protein_g": 21.5,
+        "carbs_g": 0.0,
+        "sugars_g": 0.0,
+        "fat_g": 8.1,
+        "saturated_g": 2.0,
+        "fiber_g": 0.0
+      }
+    },
+    {
+      "id": "crea-tonno-sott-olio-sgocciolato",
+      "name": "Tonno sott'olio sgocciolato",
+      "name_en": "Canned tuna in oil (drained)",
+      "category": "Pesci",
+      "per100g": {
+        "kcal": 192.0,
+        "protein_g": 25.2,
+        "carbs_g": 0.0,
+        "sugars_g": 0.0,
+        "fat_g": 8.0,
+        "saturated_g": 1.5,
+        "fiber_g": 0.0
+      }
+    },
+    {
+      "id": "crea-uovo-di-gallina-intero",
+      "name": "Uovo di gallina intero",
+      "name_en": "Whole hen egg",
+      "category": "Uova",
+      "per100g": {
+        "kcal": 128.0,
+        "protein_g": 12.4,
+        "carbs_g": 0.0,
+        "sugars_g": 0.0,
+        "fat_g": 8.7,
+        "saturated_g": 3.2,
+        "fiber_g": 0.0
+      }
+    }
+  ]
+}
