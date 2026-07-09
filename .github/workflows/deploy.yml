@@ -26,7 +26,9 @@ jobs:
         with:
           node-version: 20
       - uses: actions/configure-pages@v5
-      - run: npm ci
+      # `npm install` (not `npm ci`): reconciles cross-platform optional deps
+      # (Tailwind/lightningcss native binaries) instead of failing on a Mac-built lock.
+      - run: npm install --no-audit --no-fund
       - run: npm run build
         env:
           # Serve under /<repo>. Change if the repo is renamed.
