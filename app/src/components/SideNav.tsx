@@ -10,7 +10,7 @@ export default function SideNav() {
   const pathname = usePathname();
   return (
     <aside className="hidden w-60 shrink-0 flex-col border-r border-base-300 bg-base-100 lg:flex">
-      <Link href="/" className="flex items-center justify-center gap-2 px-6 py-6">
+      <Link href="/" className="flex items-center gap-2 px-6 py-6">
         <span className="text-xl font-bold tracking-tight">Pasto</span>
         <span className="h-2 w-2 rounded-full bg-primary" />
       </Link>
