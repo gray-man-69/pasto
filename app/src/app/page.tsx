@@ -163,7 +163,7 @@ export default function TodayPage() {
                       <div className="truncate font-medium">{e.foodName}</div>
                       <div className="mt-0.5 text-xs text-base-content/40">
                         {e.mealId ? "meal" : `${e.grams} g`} · {Math.round(mm.kcal)} kcal · P{" "}
-                        {mm.protein_g} / C {mm.carbs_g} / F {mm.fat_g}
+                        {mm.protein_g} / C {mm.carbs_g} / F {mm.fat_g} / Fib {mm.fiber_g}
                       </div>
                     </button>
                     <button

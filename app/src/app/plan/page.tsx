@@ -250,7 +250,8 @@ export default function PlanPage() {
                       )}
                     </div>
                     <div className="text-xs text-base-content/40">
-                      {Math.round(m.kcal)} kcal · P {m.protein_g} / C {m.carbs_g} / F {m.fat_g}
+                      {Math.round(m.kcal)} kcal · P {m.protein_g} / C {m.carbs_g} / F {m.fat_g} / Fib{" "}
+                      {m.fiber_g}
                     </div>
                   </div>
                   <input
