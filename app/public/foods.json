@@ -2,7 +2,7 @@
   "source": "CREA - Tabelle di Composizione degli Alimenti (curated bootstrap)",
   "source_url": "https://www.alimentinutrizione.it",
   "unit": "per 100 g edible portion",
-  "count": 80,
+  "count": 82,
   "foods": [
     {
       "id": "crea-bresaola",
@@ -1186,6 +1186,36 @@
         "sugars_g": 0.0,
         "fat_g": 8.0,
         "saturated_g": 1.5,
+        "fiber_g": 0.0
+      }
+    },
+    {
+      "id": "crea-passata-di-pomodoro-cirio",
+      "name": "Passata di pomodoro (Cirio)",
+      "name_en": "Tomato passata (Cirio)",
+      "category": "Salse e conserve",
+      "per100g": {
+        "kcal": 35.0,
+        "protein_g": 1.2,
+        "carbs_g": 6.3,
+        "sugars_g": 4.4,
+        "fat_g": 0.1,
+        "saturated_g": 0.0,
+        "fiber_g": 1.1
+      }
+    },
+    {
+      "id": "crea-albume-d-uovo",
+      "name": "Albume d'uovo",
+      "name_en": "Egg white",
+      "category": "Uova",
+      "per100g": {
+        "kcal": 43.0,
+        "protein_g": 10.7,
+        "carbs_g": 0.0,
+        "sugars_g": 0.0,
+        "fat_g": 0.0,
+        "saturated_g": 0.0,
         "fiber_g": 0.0
       }
     },

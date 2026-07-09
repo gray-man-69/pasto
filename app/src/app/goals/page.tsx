@@ -1,7 +1,7 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { getGoals, saveGoals } from "@/lib/db";
+import { useEffect, useRef, useState } from "react";
+import { exportData, getGoals, importData, localDate, saveGoals } from "@/lib/db";
 import type { Goals } from "@/lib/types";
 
 // Mifflin-St Jeor BMR × activity, then a balanced macro split:
@@ -60,7 +60,7 @@ export default function GoalsPage() {
   if (!goals) return <div className="py-10 text-center text-base-content/40">Loading…</div>;
 
   return (
-    <div className="flex flex-col gap-4">
+    <div className="mx-auto flex w-full max-w-xl flex-col gap-4">
       <h1 className="text-xl font-bold">Daily goals</h1>
 
       <div className="card bg-base-100 shadow-sm">
@@ -129,6 +129,81 @@ export default function GoalsPage() {
         Suggestion uses Mifflin-St Jeor BMR × activity, protein 1.8 g/kg, fat 25%
         of calories. Tune the numbers above to your plan, then Save.
       </p>
+
+      <BackupCard />
+    </div>
+  );
+}
+
+function BackupCard() {
+  const fileRef = useRef<HTMLInputElement>(null);
+  const [msg, setMsg] = useState<string | null>(null);
+  const [persistent, setPersistent] = useState<boolean | null>(null);
+
+  useEffect(() => {
+    navigator.storage?.persisted?.().then(setPersistent).catch(() => setPersistent(null));
+  }, []);
+
+  async function doExport() {
+    const data = await exportData();
+    const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `pasto-backup-${localDate()}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+    setMsg(
+      `Backed up ${data.entries.length} log entries, ${data.meals.length} meals, ${data.customFoods.length} custom foods.`,
+    );
+  }
+
+  async function onFile(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (fileRef.current) fileRef.current.value = "";
+    if (!file) return;
+    try {
+      const data = JSON.parse(await file.text());
+      await importData(data);
+      // Reload so every page (and the goals form) reflects the restored data.
+      window.location.reload();
+    } catch {
+      setMsg("Couldn't read that file — is it a Pasto backup?");
+    }
+  }
+
+  return (
+    <div className="card bg-base-100 shadow-sm">
+      <div className="card-body gap-3 py-5">
+        <div className="flex items-center justify-between">
+          <span className="font-medium">Backup &amp; restore</span>
+          {persistent !== null && (
+            <span className={`text-xs ${persistent ? "text-success" : "text-warning"}`}>
+              storage: {persistent ? "persistent ✓" : "best-effort"}
+            </span>
+          )}
+        </div>
+        <p className="text-xs text-base-content/50">
+          Your data lives only in this browser. Export a backup file to keep it safe or move it to
+          another browser or device.
+        </p>
+        <div className="flex gap-2">
+          <button className="btn btn-primary btn-sm flex-1" onClick={doExport}>
+            Export backup
+          </button>
+          <button className="btn btn-outline btn-sm flex-1" onClick={() => fileRef.current?.click()}>
+            Restore…
+          </button>
+          <input
+            ref={fileRef}
+            type="file"
+            accept="application/json,.json"
+            className="hidden"
+            onChange={onFile}
+          />
+        </div>
+        {msg && <div className="text-xs text-base-content/60">{msg}</div>}
+      </div>
     </div>
   );
 }

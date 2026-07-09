@@ -1,0 +1,169 @@
+"use client";
+
+import { useState } from "react";
+import { deleteCustomFood, newCustomFoodId, saveCustomFood } from "@/lib/db";
+import { emptyNutrients } from "@/lib/macros";
+import type { Food, Nutrients } from "@/lib/types";
+
+// Create or edit a custom food. Opened either from a CREA food (`base`) — so
+// every field is prefilled with the reference values and you just tweak the few
+// that differ for your store's version — or blank for a food not in the
+// database. Saved foods live in IndexedDB and outrank CREA in search.
+
+type NutrientField = { key: keyof Nutrients; label: string; unit: string };
+
+const FIELDS: NutrientField[] = [
+  { key: "kcal", label: "Calories", unit: "kcal" },
+  { key: "protein_g", label: "Protein", unit: "g" },
+  { key: "carbs_g", label: "Carbs", unit: "g" },
+  { key: "sugars_g", label: "— of which sugars", unit: "g" },
+  { key: "fat_g", label: "Fat", unit: "g" },
+  { key: "saturated_g", label: "— of which saturated", unit: "g" },
+  { key: "fiber_g", label: "Fiber", unit: "g" },
+];
+
+export default function FoodEditor({
+  base,
+  onClose,
+  onSaved,
+}: {
+  // A CREA or existing custom food to seed from. If it's already custom we edit
+  // it in place; otherwise we spin off a new custom variant based on it.
+  base: Food | null;
+  onClose: () => void;
+  onSaved: (food: Food) => void;
+}) {
+  const editingCustom = base?.custom === true;
+  const [name, setName] = useState(
+    base ? (editingCustom ? base.name : `${base.name} (custom)`) : "",
+  );
+  const [category, setCategory] = useState(base?.category ?? "Custom");
+  const [n, setN] = useState<Nutrients>(base ? { ...base.per100g } : emptyNutrients());
+  const [busy, setBusy] = useState(false);
+
+  const set = (key: keyof Nutrients, value: number) =>
+    setN((prev) => ({ ...prev, [key]: value }));
+
+  // CREA calories are measured, not derived, but a from-macros estimate is a
+  // handy sanity check / starting point for a scratch food.
+  const kcalFromMacros = Math.round(n.protein_g * 4 + n.carbs_g * 4 + n.fat_g * 9);
+
+  async function save() {
+    if (!name.trim()) return;
+    setBusy(true);
+    const food: Food = {
+      id: editingCustom ? base!.id : newCustomFoodId(),
+      name: name.trim(),
+      name_en: base?.name_en ?? null,
+      category: category.trim() || "Custom",
+      per100g: n,
+      custom: true,
+      basedOn: editingCustom ? base?.basedOn : base?.id,
+    };
+    await saveCustomFood(food);
+    onSaved(food);
+  }
+
+  async function remove() {
+    if (!editingCustom || !base) return;
+    setBusy(true);
+    await deleteCustomFood(base.id);
+    onClose();
+  }
+
+  return (
+    <div
+      className="fixed inset-0 z-[70] flex items-end justify-center bg-black/60 p-0 backdrop-blur-sm sm:items-center sm:p-4"
+      onClick={onClose}
+    >
+      <div
+        className="max-h-[90vh] w-full max-w-md overflow-y-auto rounded-t-3xl border border-base-300 bg-base-100 p-5 shadow-2xl sm:rounded-3xl"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="mb-1 flex items-center justify-between">
+          <h2 className="text-lg font-bold">
+            {editingCustom ? "Edit food" : "Custom food"}
+          </h2>
+          <button className="btn btn-ghost btn-sm btn-circle" onClick={onClose} aria-label="Close">
+            ✕
+          </button>
+        </div>
+        <p className="mb-4 text-xs text-base-content/50">
+          {base && !editingCustom
+            ? `Prefilled from ${base.name}. Adjust what differs — values are per 100 g.`
+            : "Values are per 100 g. Check the label on the pack."}
+        </p>
+
+        <label className="mb-3 block">
+          <span className="mb-1 block text-xs font-medium text-base-content/60">Name</span>
+          <input
+            autoFocus={!base}
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            placeholder="e.g. Petto di pollo — Esselunga"
+            className="input input-bordered w-full"
+          />
+        </label>
+
+        <label className="mb-4 block">
+          <span className="mb-1 block text-xs font-medium text-base-content/60">Category</span>
+          <input
+            value={category}
+            onChange={(e) => setCategory(e.target.value)}
+            className="input input-bordered input-sm w-full"
+          />
+        </label>
+
+        <div className="flex flex-col divide-y divide-base-300 rounded-2xl border border-base-300">
+          {FIELDS.map((f) => (
+            <label key={f.key} className="flex items-center justify-between gap-3 px-4 py-2.5">
+              <span
+                className={`text-sm ${
+                  f.label.startsWith("—") ? "text-base-content/45" : "text-base-content/80"
+                }`}
+              >
+                {f.label}
+              </span>
+              <span className="flex items-center gap-2">
+                <input
+                  type="number"
+                  inputMode="decimal"
+                  min={0}
+                  step="0.1"
+                  value={n[f.key]}
+                  onChange={(e) => set(f.key, Math.max(0, Number(e.target.value) || 0))}
+                  className="input input-bordered input-sm w-24 text-right tabular-nums"
+                />
+                <span className="w-8 text-xs text-base-content/40">{f.unit}</span>
+              </span>
+            </label>
+          ))}
+        </div>
+
+        {Math.abs(kcalFromMacros - n.kcal) > 5 && (
+          <button
+            className="mt-2 text-xs text-primary hover:underline"
+            onClick={() => set("kcal", kcalFromMacros)}
+          >
+            Set calories from macros ≈ {kcalFromMacros} kcal
+          </button>
+        )}
+
+        <div className="mt-5 flex gap-2">
+          {editingCustom && (
+            <button className="btn btn-ghost text-error" disabled={busy} onClick={remove}>
+              Delete
+            </button>
+          )}
+          <button
+            className="btn btn-primary flex-1"
+            disabled={busy || !name.trim()}
+            onClick={save}
+          >
+            {editingCustom ? "Save changes" : "Save food"}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}

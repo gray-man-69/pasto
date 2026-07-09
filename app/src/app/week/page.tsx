@@ -2,7 +2,17 @@
 
 import Link from "next/link";
 import { useLiveQuery } from "dexie-react-hooks";
-import { addDays, allMeals, getGoals, logMeal, weekStart, weeklyMealCounts } from "@/lib/db";
+import WeekSummary from "@/components/WeekSummary";
+import {
+  addDays,
+  allMeals,
+  dailyTotalsBetween,
+  getGoals,
+  localDate,
+  logMeal,
+  weekStart,
+  weeklyMealCounts,
+} from "@/lib/db";
 import type { Meal } from "@/lib/types";
 
 function fmtRange(start: string): string {
@@ -18,22 +28,14 @@ export default function WeekPage() {
   const counts = useLiveQuery(() => weeklyMealCounts(), []);
   const goals = useLiveQuery(() => getGoals(), []);
   const start = weekStart();
+  const dayTotals = useLiveQuery(() => dailyTotalsBetween(start, addDays(start, 6)), [start]);
 
-  const loading = meals === undefined || counts === undefined || goals === undefined;
-
-  // "Calculated targets": if you eat every allowance this week, what's the total?
-  const planned = (meals ?? []).reduce(
-    (acc, m) => ({
-      kcal: acc.kcal + m.perServing.kcal * m.weeklyLimit,
-      protein: acc.protein + m.perServing.protein_g * m.weeklyLimit,
-    }),
-    { kcal: 0, protein: 0 },
-  );
-  const weeklyKcalGoal = (goals?.kcal ?? 0) * 7;
-  const weeklyProteinGoal = (goals?.protein_g ?? 0) * 7;
+  const days = Array.from({ length: 7 }, (_, i) => addDays(start, i));
+  const today = localDate();
+  const loading = meals === undefined || counts === undefined;
 
   return (
-    <div className="flex flex-col gap-4">
+    <div className="mx-auto flex w-full max-w-2xl flex-col gap-5">
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-xl font-bold">This week</h1>
@@ -44,35 +46,33 @@ export default function WeekPage() {
         </Link>
       </div>
 
-      {/* Planned vs weekly goal */}
-      {goals && (
-        <div className="card bg-base-100 shadow-sm">
-          <div className="card-body gap-2 py-4">
-            <div className="text-xs font-semibold uppercase tracking-wide text-base-content/50">
-              Planned (if you eat every allowance)
-            </div>
-            <PlanRow label="Calories" planned={Math.round(planned.kcal)} goal={weeklyKcalGoal} unit="kcal" />
-            <PlanRow label="Protein" planned={Math.round(planned.protein)} goal={weeklyProteinGoal} unit="g" />
-          </div>
-        </div>
+      {/* Weekly nutrition summary */}
+      {goals && dayTotals && (
+        <WeekSummary days={days} dayTotals={dayTotals} goals={goals} today={today} />
       )}
 
-      {loading ? (
-        <div className="py-10 text-center text-base-content/40">Loading…</div>
-      ) : meals && meals.length > 0 ? (
-        <ul className="flex flex-col gap-2">
-          {meals.map((m) => (
-            <MealRow key={m.id} meal={m} eaten={counts?.get(m.id!) ?? 0} />
-          ))}
-        </ul>
-      ) : (
-        <div className="flex flex-col items-center gap-3 py-10 text-center text-base-content/50">
-          No meals yet.
-          <Link href="/meals" className="btn btn-primary btn-sm">
-            Create your first meal
-          </Link>
-        </div>
-      )}
+      {/* Meal allowances */}
+      <div className="flex flex-col gap-2">
+        <h2 className="px-1 text-xs font-semibold uppercase tracking-wide text-base-content/40">
+          Meal allowances
+        </h2>
+        {loading ? (
+          <div className="py-10 text-center text-base-content/40">Loading…</div>
+        ) : meals && meals.length > 0 ? (
+          <ul className="flex flex-col gap-2">
+            {meals.map((m) => (
+              <MealRow key={m.id} meal={m} eaten={counts?.get(m.id!) ?? 0} />
+            ))}
+          </ul>
+        ) : (
+          <div className="flex flex-col items-center gap-3 py-8 text-center text-base-content/50">
+            No saved meals yet.
+            <Link href="/meals" className="btn btn-primary btn-sm">
+              Create your first meal
+            </Link>
+          </div>
+        )}
+      </div>
     </div>
   );
 }
@@ -106,31 +106,5 @@ function MealRow({ meal, eaten }: { meal: Meal; eaten: number }) {
         </button>
       </div>
     </li>
-  );
-}
-
-function PlanRow({
-  label,
-  planned,
-  goal,
-  unit,
-}: {
-  label: string;
-  planned: number;
-  goal: number;
-  unit: string;
-}) {
-  const pct = goal > 0 ? Math.min(100, Math.round((planned / goal) * 100)) : 0;
-  return (
-    <div>
-      <div className="flex items-baseline justify-between text-sm">
-        <span>{label}</span>
-        <span className="tabular-nums text-base-content/70">
-          {planned}
-          <span className="text-base-content/40"> / {goal} {unit}/wk</span>
-        </span>
-      </div>
-      <progress className="progress progress-primary w-full" value={pct} max={100} />
-    </div>
   );
 }

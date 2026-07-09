@@ -1,32 +1,32 @@
 @import "tailwindcss";
 @plugin "daisyui";
 
-/* Minimal mono theme: near-white surfaces, near-black ink, flat (no depth),
-   generously rounded. Colour is reserved for the rings/status, not the chrome. */
+/* Pasto — dark & sleek. Near-black cool canvas, elevated cards, one lime accent.
+   Colour is carried by the accent + the per-macro rings; chrome stays neutral. */
 @plugin "daisyui/theme" {
   name: "pasto";
   default: true;
-  prefersdark: false;
-  color-scheme: light;
-  --color-base-100: oklch(100% 0 0);
-  --color-base-200: oklch(97% 0 0);
-  --color-base-300: oklch(91% 0 0);
-  --color-base-content: oklch(24% 0 0);
-  --color-primary: oklch(25% 0 0);
-  --color-primary-content: oklch(100% 0 0);
-  --color-secondary: oklch(55% 0 0);
-  --color-secondary-content: oklch(100% 0 0);
-  --color-accent: oklch(60% 0 0);
-  --color-accent-content: oklch(100% 0 0);
-  --color-neutral: oklch(24% 0 0);
-  --color-neutral-content: oklch(100% 0 0);
-  --color-info: oklch(72% 0.1 235);
-  --color-success: oklch(72% 0.15 150);
-  --color-warning: oklch(82% 0.15 80);
-  --color-error: oklch(64% 0.2 25);
+  prefersdark: true;
+  color-scheme: dark;
+  --color-base-100: oklch(21% 0.008 265);
+  --color-base-200: oklch(15% 0.006 265);
+  --color-base-300: oklch(32% 0.01 265);
+  --color-base-content: oklch(96% 0.004 265);
+  --color-primary: oklch(89% 0.19 128);
+  --color-primary-content: oklch(26% 0.06 128);
+  --color-secondary: oklch(72% 0.02 265);
+  --color-secondary-content: oklch(16% 0 0);
+  --color-accent: oklch(89% 0.19 128);
+  --color-accent-content: oklch(26% 0.06 128);
+  --color-neutral: oklch(27% 0.01 265);
+  --color-neutral-content: oklch(96% 0 0);
+  --color-info: oklch(74% 0.12 235);
+  --color-success: oklch(80% 0.17 150);
+  --color-warning: oklch(84% 0.15 80);
+  --color-error: oklch(70% 0.19 20);
   --radius-selector: 1rem;
   --radius-field: 0.75rem;
-  --radius-box: 1.25rem;
+  --radius-box: 1.5rem;
   --size-selector: 0.25rem;
   --size-field: 0.25rem;
   --border: 1px;
@@ -42,6 +42,15 @@ body {
   /* System font = San Francisco on Apple devices: clean, native, no fetch. */
   font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont,
     "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-  /* clear the fixed bottom navigation */
-  padding-bottom: 5.5rem;
+  background: var(--color-base-200);
+}
+
+/* Subtle lime aura at the top of the content area so the dark canvas isn't flat. */
+.app-glow {
+  background-image: radial-gradient(
+    90% 40% at 50% 0%,
+    color-mix(in oklab, var(--color-primary) 7%, transparent),
+    transparent 55%
+  );
+  background-repeat: no-repeat;
 }

@@ -57,8 +57,8 @@ export default function WeekStrip({
             <button
               key={d}
               onClick={() => onSelect(d)}
-              className={`flex flex-1 flex-col items-center gap-1 rounded-2xl py-1.5 ${
-                isSel ? "bg-base-200" : ""
+              className={`flex flex-1 flex-col items-center gap-1 rounded-2xl py-1.5 transition-colors ${
+                isSel ? "bg-base-100 ring-1 ring-base-300" : ""
               }`}
             >
               <span className="text-[10px] uppercase tracking-wide text-base-content/40">
@@ -67,11 +67,15 @@ export default function WeekStrip({
               <Ring
                 value={kcal}
                 max={goalKcal}
-                size="2.4rem"
-                thickness="3px"
-                colorClass={kcal > 0 ? "text-primary" : "text-base-300"}
+                size="2.5rem"
+                stroke={8}
+                colorClass="text-primary"
               >
-                <span className={`text-xs ${isSel ? "font-bold" : "text-base-content/70"}`}>
+                <span
+                  className={`text-xs tabular-nums ${
+                    isSel ? "font-bold text-base-content" : "text-base-content/70"
+                  }`}
+                >
                   {dayNum}
                 </span>
               </Ring>

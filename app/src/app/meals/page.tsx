@@ -16,7 +16,7 @@ export default function MealsPage() {
   const [draft, setDraft] = useState<Draft | null>(null);
 
   return (
-    <div className="flex flex-col gap-4">
+    <div className="mx-auto flex w-full max-w-2xl flex-col gap-4">
       <div className="flex items-center justify-between">
         <h1 className="text-xl font-bold">My meals</h1>
         <Link href="/week" className="btn btn-ghost btn-sm">

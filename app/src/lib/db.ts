@@ -1,7 +1,7 @@
 // Local-first storage: the food log and macro goals live in IndexedDB on the
 // device (via Dexie). No server, no login.
 import Dexie, { type Table } from "dexie";
-import type { Goals, LogEntry, Meal, MealComponent, Nutrients } from "./types";
+import type { Food, Goals, LogEntry, Meal, MealComponent, Nutrients } from "./types";
 import { scale, sum } from "./macros";
 
 const DEFAULT_GOALS: Goals = {
@@ -17,6 +17,7 @@ class PastoDB extends Dexie {
   entries!: Table<LogEntry, number>;
   goals!: Table<Goals, number>;
   meals!: Table<Meal, number>;
+  customFoods!: Table<Food, string>;
 
   constructor() {
     super("pasto");
@@ -29,6 +30,12 @@ class PastoDB extends Dexie {
       entries: "++id, date, foodId, mealId",
       goals: "id",
       meals: "++id, name",
+    });
+    this.version(3).stores({
+      entries: "++id, date, foodId, mealId",
+      goals: "id",
+      meals: "++id, name",
+      customFoods: "id, name, basedOn",
     });
   }
 }
@@ -69,6 +76,77 @@ export async function getGoals(): Promise<Goals> {
 
 export async function saveGoals(goals: Omit<Goals, "id">) {
   return db.goals.put({ ...goals, id: 1 });
+}
+
+// ---- Backup & restore ------------------------------------------------------
+// Local-first data lives only in this browser's IndexedDB. Export writes a JSON
+// snapshot the user can save anywhere; import merges one back in (idempotent —
+// re-importing the same file overwrites by id rather than duplicating).
+
+export interface Backup {
+  app: "pasto";
+  version: number;
+  exportedAt: string;
+  entries: LogEntry[];
+  goals: Goals[];
+  meals: Meal[];
+  customFoods: Food[];
+}
+
+export async function exportData(): Promise<Backup> {
+  const [entries, goals, meals, customFoods] = await Promise.all([
+    db.entries.toArray(),
+    db.goals.toArray(),
+    db.meals.toArray(),
+    db.customFoods.toArray(),
+  ]);
+  return {
+    app: "pasto",
+    version: 3,
+    exportedAt: new Date().toISOString(),
+    entries,
+    goals,
+    meals,
+    customFoods,
+  };
+}
+
+export async function importData(
+  data: Partial<Backup>,
+): Promise<{ entries: number; meals: number; customFoods: number }> {
+  if (data.app && data.app !== "pasto") throw new Error("Not a Pasto backup file.");
+  await db.transaction("rw", db.entries, db.goals, db.meals, db.customFoods, async () => {
+    if (data.goals?.length) await db.goals.bulkPut(data.goals);
+    if (data.meals?.length) await db.meals.bulkPut(data.meals);
+    if (data.customFoods?.length) await db.customFoods.bulkPut(data.customFoods);
+    if (data.entries?.length) await db.entries.bulkPut(data.entries);
+  });
+  return {
+    entries: data.entries?.length ?? 0,
+    meals: data.meals?.length ?? 0,
+    customFoods: data.customFoods?.length ?? 0,
+  };
+}
+
+// ---- Custom foods ----------------------------------------------------------
+// User-owned foods living in IndexedDB: a tweaked copy of a CREA value (e.g.
+// your store's chicken) or something new entirely. They rank above CREA foods
+// in search and are always editable.
+
+export function allCustomFoods() {
+  return db.customFoods.orderBy("name").toArray();
+}
+
+export function newCustomFoodId(): string {
+  return `custom-${crypto.randomUUID()}`;
+}
+
+export async function saveCustomFood(food: Food) {
+  return db.customFoods.put({ ...food, custom: true });
+}
+
+export async function deleteCustomFood(id: string) {
+  return db.customFoods.delete(id);
 }
 
 // ---- Meals ----------------------------------------------------------------
@@ -150,6 +228,23 @@ export async function dailyKcalBetween(
   for (const r of rows) {
     const kcal = scale(r.per100g, r.grams).kcal;
     map.set(r.date, (map.get(r.date) ?? 0) + kcal);
+  }
+  return map;
+}
+
+/** Per-day summed nutrient totals for [start, end] (inclusive). Only days with
+ * at least one logged entry appear in the map — callers treat a missing day as
+ * "not tracked", so it never drags an average toward zero. */
+export async function dailyTotalsBetween(
+  start: string,
+  end: string,
+): Promise<Map<string, Nutrients>> {
+  const rows = await db.entries.where("date").between(start, end, true, true).toArray();
+  const map = new Map<string, Nutrients>();
+  for (const r of rows) {
+    const scaled = scale(r.per100g, r.grams);
+    const cur = map.get(r.date);
+    map.set(r.date, cur ? sum([cur, scaled]) : scaled);
   }
   return map;
 }

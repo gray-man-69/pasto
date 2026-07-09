@@ -1,7 +1,9 @@
 // Minimal offline support. The food log lives in IndexedDB (handled by the app);
 // this just caches the app shell + foods.json so the PWA opens without a network.
-const CACHE = "pasto-v3";
-const PRECACHE = ["/", "/week", "/add", "/goals", "/meals", "/history", "/foods.json", "/manifest.json", "/icon.svg"];
+// Base path this SW is served under ("" at root, "/pasto" on GitHub Pages).
+const BASE = self.location.pathname.replace(/\/sw\.js.*$/, "");
+const CACHE = "pasto-v5";
+const PRECACHE = [`${BASE}/`, `${BASE}/foods.json`, `${BASE}/manifest.json`, `${BASE}/icon.svg`];
 
 self.addEventListener("install", (event) => {
   event.waitUntil(caches.open(CACHE).then((c) => c.addAll(PRECACHE)).then(() => self.skipWaiting()));
@@ -24,7 +26,7 @@ self.addEventListener("fetch", (event) => {
   const url = new URL(request.url);
   if (url.origin !== self.location.origin) return;
 
-  const isAppData = request.mode === "navigate" || url.pathname === "/foods.json";
+  const isAppData = request.mode === "navigate" || url.pathname === `${BASE}/foods.json`;
   if (isAppData) {
     event.respondWith(
       fetch(request)
@@ -33,7 +35,7 @@ self.addEventListener("fetch", (event) => {
           caches.open(CACHE).then((c) => c.put(request, copy));
           return res;
         })
-        .catch(() => caches.match(request).then((m) => m || caches.match("/"))),
+        .catch(() => caches.match(request).then((m) => m || caches.match(`${BASE}/`))),
     );
     return;
   }

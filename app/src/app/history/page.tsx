@@ -37,7 +37,7 @@ export default function HistoryPage() {
   ];
 
   return (
-    <div className="flex flex-col gap-4">
+    <div className="mx-auto flex w-full max-w-2xl flex-col gap-4">
       <div className="flex items-center justify-between">
         <button className="btn btn-ghost btn-sm btn-circle" onClick={() => shiftMonth(-1)} aria-label="Previous month">
           ‹
@@ -76,10 +76,10 @@ export default function HistoryPage() {
               key={d}
               href={`/?date=${d}`}
               className={`flex aspect-square items-center justify-center rounded-xl ${
-                isToday ? "bg-base-200" : ""
+                isToday ? "bg-base-100 ring-1 ring-base-300" : ""
               }`}
             >
-              <Ring value={kcal} max={goalKcal} size="2.3rem" thickness="3px" colorClass={color}>
+              <Ring value={kcal} max={goalKcal} size="2.3rem" stroke={9} colorClass={color}>
                 <span className="text-[11px] text-base-content/70">{day}</span>
               </Ring>
             </Link>

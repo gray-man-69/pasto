@@ -18,6 +18,10 @@ export interface Food {
   name_en: string | null;
   category: string;
   per100g: Nutrients;
+  // Set on user-created foods stored in IndexedDB (a tweaked CREA value, e.g.
+  // "your store's chicken", or something not in the database at all).
+  custom?: boolean;
+  basedOn?: string; // CREA food id this was derived from, if any
 }
 
 export interface FoodsFile {
