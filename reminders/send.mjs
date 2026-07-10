@@ -8,6 +8,12 @@ import webpush from "web-push";
 
 const APP_URL = "https://gray-man-69.github.io/pasto/?water=1";
 
+// Not configured yet? Exit cleanly (green run) instead of failing.
+if (!process.env.FIREBASE_SERVICE_ACCOUNT || !process.env.VAPID_PRIVATE_KEY) {
+  console.log("water-reminders: not configured yet (missing secrets) — skipping.");
+  process.exit(0);
+}
+
 admin.initializeApp({
   credential: admin.credential.cert(JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT)),
 });
