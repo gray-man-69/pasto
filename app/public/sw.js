@@ -2,7 +2,7 @@
 // this just caches the app shell + foods.json so the PWA opens without a network.
 // Base path this SW is served under ("" at root, "/pasto" on GitHub Pages).
 const BASE = self.location.pathname.replace(/\/sw\.js.*$/, "");
-const CACHE = "pasto-v5";
+const CACHE = "pasto-v6";
 const PRECACHE = [`${BASE}/`, `${BASE}/foods.json`, `${BASE}/manifest.json`, `${BASE}/icon.svg`];
 
 self.addEventListener("install", (event) => {
@@ -42,5 +42,39 @@ self.addEventListener("fetch", (event) => {
 
   event.respondWith(
     caches.match(request).then((cached) => cached || fetch(request)),
+  );
+});
+
+// ---- Water reminders (web push) --------------------------------------------
+self.addEventListener("push", (event) => {
+  let data = {};
+  try {
+    data = event.data ? event.data.json() : {};
+  } catch {
+    data = { body: event.data && event.data.text ? event.data.text() : "" };
+  }
+  const title = data.title || "💧 Time to drink water";
+  event.waitUntil(
+    self.registration.showNotification(title, {
+      body: data.body || "",
+      icon: `${BASE}/icon-192.png`,
+      badge: `${BASE}/icon-192.png`,
+      tag: "water-reminder",
+      renotify: true,
+      data: { url: data.url || `${BASE}/` },
+    }),
+  );
+});
+
+self.addEventListener("notificationclick", (event) => {
+  event.notification.close();
+  const url = (event.notification.data && event.notification.data.url) || `${BASE}/`;
+  event.waitUntil(
+    self.clients.matchAll({ type: "window", includeUncontrolled: true }).then((wins) => {
+      for (const w of wins) {
+        if (w.url.includes(BASE) && "focus" in w) return w.focus();
+      }
+      return self.clients.openWindow(url);
+    }),
   );
 });

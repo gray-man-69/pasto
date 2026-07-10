@@ -1,0 +1,10 @@
+{
+  "name": "pasto-reminders",
+  "private": true,
+  "type": "module",
+  "description": "Scheduled water-reminder sender (runs in GitHub Actions).",
+  "dependencies": {
+    "firebase-admin": "^12.7.0",
+    "web-push": "^3.6.7"
+  }
+}

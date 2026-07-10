@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useAuth } from "@/components/SyncProvider";
 import { exportData, getGoals, importData, localDate, saveGoals } from "@/lib/db";
+import { disableReminders, enableReminders, pushSupported, remindersEnabled } from "@/lib/push";
 import type { Goals } from "@/lib/types";
 
 // Mifflin-St Jeor BMR × activity, then a balanced macro split:
@@ -139,7 +140,76 @@ export default function GoalsPage() {
       </p>
 
       <SyncCard />
+      <RemindersCard />
       <BackupCard />
+    </div>
+  );
+}
+
+function RemindersCard() {
+  const { user } = useAuth();
+  const [on, setOn] = useState(false);
+  const [busy, setBusy] = useState(false);
+  const [err, setErr] = useState<string | null>(null);
+  const supported = pushSupported();
+
+  useEffect(() => {
+    if (user) remindersEnabled(user.uid).then(setOn);
+    else setOn(false);
+  }, [user]);
+
+  async function toggle() {
+    if (!user) return;
+    setBusy(true);
+    setErr(null);
+    try {
+      if (on) {
+        await disableReminders(user.uid);
+        setOn(false);
+      } else {
+        await enableReminders(user.uid);
+        setOn(true);
+      }
+    } catch (e) {
+      setErr(e instanceof Error ? e.message : "Couldn't change reminders.");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return (
+    <div className="card bg-base-100 shadow-sm">
+      <div className="card-body gap-3 py-5">
+        <div className="flex items-center justify-between">
+          <span className="font-medium">💧 Water reminders</span>
+          {on && <span className="text-xs text-success">on ✓</span>}
+        </div>
+        {!supported ? (
+          <p className="text-xs text-base-content/50">
+            This device doesn&apos;t support notifications. On iPhone, add Pasto to your Home Screen
+            (Share → Add to Home Screen) and open it from there.
+          </p>
+        ) : !user ? (
+          <p className="text-xs text-base-content/50">
+            Sign in above first — reminders need an account so they can be sent across the day.
+          </p>
+        ) : (
+          <>
+            <p className="text-xs text-base-content/50">
+              Get a gentle nudge a few times a day when you&apos;re behind on water. Tap the
+              notification to open the app and log a glass.
+            </p>
+            {err && <div className="text-xs text-error">{err}</div>}
+            <button
+              className={`btn btn-sm self-start ${on ? "btn-outline" : "btn-primary"}`}
+              onClick={toggle}
+              disabled={busy}
+            >
+              {busy ? "…" : on ? "Turn off reminders" : "Turn on reminders"}
+            </button>
+          </>
+        )}
+      </div>
     </div>
   );
 }
