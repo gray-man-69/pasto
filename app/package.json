@@ -13,6 +13,7 @@
     "daisyui": "^5.5.23",
     "dexie": "^4.4.4",
     "dexie-react-hooks": "^4.4.0",
+    "firebase": "^12.16.0",
     "fuse.js": "^7.4.2",
     "next": "16.2.9",
     "react": "19.2.4",

@@ -22,6 +22,8 @@ export interface Food {
   // "your store's chicken", or something not in the database at all).
   custom?: boolean;
   basedOn?: string; // CREA food id this was derived from, if any
+  // Present on custom foods once synced (id already is a uuid, so it doubles as syncId).
+  updatedAt?: number;
 }
 
 export interface FoodsFile {
@@ -32,7 +34,15 @@ export interface FoodsFile {
   foods: Food[];
 }
 
-export interface LogEntry {
+// Fields carried by every record that syncs to the cloud. syncId is a globally
+// unique id (the local numeric id is device-specific); updatedAt drives
+// last-write-wins merges across devices.
+export interface Synced {
+  syncId?: string;
+  updatedAt?: number;
+}
+
+export interface LogEntry extends Synced {
   id?: number;
   date: string; // local YYYY-MM-DD
   foodId: string;
@@ -43,6 +53,12 @@ export interface LogEntry {
   components?: MealComponent[]; // ingredient snapshot for meal entries (editable per-instance)
 }
 
+// A deleted record, kept so the deletion propagates to other devices.
+export interface Tombstone {
+  syncId: string;
+  deletedAt: number;
+}
+
 // A meal is a reusable, named plate built from foods, with a weekly allowance.
 export interface MealComponent {
   foodId: string;
@@ -51,7 +67,7 @@ export interface MealComponent {
   per100g: Nutrients;
 }
 
-export interface Meal {
+export interface Meal extends Synced {
   id?: number;
   name: string;
   weeklyLimit: number; // how many times per week you allow yourself this meal
@@ -59,7 +75,7 @@ export interface Meal {
   perServing: Nutrients; // computed total of one serving (all components)
 }
 
-export interface Goals {
+export interface Goals extends Synced {
   id?: number;
   kcal: number;
   protein_g: number;

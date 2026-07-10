@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { useAuth } from "@/components/SyncProvider";
 import { exportData, getGoals, importData, localDate, saveGoals } from "@/lib/db";
 import type { Goals } from "@/lib/types";
 
@@ -130,9 +131,111 @@ export default function GoalsPage() {
         of calories. Tune the numbers above to your plan, then Save.
       </p>
 
+      <SyncCard />
       <BackupCard />
     </div>
   );
+}
+
+function SyncCard() {
+  const { user, ready, signIn, signUp, signOut } = useAuth();
+  const [email, setEmail] = useState("");
+  const [pw, setPw] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [err, setErr] = useState<string | null>(null);
+
+  async function run(fn: () => Promise<void>) {
+    setBusy(true);
+    setErr(null);
+    try {
+      await fn();
+    } catch (e) {
+      setErr(prettyAuthError(e));
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return (
+    <div className="card bg-base-100 shadow-sm">
+      <div className="card-body gap-3 py-5">
+        <div className="flex items-center justify-between">
+          <span className="font-medium">Sync across devices</span>
+          {user && <span className="text-xs text-success">on ✓</span>}
+        </div>
+
+        {!ready ? (
+          <div className="text-xs text-base-content/40">…</div>
+        ) : user ? (
+          <>
+            <p className="text-xs text-base-content/50">
+              Signed in as <span className="text-base-content/80">{user.email}</span>. Your log,
+              meals, custom foods and goals sync automatically to every device where you sign in.
+            </p>
+            <button
+              className="btn btn-outline btn-sm self-start"
+              onClick={() => run(signOut)}
+              disabled={busy}
+            >
+              Sign out
+            </button>
+          </>
+        ) : (
+          <>
+            <p className="text-xs text-base-content/50">
+              Sign in on your Mac and your phone with the same account to keep everything in sync.
+              Your current data uploads on first sign-in — nothing is lost.
+            </p>
+            <input
+              type="email"
+              autoComplete="email"
+              placeholder="Email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              className="input input-bordered input-sm w-full"
+            />
+            <input
+              type="password"
+              autoComplete="current-password"
+              placeholder="Password (min 6 characters)"
+              value={pw}
+              onChange={(e) => setPw(e.target.value)}
+              className="input input-bordered input-sm w-full"
+            />
+            {err && <div className="text-xs text-error">{err}</div>}
+            <div className="flex gap-2">
+              <button
+                className="btn btn-primary btn-sm flex-1"
+                disabled={busy || !email || pw.length < 6}
+                onClick={() => run(() => signIn(email, pw))}
+              >
+                Sign in
+              </button>
+              <button
+                className="btn btn-outline btn-sm flex-1"
+                disabled={busy || !email || pw.length < 6}
+                onClick={() => run(() => signUp(email, pw))}
+              >
+                Create account
+              </button>
+            </div>
+          </>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function prettyAuthError(e: unknown): string {
+  const code = (e as { code?: string })?.code ?? "";
+  if (code.includes("invalid-credential") || code.includes("wrong-password"))
+    return "Wrong email or password.";
+  if (code.includes("email-already-in-use"))
+    return "That email already has an account — use Sign in.";
+  if (code.includes("weak-password")) return "Password must be at least 6 characters.";
+  if (code.includes("invalid-email")) return "That doesn't look like a valid email.";
+  if (code.includes("network")) return "Network error — check your connection.";
+  return "Couldn't complete that. Please try again.";
 }
 
 function BackupCard() {

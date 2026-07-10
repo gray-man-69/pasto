@@ -1,7 +1,7 @@
 // Local-first storage: the food log and macro goals live in IndexedDB on the
 // device (via Dexie). No server, no login.
 import Dexie, { type Table } from "dexie";
-import type { Food, Goals, LogEntry, Meal, MealComponent, Nutrients } from "./types";
+import type { Food, Goals, LogEntry, Meal, MealComponent, Nutrients, Tombstone } from "./types";
 import { scale, sum } from "./macros";
 
 const DEFAULT_GOALS: Goals = {
@@ -18,6 +18,7 @@ class PastoDB extends Dexie {
   goals!: Table<Goals, number>;
   meals!: Table<Meal, number>;
   customFoods!: Table<Food, string>;
+  tombstones!: Table<Tombstone, string>;
 
   constructor() {
     super("pasto");
@@ -37,10 +38,60 @@ class PastoDB extends Dexie {
       meals: "++id, name",
       customFoods: "id, name, basedOn",
     });
+    // v4 adds cross-device sync: a globally-unique syncId on each record (the
+    // numeric id stays device-local) and a tombstones table so deletions travel.
+    this.version(4)
+      .stores({
+        entries: "++id, date, foodId, mealId, syncId",
+        goals: "id",
+        meals: "++id, name, syncId",
+        customFoods: "id, name, basedOn",
+        tombstones: "syncId",
+      })
+      .upgrade(async (tx) => {
+        const stamp = Date.now();
+        for (const name of ["entries", "meals"]) {
+          await tx
+            .table(name)
+            .toCollection()
+            .modify((r: LogEntry | Meal) => {
+              if (!r.syncId) r.syncId = crypto.randomUUID();
+              if (!r.updatedAt) r.updatedAt = stamp;
+            });
+        }
+        await tx.table("customFoods").toCollection().modify((r: Food) => {
+          if (!r.updatedAt) r.updatedAt = stamp;
+        });
+        await tx.table("goals").toCollection().modify((r: Goals) => {
+          r.syncId = "goals";
+          if (!r.updatedAt) r.updatedAt = stamp;
+        });
+      });
   }
 }
 
 export const db = new PastoDB();
+
+// ---- Sync plumbing ---------------------------------------------------------
+// Writes stamp a syncId/updatedAt and notify the (optional) sync engine. When
+// no one is signed in, this is a no-op and the app behaves exactly as before.
+
+const now = () => Date.now();
+export function newSyncId(): string {
+  return crypto.randomUUID();
+}
+
+let localChangeHandler: (() => void) | null = null;
+/** The sync engine registers here to be pinged after any local write. */
+export function onLocalChange(fn: (() => void) | null) {
+  localChangeHandler = fn;
+}
+function touched() {
+  localChangeHandler?.();
+}
+async function tombstone(syncId: string) {
+  await db.tombstones.put({ syncId, deletedAt: now() });
+}
 
 /** Local YYYY-MM-DD for a given date (defaults to now). */
 export function localDate(d: Date = new Date()): string {
@@ -59,11 +110,16 @@ export async function addEntry(entry: {
   grams: number;
   per100g: Nutrients;
 }) {
-  return db.entries.add(entry);
+  const id = await db.entries.add({ ...entry, syncId: newSyncId(), updatedAt: now() });
+  touched();
+  return id;
 }
 
 export async function deleteEntry(id: number) {
-  return db.entries.delete(id);
+  const e = await db.entries.get(id);
+  await db.entries.delete(id);
+  if (e?.syncId) await tombstone(e.syncId);
+  touched();
 }
 
 // Read-only on purpose: this runs inside useLiveQuery's tracking transaction,
@@ -75,7 +131,9 @@ export async function getGoals(): Promise<Goals> {
 }
 
 export async function saveGoals(goals: Omit<Goals, "id">) {
-  return db.goals.put({ ...goals, id: 1 });
+  const r = await db.goals.put({ ...goals, id: 1, syncId: "goals", updatedAt: now() });
+  touched();
+  return r;
 }
 
 // ---- Backup & restore ------------------------------------------------------
@@ -142,11 +200,15 @@ export function newCustomFoodId(): string {
 }
 
 export async function saveCustomFood(food: Food) {
-  return db.customFoods.put({ ...food, custom: true });
+  const r = await db.customFoods.put({ ...food, custom: true, updatedAt: now() });
+  touched();
+  return r;
 }
 
 export async function deleteCustomFood(id: string) {
-  return db.customFoods.delete(id);
+  await db.customFoods.delete(id);
+  await tombstone(id); // a custom food's id is itself the global syncId
+  touched();
 }
 
 // ---- Meals ----------------------------------------------------------------
@@ -166,11 +228,18 @@ export function getMeal(id: number) {
 
 export async function saveMeal(meal: Omit<Meal, "perServing">) {
   const perServing = computePerServing(meal.components);
-  return db.meals.put({ ...meal, perServing });
+  const existing = meal.id != null ? await db.meals.get(meal.id) : undefined;
+  const syncId = existing?.syncId ?? meal.syncId ?? newSyncId();
+  const r = await db.meals.put({ ...meal, perServing, syncId, updatedAt: now() });
+  touched();
+  return r;
 }
 
 export async function deleteMeal(id: number) {
-  return db.meals.delete(id);
+  const m = await db.meals.get(id);
+  await db.meals.delete(id);
+  if (m?.syncId) await tombstone(m.syncId);
+  touched();
 }
 
 /** Log a meal for a day, storing an editable snapshot of its ingredients.
@@ -181,7 +250,7 @@ export async function logMeal(
   date: string = localDate(),
   components: MealComponent[] = meal.components,
 ) {
-  return db.entries.add({
+  const id = await db.entries.add({
     date,
     foodId: `meal-${meal.id}`,
     foodName: meal.name,
@@ -189,17 +258,29 @@ export async function logMeal(
     per100g: computePerServing(components),
     mealId: meal.id,
     components,
+    syncId: newSyncId(),
+    updatedAt: now(),
   });
+  touched();
+  return id;
 }
 
 /** Re-edit one logged meal instance (its ingredients) without touching the master meal. */
 export async function updateEntryComponents(id: number, components: MealComponent[]) {
-  return db.entries.update(id, { components, per100g: computePerServing(components) });
+  const r = await db.entries.update(id, {
+    components,
+    per100g: computePerServing(components),
+    updatedAt: now(),
+  });
+  touched();
+  return r;
 }
 
 /** Change the grams of a logged plain-food entry. */
 export async function updateEntryGrams(id: number, grams: number) {
-  return db.entries.update(id, { grams });
+  const r = await db.entries.update(id, { grams, updatedAt: now() });
+  touched();
+  return r;
 }
 
 // ---- Weeks (Monday–Sunday, local) -----------------------------------------
@@ -264,4 +345,73 @@ export async function weeklyMealCounts(
     if (r.mealId != null) counts.set(r.mealId, (counts.get(r.mealId) ?? 0) + 1);
   }
   return counts;
+}
+
+// ---- Sync state (read/apply for the cloud sync engine) ---------------------
+
+export interface SyncState {
+  goals: Goals | null;
+  entries: LogEntry[];
+  meals: Meal[];
+  customFoods: Food[];
+  tombstones: Tombstone[];
+}
+
+export async function getSyncState(): Promise<SyncState> {
+  const [goals, entries, meals, customFoods, tombstones] = await Promise.all([
+    db.goals.get(1),
+    db.entries.toArray(),
+    db.meals.toArray(),
+    db.customFoods.toArray(),
+    db.tombstones.toArray(),
+  ]);
+  return { goals: goals ?? null, entries, meals, customFoods, tombstones };
+}
+
+/** Write a merged state into the local DB. Loss-averse: upserts every alive
+ * record, and only deletes records that carry a tombstone. Uses raw table ops so
+ * it never re-triggers the local-change handler (no sync loop). Entries/meals are
+ * matched by syncId, keeping each device's own numeric id. */
+export async function applySyncState(s: SyncState): Promise<void> {
+  const dead = new Set(s.tombstones.map((t) => t.syncId));
+  await db.transaction(
+    "rw",
+    db.entries,
+    db.goals,
+    db.meals,
+    db.customFoods,
+    db.tombstones,
+    async () => {
+      if (s.tombstones.length) await db.tombstones.bulkPut(s.tombstones);
+      if (s.goals) await db.goals.put({ ...s.goals, id: 1 });
+
+      const localEntries = await db.entries.toArray();
+      const eBySync = new Map(localEntries.filter((e) => e.syncId).map((e) => [e.syncId!, e]));
+      for (const e of s.entries) {
+        if (!e.syncId || dead.has(e.syncId)) continue;
+        const { id: _drop, ...rest } = e;
+        const local = eBySync.get(e.syncId);
+        if (local) await db.entries.update(local.id!, rest);
+        else await db.entries.add(rest as LogEntry);
+      }
+      for (const e of localEntries) if (e.syncId && dead.has(e.syncId)) await db.entries.delete(e.id!);
+
+      const localMeals = await db.meals.toArray();
+      const mBySync = new Map(localMeals.filter((m) => m.syncId).map((m) => [m.syncId!, m]));
+      for (const m of s.meals) {
+        if (!m.syncId || dead.has(m.syncId)) continue;
+        const { id: _drop, ...rest } = m;
+        const local = mBySync.get(m.syncId);
+        if (local) await db.meals.update(local.id!, rest);
+        else await db.meals.add(rest as Meal);
+      }
+      for (const m of localMeals) if (m.syncId && dead.has(m.syncId)) await db.meals.delete(m.id!);
+
+      for (const f of s.customFoods) {
+        if (!dead.has(f.id)) await db.customFoods.put(f);
+      }
+      const localFoods = await db.customFoods.toArray();
+      for (const f of localFoods) if (dead.has(f.id)) await db.customFoods.delete(f.id);
+    },
+  );
 }
