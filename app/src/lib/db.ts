@@ -1,7 +1,16 @@
 // Local-first storage: the food log and macro goals live in IndexedDB on the
 // device (via Dexie). No server, no login.
 import Dexie, { type Table } from "dexie";
-import type { Food, Goals, LogEntry, Meal, MealComponent, Nutrients, Tombstone } from "./types";
+import type {
+  Food,
+  Goals,
+  LogEntry,
+  Meal,
+  MealComponent,
+  Nutrients,
+  Tombstone,
+  Water,
+} from "./types";
 import { scale, sum } from "./macros";
 
 const DEFAULT_GOALS: Goals = {
@@ -11,6 +20,7 @@ const DEFAULT_GOALS: Goals = {
   carbs_g: 200,
   fat_g: 60,
   fiber_g: 30,
+  water_glasses: 8,
 };
 
 class PastoDB extends Dexie {
@@ -19,6 +29,7 @@ class PastoDB extends Dexie {
   meals!: Table<Meal, number>;
   customFoods!: Table<Food, string>;
   tombstones!: Table<Tombstone, string>;
+  water!: Table<Water, string>;
 
   constructor() {
     super("pasto");
@@ -67,6 +78,15 @@ class PastoDB extends Dexie {
           if (!r.updatedAt) r.updatedAt = stamp;
         });
       });
+    // v5 adds water tracking (one record per day, keyed by date).
+    this.version(5).stores({
+      entries: "++id, date, foodId, mealId, syncId",
+      goals: "id",
+      meals: "++id, name, syncId",
+      customFoods: "id, name, basedOn",
+      tombstones: "syncId",
+      water: "date, syncId",
+    });
   }
 }
 
@@ -134,6 +154,21 @@ export async function saveGoals(goals: Omit<Goals, "id">) {
   const r = await db.goals.put({ ...goals, id: 1, syncId: "goals", updatedAt: now() });
   touched();
   return r;
+}
+
+// ---- Water -----------------------------------------------------------------
+
+export function waterForDate(date: string) {
+  return db.water.get(date);
+}
+
+/** Add (or remove) glasses of water for a day; never goes below zero. */
+export async function addGlasses(date: string, delta: number): Promise<number> {
+  const cur = await db.water.get(date);
+  const glasses = Math.max(0, (cur?.glasses ?? 0) + delta);
+  await db.water.put({ date, glasses, syncId: cur?.syncId ?? `water-${date}`, updatedAt: now() });
+  touched();
+  return glasses;
 }
 
 // ---- Backup & restore ------------------------------------------------------
@@ -354,18 +389,20 @@ export interface SyncState {
   entries: LogEntry[];
   meals: Meal[];
   customFoods: Food[];
+  water: Water[];
   tombstones: Tombstone[];
 }
 
 export async function getSyncState(): Promise<SyncState> {
-  const [goals, entries, meals, customFoods, tombstones] = await Promise.all([
+  const [goals, entries, meals, customFoods, water, tombstones] = await Promise.all([
     db.goals.get(1),
     db.entries.toArray(),
     db.meals.toArray(),
     db.customFoods.toArray(),
+    db.water.toArray(),
     db.tombstones.toArray(),
   ]);
-  return { goals: goals ?? null, entries, meals, customFoods, tombstones };
+  return { goals: goals ?? null, entries, meals, customFoods, water, tombstones };
 }
 
 /** Write a merged state into the local DB. Loss-averse: upserts every alive
@@ -376,14 +413,15 @@ export async function applySyncState(s: SyncState): Promise<void> {
   const dead = new Set(s.tombstones.map((t) => t.syncId));
   await db.transaction(
     "rw",
-    db.entries,
-    db.goals,
-    db.meals,
-    db.customFoods,
-    db.tombstones,
+    [db.entries, db.goals, db.meals, db.customFoods, db.water, db.tombstones],
     async () => {
       if (s.tombstones.length) await db.tombstones.bulkPut(s.tombstones);
       if (s.goals) await db.goals.put({ ...s.goals, id: 1 });
+
+      for (const w of s.water) {
+        if (!w.syncId || dead.has(w.syncId)) continue;
+        await db.water.put(w);
+      }
 
       const localEntries = await db.entries.toArray();
       const eBySync = new Map(localEntries.filter((e) => e.syncId).map((e) => [e.syncId!, e]));

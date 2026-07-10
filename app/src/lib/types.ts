@@ -82,4 +82,12 @@ export interface Goals extends Synced {
   carbs_g: number;
   fat_g: number;
   fiber_g: number;
+  water_glasses: number; // daily water goal, in glasses (~250 ml each)
+}
+
+// One water record per day: how many glasses logged. Keyed by date; syncs like
+// the rest so it's visible/consistent across devices.
+export interface Water extends Synced {
+  date: string; // YYYY-MM-DD (primary key)
+  glasses: number;
 }

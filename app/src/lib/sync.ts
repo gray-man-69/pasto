@@ -6,10 +6,10 @@
 import { doc, getDoc, onSnapshot, setDoc } from "firebase/firestore";
 import { firestore } from "./firebase";
 import { applySyncState, getSyncState, onLocalChange, type SyncState } from "./db";
-import type { Food, Goals, LogEntry, Meal, Tombstone } from "./types";
+import type { Food, Goals, LogEntry, Meal, Tombstone, Water } from "./types";
 
 function emptyState(): SyncState {
-  return { goals: null, entries: [], meals: [], customFoods: [], tombstones: [] };
+  return { goals: null, entries: [], meals: [], customFoods: [], water: [], tombstones: [] };
 }
 
 function normalize(d: Partial<SyncState> | undefined): SyncState {
@@ -18,6 +18,7 @@ function normalize(d: Partial<SyncState> | undefined): SyncState {
     entries: d?.entries ?? [],
     meals: d?.meals ?? [],
     customFoods: d?.customFoods ?? [],
+    water: d?.water ?? [],
     tombstones: d?.tombstones ?? [],
   };
 }
@@ -51,11 +52,12 @@ export function mergeState(local: SyncState, remote: SyncState): SyncState {
   const entries = pick<LogEntry>([...local.entries, ...remote.entries], (e) => e.syncId);
   const meals = pick<Meal>([...local.meals, ...remote.meals], (m) => m.syncId);
   const customFoods = pick<Food>([...local.customFoods, ...remote.customFoods], (f) => f.id);
+  const water = pick<Water>([...local.water, ...remote.water], (w) => w.syncId);
 
   const goalCandidates = [local.goals, remote.goals].filter(Boolean) as Goals[];
   goalCandidates.sort((a, b) => (b.updatedAt ?? 0) - (a.updatedAt ?? 0));
 
-  return { goals: goalCandidates[0] ?? null, entries, meals, customFoods, tombstones };
+  return { goals: goalCandidates[0] ?? null, entries, meals, customFoods, water, tombstones };
 }
 
 let unsub: (() => void) | null = null;

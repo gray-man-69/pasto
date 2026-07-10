@@ -22,7 +22,8 @@ function suggestGoals(input: {
   const fat_g = Math.round((kcal * 0.25) / 9);
   const carbs_g = Math.max(0, Math.round((kcal - protein_g * 4 - fat_g * 9) / 4));
   const fiber_g = Math.round((14 * kcal) / 1000); // ~14 g per 1000 kcal guideline
-  return { kcal, protein_g, carbs_g, fat_g, fiber_g };
+  const water_glasses = Math.max(6, Math.round((weightKg * 35) / 250)); // ~35 ml/kg, 250 ml glasses
+  return { kcal, protein_g, carbs_g, fat_g, fiber_g, water_glasses };
 }
 
 const ACTIVITY = [
@@ -71,6 +72,12 @@ export default function GoalsPage() {
           <Field label="Carbs" unit="g" value={goals.carbs_g} onChange={(v) => update("carbs_g", v)} />
           <Field label="Fat" unit="g" value={goals.fat_g} onChange={(v) => update("fat_g", v)} />
           <Field label="Fiber" unit="g" value={goals.fiber_g} onChange={(v) => update("fiber_g", v)} />
+          <Field
+            label="Water"
+            unit="glasses"
+            value={goals.water_glasses}
+            onChange={(v) => update("water_glasses", v)}
+          />
         </div>
       </div>
 

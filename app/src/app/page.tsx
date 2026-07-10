@@ -8,11 +8,13 @@ import WeekStrip from "@/components/WeekStrip";
 import EntryEditor from "@/components/EntryEditor";
 import {
   addDays,
+  addGlasses,
   dailyKcalBetween,
   deleteEntry,
   entriesForDate,
   getGoals,
   localDate,
+  waterForDate,
   weekStart,
 } from "@/lib/db";
 import { fmtNum, scale, sum } from "@/lib/macros";
@@ -44,6 +46,9 @@ export default function TodayPage() {
   const entries = useLiveQuery(() => entriesForDate(selected), [selected]);
   const goals = useLiveQuery(() => getGoals(), []);
   const dayKcal = useLiveQuery(() => dailyKcalBetween(ws, addDays(ws, 6)), [ws]);
+  const water = useLiveQuery(() => waterForDate(selected), [selected]);
+  const glasses = water?.glasses ?? 0;
+  const waterGoal = goals?.water_glasses ?? 8;
 
   const scaled = (entries ?? []).map(scaleSnapshot);
   const totals = sum(scaled);
@@ -124,6 +129,44 @@ export default function TodayPage() {
               })}
             </div>
           )}
+
+          {/* Water — one-tap logging */}
+          <div className="mt-1 flex w-full max-w-sm flex-col gap-2.5 rounded-2xl border border-base-300/70 bg-base-200/40 p-3">
+            <div className="flex items-center justify-between">
+              <span className="text-sm font-semibold">💧 Water</span>
+              <span className="text-sm tabular-nums text-base-content/60">
+                {glasses} / {waterGoal} glasses
+              </span>
+            </div>
+            <div className="flex flex-wrap gap-1.5">
+              {Array.from({ length: Math.max(waterGoal, glasses) }).map((_, i) => (
+                <button
+                  key={i}
+                  aria-label={`Set ${i + 1} glasses`}
+                  onClick={() => addGlasses(selected, i + 1 - glasses)}
+                  className={`h-6 w-6 rounded-full transition-colors ${
+                    i < glasses ? "bg-sky-400" : "bg-base-300 hover:bg-base-content/20"
+                  }`}
+                />
+              ))}
+            </div>
+            <div className="flex gap-2">
+              <button
+                onClick={() => addGlasses(selected, 1)}
+                className="btn btn-primary btn-sm flex-1"
+              >
+                ＋ Glass
+              </button>
+              <button
+                onClick={() => addGlasses(selected, -1)}
+                disabled={glasses <= 0}
+                className="btn btn-ghost btn-sm"
+                aria-label="Remove a glass"
+              >
+                −
+              </button>
+            </div>
+          </div>
         </section>
 
         {/* Log */}
