@@ -15,7 +15,7 @@ import {
   localDate,
   weekStart,
 } from "@/lib/db";
-import { scale, sum } from "@/lib/macros";
+import { fmtNum, scale, sum } from "@/lib/macros";
 import type { LogEntry } from "@/lib/types";
 
 function scaleSnapshot(e: LogEntry) {
@@ -45,9 +45,12 @@ export default function TodayPage() {
   const goals = useLiveQuery(() => getGoals(), []);
   const dayKcal = useLiveQuery(() => dailyKcalBetween(ws, addDays(ws, 6)), [ws]);
 
-  const totals = sum((entries ?? []).map(scaleSnapshot));
+  const scaled = (entries ?? []).map(scaleSnapshot);
+  const totals = sum(scaled);
   const goalKcal = goals?.kcal ?? 0;
-  const consumed = Math.round(totals.kcal);
+  // The calorie total is the sum of each food's *displayed* (whole-number) kcal,
+  // so the parts always add up to the total on screen (no round(sum) vs sum(round)).
+  const consumed = scaled.reduce((s, m) => s + Math.round(m.kcal), 0);
   const remaining = Math.max(0, goalKcal - consumed);
   const over = consumed > goalKcal && goalKcal > 0;
 
@@ -78,7 +81,7 @@ export default function TodayPage() {
           </div>
 
           <Ring
-            value={totals.kcal}
+            value={consumed}
             max={goalKcal || 2000}
             size="13rem"
             stroke={7}
@@ -110,9 +113,7 @@ export default function TodayPage() {
                 return (
                   <div key={m.key} className="flex flex-col items-center gap-2">
                     <Ring value={value} max={goal} size="4.5rem" stroke={9} colorClass={m.color}>
-                      <span className="text-base font-semibold tabular-nums">
-                        {Math.round(value)}
-                      </span>
+                      <span className="text-base font-semibold tabular-nums">{fmtNum(value)}</span>
                     </Ring>
                     <span className="text-center text-[11px] leading-tight text-base-content/50">
                       <span className="block font-medium text-base-content/70">{m.label}</span>

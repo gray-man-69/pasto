@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 import { useLiveQuery } from "dexie-react-hooks";
 import { addEntry, allCustomFoods, allMeals, getGoals, localDate, logMeal } from "@/lib/db";
 import { searchAllFoods } from "@/lib/foods";
-import { scale, sum } from "@/lib/macros";
+import { fmtNum, scale, sum } from "@/lib/macros";
 import { balanceDay, dayStatus, KCAL_TOL, type BalanceItem } from "@/lib/balance";
 import type { Food, Goals, Meal, Nutrients } from "@/lib/types";
 
@@ -96,6 +96,11 @@ export default function PlanPage() {
   }, [query, customFoods]);
 
   const totals = useMemo(() => sum(rows.map(rowNutrients)), [rows]);
+  // Sum of each row's displayed (whole-number) kcal, so the total matches the rows.
+  const shownKcal = useMemo(
+    () => rows.reduce((s, r) => s + Math.round(rowNutrients(r).kcal), 0),
+    [rows],
+  );
   const status = goals ? dayStatus(totals, goals) : null;
 
   function addFood(f: Food) {
@@ -317,7 +322,8 @@ export default function PlanPage() {
           </div>
           <div className="flex flex-col gap-3">
             {METRICS.map((mm) => {
-              const val = totals[mm.key];
+              const isKcal = mm.key === "kcal";
+              const val = isKcal ? shownKcal : totals[mm.key];
               const goal = goals[mm.key] || 0;
               const pct = goal > 0 ? Math.min(100, (val / goal) * 100) : 0;
               return (
@@ -328,7 +334,7 @@ export default function PlanPage() {
                       <span className="font-medium">{mm.label}</span>
                     </span>
                     <span className="tabular-nums">
-                      <span className="font-semibold">{fmt(val)}</span>
+                      <span className="font-semibold">{isKcal ? fmt(val) : fmtNum(val)}</span>
                       <span className="text-base-content/40">
                         {" "}
                         / {fmt(goal)} {mm.unit}

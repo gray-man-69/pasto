@@ -55,3 +55,10 @@ export function remaining(goal: number, consumed: number): number {
 export function round(n: number): number {
   return Math.round(n * 10) / 10;
 }
+
+/** Display a nutrient value: whole number if it's whole, otherwise one decimal.
+ * Used so a total shown to the user equals the sum of the parts shown. */
+export function fmtNum(n: number): string {
+  const r = round(n);
+  return Number.isInteger(r) ? `${r}` : r.toFixed(1);
+}
