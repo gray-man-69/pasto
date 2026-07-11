@@ -25,6 +25,10 @@ webpush.setVapidDetails(
   process.env.VAPID_PRIVATE_KEY,
 );
 
+// Test mode: send a push to every enabled subscriber unconditionally, to verify
+// delivery (bypasses the waking-hours and behind-pace checks).
+const TEST = process.env.TEST_MODE === "true";
+
 // Local calendar date + fractional hour for a timezone.
 function localNow(tz) {
   const parts = new Intl.DateTimeFormat("en-CA", {
@@ -48,6 +52,26 @@ let sent = 0,
 for (const docSnap of subs.docs) {
   const s = docSnap.data();
   const uid = s.uid || docSnap.id;
+
+  if (TEST) {
+    try {
+      await webpush.sendNotification(
+        s.subscription,
+        JSON.stringify({
+          title: "💧 Pasto",
+          body: "Test — your water reminders are working!",
+          url: APP_URL,
+        }),
+      );
+      sent++;
+    } catch (e) {
+      console.error(`test send failed for ${uid}:`, e.statusCode);
+      if (e.statusCode === 404 || e.statusCode === 410)
+        await docSnap.ref.set({ enabled: false }, { merge: true });
+    }
+    continue;
+  }
+
   const tz = s.tz || "UTC";
   const wakeStart = s.wakeStart ?? 8;
   const wakeEnd = s.wakeEnd ?? 22;

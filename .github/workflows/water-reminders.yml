@@ -3,7 +3,12 @@ name: Water reminders
 on:
   schedule:
     - cron: "0 */2 * * *" # every 2 hours (UTC); the sender filters to each user's waking hours
-  workflow_dispatch: {}
+  workflow_dispatch:
+    inputs:
+      test:
+        description: "Send a test push to all enabled subscribers now"
+        type: boolean
+        default: false
 
 jobs:
   send:
@@ -23,3 +28,4 @@ jobs:
           VAPID_PUBLIC_KEY: ${{ secrets.VAPID_PUBLIC_KEY }}
           VAPID_PRIVATE_KEY: ${{ secrets.VAPID_PRIVATE_KEY }}
           VAPID_SUBJECT: ${{ secrets.VAPID_SUBJECT }}
+          TEST_MODE: ${{ inputs.test }}
