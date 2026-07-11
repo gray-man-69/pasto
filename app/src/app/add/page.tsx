@@ -51,13 +51,16 @@ export default function AddPage() {
     setScanMsg("Looking up…");
     try {
       const r = await lookupBarcode(barcode);
-      if (r) {
+      if (r && r.hasNutrition) {
         await saveCustomFood(r.food); // keep it for next time (and sync it)
         setFood(r.food);
         setGrams(100);
-        setScanMsg(
-          r.hasNutrition ? null : `${r.food.name}: no nutrition on file — tap “Macros off?” to add it.`,
-        );
+        setScanMsg(null);
+      } else if (r) {
+        // Product exists but Open Food Facts has no usable nutrition — let the
+        // user type it off the pack (prefilled with the name + barcode).
+        setScanMsg(`“${r.food.name}” has no nutrition in Open Food Facts — add it from the label.`);
+        openEditor(r.food);
       } else {
         setScanMsg(`Barcode ${barcode} isn't in Open Food Facts — add it as a custom food.`);
         openEditor(null);

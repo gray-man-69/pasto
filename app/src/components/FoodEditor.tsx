@@ -60,6 +60,7 @@ export default function FoodEditor({
       per100g: n,
       custom: true,
       basedOn: editingCustom ? base?.basedOn : base?.id,
+      barcode: base?.barcode, // keep the scanned barcode so it matches next time
     };
     await saveCustomFood(food);
     onSaved(food);

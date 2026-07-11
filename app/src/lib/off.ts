@@ -4,9 +4,13 @@ import type { Food, Nutrients } from "./types";
 
 const FIELDS = "code,product_name,product_name_it,brands,nutriments";
 
-function toNum(v: unknown): number {
-  const x = typeof v === "number" ? v : Number(v);
-  return Number.isFinite(x) ? Math.round(x * 10) / 10 : 0;
+// First finite value among candidate nutriment keys (rounded to 1 dp).
+function pick(nut: Record<string, unknown>, ...keys: string[]): number {
+  for (const k of keys) {
+    const x = Number(nut[k]);
+    if (Number.isFinite(x)) return Math.round(x * 10) / 10;
+  }
+  return 0;
 }
 
 export type OffLookup = { food: Food; hasNutrition: boolean } | null;
@@ -28,14 +32,20 @@ export async function lookupBarcode(barcode: string): Promise<OffLookup> {
   const brand = (p.brands || "").split(",")[0]?.trim() || "";
   if (!name && !brand) return null;
 
+  // kcal: prefer the kcal field; else convert an energy value (kJ) → kcal.
+  let kcal = pick(nut, "energy-kcal_100g", "energy-kcal_value");
+  if (!kcal) {
+    const kj = pick(nut, "energy-kj_100g", "energy_100g", "energy-kj_value");
+    if (kj) kcal = Math.round((kj / 4.184) * 10) / 10;
+  }
   const per100g: Nutrients = {
-    kcal: toNum(nut["energy-kcal_100g"]),
-    protein_g: toNum(nut["proteins_100g"]),
-    carbs_g: toNum(nut["carbohydrates_100g"]),
-    sugars_g: toNum(nut["sugars_100g"]),
-    fat_g: toNum(nut["fat_100g"]),
-    saturated_g: toNum(nut["saturated-fat_100g"]),
-    fiber_g: toNum(nut["fiber_100g"]),
+    kcal,
+    protein_g: pick(nut, "proteins_100g", "proteins_value"),
+    carbs_g: pick(nut, "carbohydrates_100g", "carbohydrates_value"),
+    sugars_g: pick(nut, "sugars_100g", "sugars_value"),
+    fat_g: pick(nut, "fat_100g", "fat_value"),
+    saturated_g: pick(nut, "saturated-fat_100g", "saturated-fat_value"),
+    fiber_g: pick(nut, "fiber_100g", "fiber_value"),
   };
 
   const displayName =
@@ -53,6 +63,7 @@ export async function lookupBarcode(barcode: string): Promise<OffLookup> {
       custom: true,
       barcode: p.code || code,
     },
-    hasNutrition: nut["energy-kcal_100g"] != null,
+    // Usable only if we actually got calories or at least a couple of macros.
+    hasNutrition: kcal > 0 || per100g.protein_g > 0 || per100g.carbs_g > 0 || per100g.fat_g > 0,
   };
 }
