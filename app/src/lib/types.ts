@@ -22,6 +22,7 @@ export interface Food {
   // "your store's chicken", or something not in the database at all).
   custom?: boolean;
   basedOn?: string; // CREA food id this was derived from, if any
+  barcode?: string; // EAN/UPC, for packaged products (bundled or scanned via Open Food Facts)
   // Present on custom foods once synced (id already is a uuid, so it doubles as syncId).
   updatedAt?: number;
 }

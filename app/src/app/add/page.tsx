@@ -4,11 +4,13 @@ import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useLiveQuery } from "dexie-react-hooks";
+import BarcodeScanner from "@/components/BarcodeScanner";
 import ComponentsEditor from "@/components/ComponentsEditor";
 import FoodEditor from "@/components/FoodEditor";
 import NumberField from "@/components/NumberField";
-import { addEntry, allCustomFoods, allMeals, localDate, logMeal } from "@/lib/db";
+import { addEntry, allCustomFoods, allMeals, localDate, logMeal, saveCustomFood } from "@/lib/db";
 import { searchAllFoods } from "@/lib/foods";
+import { lookupBarcode } from "@/lib/off";
 import { scale } from "@/lib/macros";
 import type { Food, Meal, MealComponent } from "@/lib/types";
 
@@ -41,6 +43,29 @@ export default function AddPage() {
   const [editorBase, setEditorBase] = useState<Food | null>(null);
   const [editorOpen, setEditorOpen] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [scanning, setScanning] = useState(false);
+  const [scanMsg, setScanMsg] = useState<string | null>(null);
+
+  async function handleBarcode(barcode: string) {
+    setScanning(false);
+    setScanMsg("Looking up…");
+    try {
+      const r = await lookupBarcode(barcode);
+      if (r) {
+        await saveCustomFood(r.food); // keep it for next time (and sync it)
+        setFood(r.food);
+        setGrams(100);
+        setScanMsg(
+          r.hasNutrition ? null : `${r.food.name}: no nutrition on file — tap “Macros off?” to add it.`,
+        );
+      } else {
+        setScanMsg(`Barcode ${barcode} isn't in Open Food Facts — add it as a custom food.`);
+        openEditor(null);
+      }
+    } catch {
+      setScanMsg("Lookup failed — check your connection and try again.");
+    }
+  }
 
   useEffect(() => {
     let active = true;
@@ -134,15 +159,30 @@ export default function AddPage() {
         </div>
       )}
 
-      {/* Food search */}
-      <input
-        type="search"
-        autoFocus
-        value={query}
-        onChange={(e) => setQuery(e.target.value)}
-        placeholder="Search foods… (e.g. pollo)"
-        className="input input-bordered w-full"
-      />
+      {/* Food search + barcode scan */}
+      <div className="flex gap-2">
+        <input
+          type="search"
+          autoFocus
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+          placeholder="Search foods… (e.g. pollo)"
+          className="input input-bordered w-full"
+        />
+        <button
+          onClick={() => {
+            setScanMsg(null);
+            setScanning(true);
+          }}
+          className="btn btn-outline shrink-0"
+          aria-label="Scan a barcode"
+          title="Scan a barcode"
+        >
+          <ScanIcon />
+        </button>
+      </div>
+
+      {scanMsg && <div className="px-1 text-xs text-base-content/60">{scanMsg}</div>}
 
       <ul className="flex flex-col gap-1.5">
         {results.map((f) => {
@@ -254,7 +294,20 @@ export default function AddPage() {
           }}
         />
       )}
+
+      {scanning && (
+        <BarcodeScanner onDetected={handleBarcode} onClose={() => setScanning(false)} />
+      )}
     </div>
+  );
+}
+
+function ScanIcon() {
+  return (
+    <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth={1.9}>
+      <path d="M3 7V5a2 2 0 0 1 2-2h2M17 3h2a2 2 0 0 1 2 2v2M21 17v2a2 2 0 0 1-2 2h-2M7 21H5a2 2 0 0 1-2-2v-2" strokeLinecap="round" />
+      <path d="M7 8v8M10 8v8M13 8v8M17 8v8" strokeLinecap="round" />
+    </svg>
   );
 }
 

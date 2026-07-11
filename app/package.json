@@ -10,6 +10,8 @@
     "test": "node --test --experimental-strip-types src/lib/macros.test.ts"
   },
   "dependencies": {
+    "@zxing/browser": "^0.2.1",
+    "@zxing/library": "^0.23.0",
     "daisyui": "^5.5.23",
     "dexie": "^4.4.4",
     "dexie-react-hooks": "^4.4.0",
