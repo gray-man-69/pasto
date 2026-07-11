@@ -46,15 +46,15 @@ function localNow(tz) {
 
 function buildMessage(glasses, goal) {
   if (glasses >= goal) {
-    return { title: "💧 Goal reached!", body: `${glasses}/${goal} glasses today — nice work 🎉` };
+    return { title: "💧 Obiettivo raggiunto!", body: `${glasses}/${goal} bicchieri oggi — bravissima! 🎉` };
   }
   const options = [
-    `You're at ${glasses}/${goal} glasses — time for a drink 💦`,
-    `Hydration check: ${glasses}/${goal} today. Sip sip! 💧`,
-    `${glasses}/${goal} glasses so far — go grab some water 💦`,
-    `A little behind on water (${glasses}/${goal}) — take a sip 💧`,
+    `Sei a ${glasses}/${goal} bicchieri — è ora di bere un po' d'acqua 💦`,
+    `Controllo idratazione: ${glasses}/${goal} oggi. Fai un sorso! 💧`,
+    `${glasses}/${goal} bicchieri finora — vai a bere 💦`,
+    `Un po' indietro con l'acqua (${glasses}/${goal}) — bevi un sorso 💧`,
   ];
-  return { title: "💧 Water reminder", body: options[Math.floor(Math.random() * options.length)] };
+  return { title: "💧 Promemoria acqua", body: options[Math.floor(Math.random() * options.length)] };
 }
 
 const subs = await db.collection("pushSubscribers").where("enabled", "==", true).get();
