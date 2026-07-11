@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useLiveQuery } from "dexie-react-hooks";
+import NumberField from "@/components/NumberField";
 import { addEntry, allCustomFoods, allMeals, getGoals, localDate, logMeal } from "@/lib/db";
 import { searchAllFoods } from "@/lib/foods";
 import { fmtNum, scale, sum } from "@/lib/macros";
@@ -259,13 +260,10 @@ export default function PlanPage() {
                       {m.fiber_g}
                     </div>
                   </div>
-                  <input
-                    type="number"
-                    inputMode="decimal"
+                  <NumberField
                     min={0}
-                    step={isMeal ? 0.25 : 1}
                     value={r.amount}
-                    onChange={(e) => patch(i, { amount: Math.max(0, Number(e.target.value) || 0) })}
+                    onChange={(n) => patch(i, { amount: n })}
                     className="input input-bordered input-sm w-20 text-right tabular-nums"
                   />
                   <span className="w-6 text-xs text-base-content/40">{unit}</span>
@@ -289,13 +287,10 @@ export default function PlanPage() {
                 {!r.locked && (
                   <label className="flex items-center gap-2 pl-1 text-xs text-base-content/40">
                     max
-                    <input
-                      type="number"
-                      inputMode="decimal"
+                    <NumberField
                       min={0}
-                      step={isMeal ? 0.25 : 10}
                       value={r.max}
-                      onChange={(e) => patch(i, { max: Math.max(0, Number(e.target.value) || 0) })}
+                      onChange={(n) => patch(i, { max: n })}
                       className="input input-bordered input-xs w-16 text-right tabular-nums"
                     />
                     {unit}

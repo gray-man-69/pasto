@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import ComponentsEditor from "@/components/ComponentsEditor";
+import NumberField from "@/components/NumberField";
 import { deleteEntry, updateEntryComponents, updateEntryGrams } from "@/lib/db";
 import { scale } from "@/lib/macros";
 import type { LogEntry, MealComponent } from "@/lib/types";
@@ -47,12 +48,11 @@ export default function EntryEditor({ entry, onClose }: { entry: LogEntry; onClo
         ) : (
           <label className="flex items-center gap-3 py-2">
             <span className="text-sm text-base-content/60">Amount</span>
-            <input
-              type="number"
+            <NumberField
               inputMode="numeric"
               min={0}
               value={grams}
-              onChange={(e) => setGrams(Math.max(0, Number(e.target.value) || 0))}
+              onChange={setGrams}
               className="input input-bordered input-sm w-24 text-right tabular-nums"
               autoFocus
             />

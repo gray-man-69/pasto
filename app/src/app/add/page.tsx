@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { useLiveQuery } from "dexie-react-hooks";
 import ComponentsEditor from "@/components/ComponentsEditor";
 import FoodEditor from "@/components/FoodEditor";
+import NumberField from "@/components/NumberField";
 import { addEntry, allCustomFoods, allMeals, localDate, logMeal } from "@/lib/db";
 import { searchAllFoods } from "@/lib/foods";
 import { scale } from "@/lib/macros";
@@ -213,12 +214,11 @@ export default function AddPage() {
               </div>
               <label className="flex items-center gap-3">
                 <span className="text-sm text-base-content/60">Amount</span>
-                <input
-                  type="number"
+                <NumberField
                   inputMode="numeric"
-                  min={1}
+                  min={0}
                   value={grams}
-                  onChange={(e) => setGrams(Math.max(0, Number(e.target.value) || 0))}
+                  onChange={setGrams}
                   className="input input-bordered input-sm w-24 text-right tabular-nums"
                 />
                 <span className="text-sm text-base-content/60">g</span>

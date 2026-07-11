@@ -4,6 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { useLiveQuery } from "dexie-react-hooks";
 import ComponentsEditor from "@/components/ComponentsEditor";
+import NumberField from "@/components/NumberField";
 import { allMeals, deleteMeal, saveMeal } from "@/lib/db";
 import type { MealComponent } from "@/lib/types";
 
@@ -94,12 +95,11 @@ function MealEditor({ draft, onClose }: { draft: Draft; onClose: () => void }) {
         />
         <label className="flex items-center justify-between gap-3">
           <span className="text-sm text-base-content/70">Times allowed per week</span>
-          <input
-            type="number"
+          <NumberField
             inputMode="numeric"
             min={1}
             value={weeklyLimit}
-            onChange={(e) => setWeeklyLimit(Math.max(1, Number(e.target.value) || 1))}
+            onChange={setWeeklyLimit}
             className="input input-bordered input-sm w-20 text-right tabular-nums"
           />
         </label>

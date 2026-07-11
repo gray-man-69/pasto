@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import NumberField from "@/components/NumberField";
 import { useAuth } from "@/components/SyncProvider";
 import { exportData, getGoals, importData, localDate, saveGoals } from "@/lib/db";
 import { disableReminders, enableReminders, pushSupported, remindersEnabled } from "@/lib/push";
@@ -403,12 +404,11 @@ function Field({
     <label className="flex items-center justify-between gap-3">
       <span className="text-sm text-base-content/70">{label}</span>
       <span className="flex items-center gap-2">
-        <input
-          type="number"
+        <NumberField
           inputMode="numeric"
           min={0}
           value={value}
-          onChange={(e) => onChange(Math.max(0, Number(e.target.value) || 0))}
+          onChange={onChange}
           className="input input-bordered input-sm w-24 text-right tabular-nums"
         />
         <span className="w-8 text-sm text-base-content/50">{unit}</span>

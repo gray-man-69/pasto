@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import NumberField from "@/components/NumberField";
 import { computePerServing } from "@/lib/db";
 import { searchFoods } from "@/lib/foods";
 import { scale } from "@/lib/macros";
@@ -43,17 +44,12 @@ export default function ComponentsEditor({
           return (
             <li key={i} className="flex items-center gap-2 rounded-2xl bg-base-200 px-3 py-2">
               <span className="min-w-0 flex-1 truncate text-sm">{c.foodName}</span>
-              <input
-                type="number"
+              <NumberField
                 inputMode="numeric"
                 min={0}
                 value={c.grams}
-                onChange={(e) =>
-                  onChange(
-                    components.map((x, idx) =>
-                      idx === i ? { ...x, grams: Math.max(0, Number(e.target.value) || 0) } : x,
-                    ),
-                  )
+                onChange={(v) =>
+                  onChange(components.map((x, idx) => (idx === i ? { ...x, grams: v } : x)))
                 }
                 className="input input-bordered input-xs w-16 text-right tabular-nums"
               />

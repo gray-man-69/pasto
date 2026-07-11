@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import NumberField from "@/components/NumberField";
 import { deleteCustomFood, newCustomFoodId, saveCustomFood } from "@/lib/db";
 import { emptyNutrients } from "@/lib/macros";
 import type { Food, Nutrients } from "@/lib/types";
@@ -125,13 +126,10 @@ export default function FoodEditor({
                 {f.label}
               </span>
               <span className="flex items-center gap-2">
-                <input
-                  type="number"
-                  inputMode="decimal"
+                <NumberField
                   min={0}
-                  step="0.1"
                   value={n[f.key]}
-                  onChange={(e) => set(f.key, Math.max(0, Number(e.target.value) || 0))}
+                  onChange={(v) => set(f.key, v)}
                   className="input input-bordered input-sm w-24 text-right tabular-nums"
                 />
                 <span className="w-8 text-xs text-base-content/40">{f.unit}</span>
