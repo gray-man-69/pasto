@@ -25,7 +25,10 @@ export default function NumberField({
   ...rest
 }: Props) {
   const [draft, setDraft] = useState<string | null>(null);
-  const shown = draft ?? String(value);
+  const [focused, setFocused] = useState(false);
+  // While focused, show what's being typed (the draft); otherwise always mirror
+  // the numeric value, so external changes (e.g. picking another food) show through.
+  const shown = focused && draft != null ? draft : String(value);
 
   const clamp = (n: number) => {
     if (min != null) n = Math.max(min, n);
@@ -39,6 +42,10 @@ export default function NumberField({
       type="text"
       inputMode={inputMode}
       value={shown}
+      onFocus={(e) => {
+        setFocused(true);
+        rest.onFocus?.(e);
+      }}
       onChange={(e) => {
         const raw = e.target.value;
         if (raw !== "" && !/^-?\d*\.?\d*$/.test(raw)) return; // ignore non-numeric keystrokes
@@ -52,6 +59,7 @@ export default function NumberField({
         const n = Number(draft ?? shown);
         onChange(draft === "" || Number.isNaN(n) ? clamp(min ?? 0) : clamp(n));
         setDraft(null);
+        setFocused(false);
         rest.onBlur?.(e);
       }}
     />
