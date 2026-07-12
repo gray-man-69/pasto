@@ -48,6 +48,8 @@ export default function FoodEditor({
   const [ocrBusy, setOcrBusy] = useState(false);
   const [ocrMsg, setOcrMsg] = useState<string | null>(null);
   const [ocrText, setOcrText] = useState<string | null>(null);
+  const [ocrPreview, setOcrPreview] = useState<string | null>(null);
+  const [ocrInfo, setOcrInfo] = useState<string | null>(null);
 
   const set = (key: keyof Nutrients, value: number) =>
     setN((prev) => ({ ...prev, [key]: value }));
@@ -65,6 +67,19 @@ export default function FoodEditor({
     setCropFile(null);
     setOcrBusy(true);
     setOcrText(null);
+    // Show exactly what image we send to the scanner — the fastest way to tell a
+    // bad crop (blank/rotated) apart from an OCR miss.
+    setOcrPreview((prev) => {
+      if (prev) URL.revokeObjectURL(prev);
+      return URL.createObjectURL(blob);
+    });
+    const dim = await new Promise<string>((res) => {
+      const im = new Image();
+      im.onload = () => res(`${im.naturalWidth}×${im.naturalHeight}`);
+      im.onerror = () => res("?");
+      im.src = URL.createObjectURL(blob);
+    });
+    setOcrInfo(`${dim} px · ${Math.round(blob.size / 1024)} KB`);
     setOcrMsg("Starting scanner… 0%");
     try {
       const { text, values } = await ocrLabel(blob, (label, p) =>
@@ -175,6 +190,17 @@ export default function FoodEditor({
           </button>
         )}
         {ocrMsg && <div className="mb-1 text-xs text-base-content/60">{ocrMsg}</div>}
+        {ocrPreview && (
+          <div className="mb-1">
+            <div className="text-[11px] text-base-content/40">Sent to scanner · {ocrInfo}</div>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={ocrPreview}
+              alt="Image sent to the scanner"
+              className="mt-1 max-h-44 rounded-lg border border-base-300"
+            />
+          </div>
+        )}
         {ocrText && (
           <details className="mb-1 text-xs text-base-content/50">
             <summary className="cursor-pointer">What the scanner read</summary>
