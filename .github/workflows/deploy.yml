@@ -33,6 +33,9 @@ jobs:
         env:
           # Serve under /<repo>. Change if the repo is renamed.
           NEXT_PUBLIC_BASE_PATH: /pasto
+          # Cloudflare Worker URL that proxies label OCR (public; not a secret).
+          # Set it under Settings → Secrets and variables → Actions → Variables.
+          NEXT_PUBLIC_OCR_PROXY_URL: ${{ vars.OCR_PROXY_URL }}
       - uses: actions/upload-pages-artifact@v3
         with:
           path: app/out

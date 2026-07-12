@@ -104,7 +104,8 @@ export default function LabelCropper({
       px[i] = px[i + 1] = px[i + 2] = g;
     }
     ctx.putImageData(id, 0, 0);
-    canvas.toBlob((b) => b && onConfirm(b), "image/png");
+    // JPEG (not PNG) so the upload stays well under the OCR free-tier size limit.
+    canvas.toBlob((b) => b && onConfirm(b), "image/jpeg", 0.85);
   }
 
   const pct = (n: number) => `${n * 100}%`;

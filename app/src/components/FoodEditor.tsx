@@ -4,7 +4,7 @@ import { useRef, useState } from "react";
 import LabelCropper from "@/components/LabelCropper";
 import NumberField from "@/components/NumberField";
 import { deleteCustomFood, newCustomFoodId, saveCustomFood } from "@/lib/db";
-import { ocrLabel } from "@/lib/labelOcr";
+import { ocrConfigured, ocrLabel } from "@/lib/labelOcr";
 import { emptyNutrients } from "@/lib/macros";
 import type { Food, Nutrients } from "@/lib/types";
 
@@ -165,13 +165,15 @@ export default function FoodEditor({
           className="hidden"
           onChange={handleLabelPhoto}
         />
-        <button
-          onClick={() => labelInput.current?.click()}
-          disabled={ocrBusy}
-          className="btn btn-outline btn-sm mb-1 gap-2"
-        >
-          📷 {ocrBusy ? "Reading…" : "Scan nutrition label"}
-        </button>
+        {ocrConfigured() && (
+          <button
+            onClick={() => labelInput.current?.click()}
+            disabled={ocrBusy}
+            className="btn btn-outline btn-sm mb-1 gap-2"
+          >
+            📷 {ocrBusy ? "Reading…" : "Scan nutrition label"}
+          </button>
+        )}
         {ocrMsg && <div className="mb-1 text-xs text-base-content/60">{ocrMsg}</div>}
         {ocrText && (
           <details className="mb-1 text-xs text-base-content/50">
