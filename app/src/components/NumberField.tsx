@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, type InputHTMLAttributes } from "react";
+import { useEffect, useState, type InputHTMLAttributes } from "react";
 
 type Props = Omit<
   InputHTMLAttributes<HTMLInputElement>,
@@ -12,10 +12,10 @@ type Props = Omit<
   max?: number;
 };
 
-// A number input that behaves like a normal text box: you can clear it to empty
-// while typing (no forced "0"), type freely with no stuck leading zero, and it
-// only settles to a clean number when you leave the field. While editing it holds
-// the raw draft string; when idle it mirrors the numeric value.
+// A number input that behaves like a normal text box: clear it to empty while
+// typing (no forced "0"), type freely with no stuck leading zero, and it settles
+// on blur. Accepts BOTH "," and "." as the decimal separator (Italian keyboards
+// type a comma) and shows the value using the user's locale separator.
 export default function NumberField({
   value,
   onChange,
@@ -26,10 +26,18 @@ export default function NumberField({
 }: Props) {
   const [draft, setDraft] = useState<string | null>(null);
   const [focused, setFocused] = useState(false);
-  // While focused, show what's being typed (the draft); otherwise always mirror
-  // the numeric value, so external changes (e.g. picking another food) show through.
-  const shown = focused && draft != null ? draft : String(value);
+  const [sep, setSep] = useState("."); // locale decimal separator; resolved after mount (SSR-safe)
 
+  useEffect(() => {
+    try {
+      if ((1.1).toLocaleString().includes(",")) setSep(",");
+    } catch {
+      /* keep "." */
+    }
+  }, []);
+
+  const shown = focused && draft != null ? draft : String(value).replace(".", sep);
+  const parse = (s: string) => Number(s.replace(",", "."));
   const clamp = (n: number) => {
     if (min != null) n = Math.max(min, n);
     if (max != null) n = Math.min(max, n);
@@ -48,15 +56,14 @@ export default function NumberField({
       }}
       onChange={(e) => {
         const raw = e.target.value;
-        if (raw !== "" && !/^-?\d*\.?\d*$/.test(raw)) return; // ignore non-numeric keystrokes
+        if (raw !== "" && !/^-?\d*[.,]?\d*$/.test(raw)) return; // digits + one decimal (. or ,)
         setDraft(raw);
-        // Partial input (empty, lone "-" or ".") — keep the field as typed, don't push a value yet.
-        if (raw === "" || raw === "-" || raw === "." || raw === "-.") return;
-        const n = Number(raw);
+        if (/^-?[.,]?$/.test(raw)) return; // partial ("", "-", ".", ",") — don't push a value yet
+        const n = parse(raw);
         if (!Number.isNaN(n)) onChange(min != null ? Math.max(min, n) : n);
       }}
       onBlur={(e) => {
-        const n = Number(draft ?? shown);
+        const n = parse(draft ?? shown);
         onChange(draft === "" || Number.isNaN(n) ? clamp(min ?? 0) : clamp(n));
         setDraft(null);
         setFocused(false);
