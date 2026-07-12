@@ -9,6 +9,7 @@ import type {
   MealComponent,
   MealSlot,
   Nutrients,
+  Unit,
   Tombstone,
   Water,
 } from "./types";
@@ -131,6 +132,7 @@ export async function addEntry(entry: {
   grams: number;
   per100g: Nutrients;
   meal?: MealSlot;
+  unit?: Unit;
 }) {
   const id = await db.entries.add({ ...entry, syncId: newSyncId(), updatedAt: now() });
   touched();
@@ -322,9 +324,11 @@ export async function updateEntryComponents(id: number, components: MealComponen
   return r;
 }
 
-/** Change the grams of a logged plain-food entry. */
-export async function updateEntryGrams(id: number, grams: number) {
-  const r = await db.entries.update(id, { grams, updatedAt: now() });
+/** Change the amount (and optionally unit) of a logged plain-food entry. */
+export async function updateEntryGrams(id: number, grams: number, unit?: Unit) {
+  const patch: Partial<LogEntry> = { grams, updatedAt: now() };
+  if (unit) patch.unit = unit;
+  const r = await db.entries.update(id, patch);
   touched();
   return r;
 }

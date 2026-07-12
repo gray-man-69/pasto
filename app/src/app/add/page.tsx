@@ -9,12 +9,13 @@ import ComponentsEditor from "@/components/ComponentsEditor";
 import FoodEditor from "@/components/FoodEditor";
 import MealPicker from "@/components/MealPicker";
 import NumberField from "@/components/NumberField";
+import UnitToggle from "@/components/UnitToggle";
 import { addEntry, allCustomFoods, allMeals, localDate, logMeal, saveCustomFood } from "@/lib/db";
 import { searchAllFoods } from "@/lib/foods";
 import { defaultMealSlot, isMealSlot } from "@/lib/mealSlots";
 import { lookupBarcode } from "@/lib/off";
 import { scale } from "@/lib/macros";
-import type { Food, Meal, MealComponent, MealSlot } from "@/lib/types";
+import type { Food, Meal, MealComponent, MealSlot, Unit } from "@/lib/types";
 
 function dayLabel(date: string): string {
   if (date === localDate()) return "today";
@@ -45,6 +46,7 @@ export default function AddPage() {
   const [results, setResults] = useState<Food[]>([]);
   const [food, setFood] = useState<Food | null>(null);
   const [grams, setGrams] = useState(100);
+  const [unit, setUnit] = useState<Unit>("g");
   const [mealDraft, setMealDraft] = useState<{ meal: Meal; components: MealComponent[] } | null>(null);
   const [editorBase, setEditorBase] = useState<Food | null>(null);
   const [editorOpen, setEditorOpen] = useState(false);
@@ -91,7 +93,7 @@ export default function AddPage() {
   async function logFood() {
     if (!food) return;
     setSaving(true);
-    await addEntry({ date, foodId: food.id, foodName: food.name, grams, per100g: food.per100g, meal });
+    await addEntry({ date, foodId: food.id, foodName: food.name, grams, unit, per100g: food.per100g, meal });
     back();
   }
 
@@ -271,7 +273,7 @@ export default function AddPage() {
                   onChange={setGrams}
                   className="input input-bordered input-sm w-24 text-right tabular-nums"
                 />
-                <span className="text-sm text-base-content/60">g</span>
+                <UnitToggle value={unit} onChange={setUnit} />
                 <button
                   onClick={() => openEditor(food)}
                   className="ml-auto text-xs text-base-content/50 underline-offset-2 hover:text-primary hover:underline"

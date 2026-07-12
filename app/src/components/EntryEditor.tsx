@@ -4,6 +4,7 @@ import { useState } from "react";
 import ComponentsEditor from "@/components/ComponentsEditor";
 import MealPicker from "@/components/MealPicker";
 import NumberField from "@/components/NumberField";
+import UnitToggle from "@/components/UnitToggle";
 import {
   deleteEntry,
   updateEntryComponents,
@@ -12,7 +13,7 @@ import {
 } from "@/lib/db";
 import { isMealSlot } from "@/lib/mealSlots";
 import { scale } from "@/lib/macros";
-import type { LogEntry, MealComponent, MealSlot } from "@/lib/types";
+import type { LogEntry, MealComponent, MealSlot, Unit } from "@/lib/types";
 
 // Edit a single logged entry. Meal entries edit their ingredient snapshot
 // (this instance only); plain foods edit grams. Both can be deleted.
@@ -20,6 +21,7 @@ export default function EntryEditor({ entry, onClose }: { entry: LogEntry; onClo
   const isMeal = Array.isArray(entry.components);
   const [components, setComponents] = useState<MealComponent[]>(entry.components ?? []);
   const [grams, setGrams] = useState(entry.grams);
+  const [unit, setUnit] = useState<Unit>(entry.unit ?? "g");
   const [meal, setMeal] = useState<MealSlot | null>(isMealSlot(entry.meal) ? entry.meal : null);
   const [busy, setBusy] = useState(false);
 
@@ -27,7 +29,7 @@ export default function EntryEditor({ entry, onClose }: { entry: LogEntry; onClo
     if (entry.id == null) return;
     setBusy(true);
     if (isMeal) await updateEntryComponents(entry.id, components);
-    else await updateEntryGrams(entry.id, grams);
+    else await updateEntryGrams(entry.id, grams, unit);
     if (meal && meal !== entry.meal) await updateEntryMeal(entry.id, meal);
     onClose();
   }
@@ -65,7 +67,7 @@ export default function EntryEditor({ entry, onClose }: { entry: LogEntry; onClo
               className="input input-bordered input-sm w-24 text-right tabular-nums"
               autoFocus
             />
-            <span className="text-sm text-base-content/60">g</span>
+            <UnitToggle value={unit} onChange={setUnit} />
             <span className="ml-auto text-sm tabular-nums text-base-content/50">
               {Math.round(scale(entry.per100g, grams).kcal)} kcal
             </span>

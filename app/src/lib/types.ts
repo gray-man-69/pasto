@@ -47,12 +47,18 @@ export interface Synced {
 // before this feature (or via the planner) simply have none and show under "Other".
 export type MealSlot = "breakfast" | "lunch" | "dinner" | "snack";
 
+// Amount unit for a logged food. Nutrients are per-100-unit either way, so the
+// math is identical — this only changes the label (grams for solids, millilitres
+// for liquids, whose labels are already "per 100 ml").
+export type Unit = "g" | "ml";
+
 export interface LogEntry extends Synced {
   id?: number;
   date: string; // local YYYY-MM-DD
   foodId: string;
   foodName: string;
-  grams: number;
+  grams: number; // amount in `unit` (defaults to grams)
+  unit?: Unit; // "g" (default) or "ml" for liquids
   per100g: Nutrients; // snapshot at time of logging
   meal?: MealSlot; // breakfast / lunch / dinner / snack grouping
   mealId?: number; // set when this entry came from logging a saved Meal

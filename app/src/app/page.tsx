@@ -27,9 +27,9 @@ function scaleSnapshot(e: LogEntry) {
 }
 
 const MACROS = [
-  { key: "protein_g", label: "Protein", color: "text-rose-400" },
-  { key: "carbs_g", label: "Carbs", color: "text-amber-400" },
-  { key: "fat_g", label: "Fat", color: "text-sky-400" },
+  { key: "protein_g", label: "Protein", color: "text-sky-400" },
+  { key: "carbs_g", label: "Carbs", color: "text-rose-400" },
+  { key: "fat_g", label: "Fat", color: "text-orange-400" },
   { key: "fiber_g", label: "Fiber", color: "text-emerald-400" },
 ] as const;
 
@@ -103,7 +103,7 @@ export default function TodayPage() {
             max={goalKcal || 2000}
             size="13rem"
             stroke={7}
-            colorClass={over ? "text-error" : "text-primary"}
+            colorClass={over ? "text-red-500" : "text-primary"}
           >
             <span className="flex flex-col items-center">
               <span className="text-5xl font-bold leading-none tracking-tight tabular-nums">
@@ -117,7 +117,7 @@ export default function TodayPage() {
 
           <span
             className={`rounded-full px-3 py-1 text-sm font-medium tabular-nums ${
-              over ? "bg-error/15 text-error" : "bg-primary/10 text-primary"
+              over ? "bg-red-500/15 text-red-500" : "bg-primary/10 text-primary"
             }`}
           >
             {over ? `${consumed - goalKcal} over` : `${remaining} left`}
@@ -242,6 +242,7 @@ function MealSection({
   // Collapsible: open when there's food, collapsed when empty (compact row).
   const [open, setOpen] = useState(entries.length > 0);
   const kcal = entries.reduce((s, e) => s + Math.round(scaleSnapshot(e).kcal), 0);
+  const macros = sum(entries.map(scaleSnapshot));
   const addHref = slot ? `/add?date=${date}&meal=${slot}` : `/add?date=${date}`;
 
   return (
@@ -257,11 +258,19 @@ function MealSection({
           </span>
           <span className="min-w-0">
             <span className="block text-sm font-semibold">{label}</span>
-            <span className="block text-[11px] tabular-nums text-base-content/40">
-              {entries.length > 0
-                ? `${entries.length} item${entries.length > 1 ? "s" : ""} · ${kcal} kcal`
-                : "empty"}
-            </span>
+            {entries.length > 0 ? (
+              <>
+                <span className="block text-[11px] tabular-nums text-base-content/40">
+                  {entries.length} item{entries.length > 1 ? "s" : ""} · {kcal} kcal
+                </span>
+                <span className="block text-[11px] tabular-nums text-base-content/35">
+                  P {fmtNum(macros.protein_g)} · C {fmtNum(macros.carbs_g)} · F{" "}
+                  {fmtNum(macros.fat_g)} · Fib {fmtNum(macros.fiber_g)}
+                </span>
+              </>
+            ) : (
+              <span className="block text-[11px] text-base-content/40">empty</span>
+            )}
           </span>
           <svg
             viewBox="0 0 24 24"
@@ -316,8 +325,8 @@ function EntryRow({ entry, onEdit }: { entry: LogEntry; onEdit: (e: LogEntry) =>
       >
         <div className="truncate text-sm font-medium">{entry.foodName}</div>
         <div className="mt-0.5 text-[11px] text-base-content/40">
-          {entry.mealId ? "meal" : `${entry.grams} g`} · {Math.round(mm.kcal)} kcal · P{" "}
-          {mm.protein_g} / C {mm.carbs_g} / F {mm.fat_g} / Fib {mm.fiber_g}
+          {entry.mealId ? "meal" : `${entry.grams} ${entry.unit ?? "g"}`} · {Math.round(mm.kcal)}{" "}
+          kcal · P {mm.protein_g} / C {mm.carbs_g} / F {mm.fat_g} / Fib {mm.fiber_g}
         </div>
       </button>
       <button

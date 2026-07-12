@@ -14,9 +14,9 @@ type Metric = { key: MetricKey; label: string; unit: string; color: string };
 
 const METRICS: Metric[] = [
   { key: "kcal", label: "Calories", unit: "kcal", color: "bg-primary" },
-  { key: "protein_g", label: "Protein", unit: "g", color: "bg-rose-400" },
-  { key: "carbs_g", label: "Carbs", unit: "g", color: "bg-amber-400" },
-  { key: "fat_g", label: "Fat", unit: "g", color: "bg-sky-400" },
+  { key: "protein_g", label: "Protein", unit: "g", color: "bg-sky-400" },
+  { key: "carbs_g", label: "Carbs", unit: "g", color: "bg-rose-400" },
+  { key: "fat_g", label: "Fat", unit: "g", color: "bg-orange-400" },
   { key: "fiber_g", label: "Fiber", unit: "g", color: "bg-emerald-400" },
 ];
 
