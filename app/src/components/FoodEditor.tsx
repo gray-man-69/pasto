@@ -1,6 +1,7 @@
 "use client";
 
 import { useRef, useState } from "react";
+import LabelCropper from "@/components/LabelCropper";
 import NumberField from "@/components/NumberField";
 import { deleteCustomFood, newCustomFoodId, saveCustomFood } from "@/lib/db";
 import { ocrLabel } from "@/lib/labelOcr";
@@ -43,25 +44,33 @@ export default function FoodEditor({
   const [n, setN] = useState<Nutrients>(base ? { ...base.per100g } : emptyNutrients());
   const [busy, setBusy] = useState(false);
   const labelInput = useRef<HTMLInputElement>(null);
+  const [cropFile, setCropFile] = useState<File | null>(null);
   const [ocrBusy, setOcrBusy] = useState(false);
   const [ocrMsg, setOcrMsg] = useState<string | null>(null);
 
   const set = (key: keyof Nutrients, value: number) =>
     setN((prev) => ({ ...prev, [key]: value }));
 
-  async function handleLabelPhoto(e: React.ChangeEvent<HTMLInputElement>) {
+  // Camera shot → let the user frame just the table (LabelCropper) → OCR that crop.
+  function handleLabelPhoto(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
     if (labelInput.current) labelInput.current.value = "";
     if (!file) return;
+    setOcrMsg(null);
+    setCropFile(file);
+  }
+
+  async function scanCrop(blob: Blob) {
+    setCropFile(null);
     setOcrBusy(true);
-    setOcrMsg("Reading the label…");
+    setOcrMsg("Reading the table… 0%");
     try {
-      const { values } = await ocrLabel(file, (p) =>
-        setOcrMsg(`Reading the label… ${Math.round(p * 100)}%`),
+      const { values } = await ocrLabel(blob, (p) =>
+        setOcrMsg(`Reading the table… ${Math.round(p * 100)}%`),
       );
       const filled = Object.keys(values).length;
       if (filled === 0) {
-        setOcrMsg("Couldn't read it — try a straight, well-lit photo of the nutrition table, or type it in.");
+        setOcrMsg("Couldn't read it — try again with the box tight around the table, or type the values in.");
       } else {
         setN((prev) => ({ ...prev, ...values }));
         setOcrMsg(`Filled ${filled} value${filled === 1 ? "" : "s"} — please double-check them.`);
@@ -161,6 +170,14 @@ export default function FoodEditor({
           📷 {ocrBusy ? "Reading…" : "Scan nutrition label"}
         </button>
         {ocrMsg && <div className="mb-1 text-xs text-base-content/60">{ocrMsg}</div>}
+
+        {cropFile && (
+          <LabelCropper
+            file={cropFile}
+            onCancel={() => setCropFile(null)}
+            onConfirm={scanCrop}
+          />
+        )}
 
         <div className="flex flex-col divide-y divide-base-300 rounded-2xl border border-base-300">
           {FIELDS.map((f) => (

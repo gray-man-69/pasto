@@ -1,6 +1,8 @@
 // Read an Italian "Valori nutrizionali" panel from a photo and pull out the
-// per-100g macros. OCR runs client-side via tesseract.js (lazy-loaded). The parse
-// is best-effort — the user always verifies the values before saving.
+// per-100g macros. OCR runs client-side via tesseract.js (lazy-loaded). The
+// caller passes a *cropped + upscaled* image of just the table (see
+// LabelCropper) — that is what makes the read reliable. The parse is
+// best-effort; the user always verifies the values before saving.
 import type { Nutrients } from "./types";
 
 export type LabelValues = Partial<Nutrients>;
@@ -9,13 +11,21 @@ export async function ocrLabel(
   image: Blob,
   onProgress?: (fraction: number) => void,
 ): Promise<{ text: string; values: LabelValues }> {
-  const { recognize } = await import("tesseract.js");
-  const { data } = await recognize(image, "ita", {
+  const { createWorker, PSM } = await import("tesseract.js");
+  const worker = await createWorker("ita", 1, {
     logger: (m: { status: string; progress: number }) => {
       if (m.status === "recognizing text") onProgress?.(m.progress);
     },
   });
-  return { text: data.text, values: parseLabel(data.text) };
+  try {
+    // "single uniform block of text" — right for a cropped nutrition table,
+    // far better than the default full-page segmentation.
+    await worker.setParameters({ tessedit_pageseg_mode: PSM.SINGLE_BLOCK });
+    const { data } = await worker.recognize(image);
+    return { text: data.text, values: parseLabel(data.text) };
+  } finally {
+    await worker.terminate();
+  }
 }
 
 /** Parse an Italian nutrition label's OCR text into per-100g values. */
@@ -28,6 +38,8 @@ export function parseLabel(text: string): LabelValues {
     return Number.isFinite(v) ? v : null;
   };
 
+  let kj: number | null = null;
+
   for (const raw of text.split(/\n+/)) {
     const line = raw.trim();
     if (!line) continue;
@@ -37,6 +49,12 @@ export function parseLabel(text: string): LabelValues {
     const kcalM = lower.match(/([\d.,]+)\s*kcal/);
     if (kcalM) {
       out.kcal = Number(kcalM[1].replace(",", "."));
+      continue;
+    }
+    // Some labels only print kJ — remember it as a fallback for later.
+    const kjM = lower.match(/([\d.,]+)\s*kj/);
+    if (kjM) {
+      if (kj == null) kj = Number(kjM[1].replace(",", "."));
       continue;
     }
 
@@ -51,5 +69,8 @@ export function parseLabel(text: string): LabelValues {
     else if (/carboidr/.test(lower)) out.carbs_g = num;
     else if (/grass/.test(lower)) out.fat_g = num;
   }
+
+  // No kcal printed but we saw kJ → convert (1 kcal = 4.184 kJ).
+  if (out.kcal == null && kj != null) out.kcal = Math.round(kj / 4.184);
   return out;
 }
