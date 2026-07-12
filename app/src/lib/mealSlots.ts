@@ -2,11 +2,11 @@
 // day log. The MealSlot *type* lives in types.ts; this is the runtime side.
 import type { MealSlot } from "./types";
 
-export const MEAL_SLOTS: { id: MealSlot; label: string; emoji: string }[] = [
-  { id: "breakfast", label: "Breakfast", emoji: "🌅" },
-  { id: "lunch", label: "Lunch", emoji: "🥗" },
-  { id: "dinner", label: "Dinner", emoji: "🍽️" },
-  { id: "snack", label: "Snacks", emoji: "🍎" },
+export const MEAL_SLOTS: { id: MealSlot; label: string }[] = [
+  { id: "breakfast", label: "Breakfast" },
+  { id: "lunch", label: "Lunch" },
+  { id: "dinner", label: "Dinner" },
+  { id: "snack", label: "Snacks" },
 ];
 
 export function isMealSlot(v: unknown): v is MealSlot {

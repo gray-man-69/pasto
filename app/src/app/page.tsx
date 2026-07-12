@@ -6,6 +6,7 @@ import { useLiveQuery } from "dexie-react-hooks";
 import Ring from "@/components/Ring";
 import WeekStrip from "@/components/WeekStrip";
 import EntryEditor from "@/components/EntryEditor";
+import MealIcon from "@/components/MealIcon";
 import {
   addDays,
   addGlasses,
@@ -209,7 +210,6 @@ export default function TodayPage() {
                   key={s.id}
                   slot={s.id}
                   label={s.label}
-                  emoji={s.emoji}
                   entries={grouped.get(s.id) ?? []}
                   date={selected}
                   onEdit={setEditing}
@@ -219,7 +219,6 @@ export default function TodayPage() {
                 <MealSection
                   slot={null}
                   label="Other"
-                  emoji="🗂️"
                   entries={other}
                   date={selected}
                   onEdit={setEditing}
@@ -238,56 +237,78 @@ export default function TodayPage() {
 function MealSection({
   slot,
   label,
-  emoji,
   entries,
   date,
   onEdit,
 }: {
   slot: MealSlot | null;
   label: string;
-  emoji: string;
   entries: LogEntry[];
   date: string;
   onEdit: (e: LogEntry) => void;
 }) {
+  // Collapsible: open when there's food, collapsed when empty (compact row).
+  const [open, setOpen] = useState(entries.length > 0);
   const kcal = entries.reduce((s, e) => s + Math.round(scaleSnapshot(e).kcal), 0);
   const addHref = slot ? `/add?date=${date}&meal=${slot}` : `/add?date=${date}`;
+
   return (
-    <div className="flex flex-col gap-1.5">
-      <div className="flex items-center justify-between px-1">
-        <h3 className="flex items-center gap-2 text-sm font-semibold">
-          <span aria-hidden>{emoji}</span>
-          {label}
-        </h3>
-        <div className="flex items-center gap-3">
-          {entries.length > 0 && (
-            <span className="text-xs tabular-nums text-base-content/40">{kcal} kcal</span>
-          )}
-          {slot && (
-            <Link
-              href={addHref}
-              aria-label={`Add to ${label}`}
-              className="grid h-7 w-7 place-items-center rounded-full text-lg leading-none text-primary hover:bg-primary/10"
-            >
-              ＋
-            </Link>
-          )}
-        </div>
-      </div>
-      {entries.length > 0 ? (
-        <ul className="flex flex-col gap-1.5">
-          {entries.map((e) => (
-            <EntryRow key={e.id} entry={e} onEdit={onEdit} />
-          ))}
-        </ul>
-      ) : (
-        <Link
-          href={addHref}
-          className="rounded-2xl border border-dashed border-base-300/70 px-4 py-2.5 text-xs text-base-content/35 transition-colors hover:border-primary/40 hover:text-base-content/60"
+    <div className="overflow-hidden rounded-2xl border border-base-300/60 bg-base-100">
+      <div className="flex items-center gap-1 pr-2">
+        <button
+          onClick={() => setOpen((o) => !o)}
+          aria-expanded={open}
+          className="flex min-w-0 flex-1 items-center gap-3 px-3 py-2.5 text-left"
         >
-          Add {label.toLowerCase()}…
-        </Link>
-      )}
+          <span className="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-primary/10 text-primary">
+            <MealIcon slot={slot} />
+          </span>
+          <span className="min-w-0">
+            <span className="block text-sm font-semibold">{label}</span>
+            <span className="block text-[11px] tabular-nums text-base-content/40">
+              {entries.length > 0
+                ? `${entries.length} item${entries.length > 1 ? "s" : ""} · ${kcal} kcal`
+                : "empty"}
+            </span>
+          </span>
+          <svg
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth={2}
+            className={`ml-auto h-4 w-4 shrink-0 text-base-content/30 transition-transform ${
+              open ? "rotate-180" : ""
+            }`}
+          >
+            <path d="m6 9 6 6 6-6" strokeLinecap="round" strokeLinejoin="round" />
+          </svg>
+        </button>
+        {slot && (
+          <Link
+            href={addHref}
+            aria-label={`Add to ${label}`}
+            className="grid h-8 w-8 shrink-0 place-items-center rounded-full text-lg leading-none text-primary hover:bg-primary/10"
+          >
+            ＋
+          </Link>
+        )}
+      </div>
+
+      {open &&
+        (entries.length > 0 ? (
+          <ul className="flex flex-col gap-1 px-2 pb-2">
+            {entries.map((e) => (
+              <EntryRow key={e.id} entry={e} onEdit={onEdit} />
+            ))}
+          </ul>
+        ) : (
+          <Link
+            href={addHref}
+            className="mx-2 mb-2 block rounded-xl border border-dashed border-base-300/70 px-4 py-2.5 text-center text-xs text-base-content/35 transition-colors hover:border-primary/40 hover:text-base-content/60"
+          >
+            Add {label.toLowerCase()}…
+          </Link>
+        ))}
     </div>
   );
 }
@@ -295,14 +316,14 @@ function MealSection({
 function EntryRow({ entry, onEdit }: { entry: LogEntry; onEdit: (e: LogEntry) => void }) {
   const mm = scaleSnapshot(entry);
   return (
-    <li className="flex items-center justify-between gap-2 rounded-2xl border border-base-300/60 bg-base-100 px-4 py-3">
+    <li className="flex items-center justify-between gap-2 rounded-xl bg-base-200/40 px-3 py-2.5">
       <button
         className="min-w-0 flex-1 text-left"
         onClick={() => onEdit(entry)}
         aria-label={`Edit ${entry.foodName}`}
       >
-        <div className="truncate font-medium">{entry.foodName}</div>
-        <div className="mt-0.5 text-xs text-base-content/40">
+        <div className="truncate text-sm font-medium">{entry.foodName}</div>
+        <div className="mt-0.5 text-[11px] text-base-content/40">
           {entry.mealId ? "meal" : `${entry.grams} g`} · {Math.round(mm.kcal)} kcal · P{" "}
           {mm.protein_g} / C {mm.carbs_g} / F {mm.fat_g} / Fib {mm.fiber_g}
         </div>
