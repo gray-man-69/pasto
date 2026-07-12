@@ -41,24 +41,32 @@ function AddIcon() {
   );
 }
 
-function GoalsIcon() {
+function MoreIcon() {
   return (
     <svg {...iconProps}>
-      <circle cx="12" cy="12" r="8.5" />
-      <circle cx="12" cy="12" r="4.5" />
-      <circle cx="12" cy="12" r="0.9" fill="currentColor" stroke="none" />
+      <circle cx="5" cy="12" r="1.4" fill="currentColor" stroke="none" />
+      <circle cx="12" cy="12" r="1.4" fill="currentColor" stroke="none" />
+      <circle cx="19" cy="12" r="1.4" fill="currentColor" stroke="none" />
     </svg>
   );
 }
 
+// Primary destinations. Secondary pages (Goals, Settings, Meals, History, Plan)
+// live under "More". A Training tab will slot in before "More" when built.
 export const NAV_ITEMS: NavItem[] = [
   { href: "/", label: "Today", icon: <TodayIcon /> },
   { href: "/week", label: "Week", icon: <WeekIcon /> },
   { href: "/add", label: "Add", icon: <AddIcon /> },
-  { href: "/goals", label: "Goals", icon: <GoalsIcon /> },
+  { href: "/more", label: "More", icon: <MoreIcon /> },
 ];
+
+// Pages that live under the "More" hub — so the More tab stays highlighted
+// while you're on any of them.
+const MORE_ROUTES = ["/more", "/goals", "/settings", "/meals", "/history", "/plan"];
 
 /** True when `href` is the active route for `pathname`. */
 export function isActive(href: string, pathname: string): boolean {
-  return href === "/" ? pathname === "/" : pathname.startsWith(href);
+  if (href === "/") return pathname === "/";
+  if (href === "/more") return MORE_ROUTES.some((r) => pathname.startsWith(r));
+  return pathname.startsWith(href);
 }
