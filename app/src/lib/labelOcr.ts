@@ -7,7 +7,14 @@ import type { Nutrients } from "./types";
 
 export type LabelValues = Partial<Nutrients>;
 
-const PROXY_URL = process.env.NEXT_PUBLIC_OCR_PROXY_URL;
+// Normalise the configured proxy URL — tolerate a value set without a scheme
+// (e.g. "pasto-ocr.example.workers.dev") by defaulting to https://.
+const RAW_PROXY = process.env.NEXT_PUBLIC_OCR_PROXY_URL?.trim();
+const PROXY_URL = RAW_PROXY
+  ? /^https?:\/\//i.test(RAW_PROXY)
+    ? RAW_PROXY
+    : `https://${RAW_PROXY}`
+  : undefined;
 
 export function ocrConfigured(): boolean {
   return !!PROXY_URL;
