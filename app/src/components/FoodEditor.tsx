@@ -47,6 +47,7 @@ export default function FoodEditor({
   const [cropFile, setCropFile] = useState<File | null>(null);
   const [ocrBusy, setOcrBusy] = useState(false);
   const [ocrMsg, setOcrMsg] = useState<string | null>(null);
+  const [ocrText, setOcrText] = useState<string | null>(null);
 
   const set = (key: keyof Nutrients, value: number) =>
     setN((prev) => ({ ...prev, [key]: value }));
@@ -63,20 +64,22 @@ export default function FoodEditor({
   async function scanCrop(blob: Blob) {
     setCropFile(null);
     setOcrBusy(true);
-    setOcrMsg("Reading the table… 0%");
+    setOcrText(null);
+    setOcrMsg("Starting scanner… 0%");
     try {
-      const { values } = await ocrLabel(blob, (p) =>
-        setOcrMsg(`Reading the table… ${Math.round(p * 100)}%`),
+      const { text, values } = await ocrLabel(blob, (label, p) =>
+        setOcrMsg(`${label}… ${Math.round(p * 100)}%`),
       );
+      setOcrText(text.trim() || "(the scanner read nothing)");
       const filled = Object.keys(values).length;
       if (filled === 0) {
-        setOcrMsg("Couldn't read it — try again with the box tight around the table, or type the values in.");
+        setOcrMsg("Couldn't find any values — make sure the box is tight around just the nutrition table, then try again.");
       } else {
         setN((prev) => ({ ...prev, ...values }));
         setOcrMsg(`Filled ${filled} value${filled === 1 ? "" : "s"} — please double-check them.`);
       }
-    } catch {
-      setOcrMsg("Label scan failed — type the values in instead.");
+    } catch (err) {
+      setOcrMsg(`Label scan failed: ${err instanceof Error ? err.message : "unknown error"}. Type the values in instead.`);
     } finally {
       setOcrBusy(false);
     }
@@ -170,6 +173,14 @@ export default function FoodEditor({
           📷 {ocrBusy ? "Reading…" : "Scan nutrition label"}
         </button>
         {ocrMsg && <div className="mb-1 text-xs text-base-content/60">{ocrMsg}</div>}
+        {ocrText && (
+          <details className="mb-1 text-xs text-base-content/50">
+            <summary className="cursor-pointer">What the scanner read</summary>
+            <pre className="mt-1 max-h-32 overflow-auto whitespace-pre-wrap rounded-lg bg-base-200 p-2 text-[11px] leading-tight">
+              {ocrText}
+            </pre>
+          </details>
+        )}
 
         {cropFile && (
           <LabelCropper
