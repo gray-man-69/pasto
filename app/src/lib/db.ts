@@ -7,6 +7,7 @@ import type {
   LogEntry,
   Meal,
   MealComponent,
+  MealSlot,
   Nutrients,
   Tombstone,
   Water,
@@ -129,10 +130,18 @@ export async function addEntry(entry: {
   foodName: string;
   grams: number;
   per100g: Nutrients;
+  meal?: MealSlot;
 }) {
   const id = await db.entries.add({ ...entry, syncId: newSyncId(), updatedAt: now() });
   touched();
   return id;
+}
+
+/** Move a logged entry into a meal group (breakfast/lunch/dinner/snack). */
+export async function updateEntryMeal(id: number, meal: MealSlot) {
+  const r = await db.entries.update(id, { meal, updatedAt: now() });
+  touched();
+  return r;
 }
 
 export async function deleteEntry(id: number) {
@@ -284,6 +293,7 @@ export async function logMeal(
   meal: Meal,
   date: string = localDate(),
   components: MealComponent[] = meal.components,
+  slot?: MealSlot,
 ) {
   const id = await db.entries.add({
     date,
@@ -291,6 +301,7 @@ export async function logMeal(
     foodName: meal.name,
     grams: 100, // per100g holds the per-serving macros, so 100g === 1 serving
     per100g: computePerServing(components),
+    meal: slot,
     mealId: meal.id,
     components,
     syncId: newSyncId(),

@@ -2,10 +2,17 @@
 
 import { useState } from "react";
 import ComponentsEditor from "@/components/ComponentsEditor";
+import MealPicker from "@/components/MealPicker";
 import NumberField from "@/components/NumberField";
-import { deleteEntry, updateEntryComponents, updateEntryGrams } from "@/lib/db";
+import {
+  deleteEntry,
+  updateEntryComponents,
+  updateEntryGrams,
+  updateEntryMeal,
+} from "@/lib/db";
+import { isMealSlot } from "@/lib/mealSlots";
 import { scale } from "@/lib/macros";
-import type { LogEntry, MealComponent } from "@/lib/types";
+import type { LogEntry, MealComponent, MealSlot } from "@/lib/types";
 
 // Edit a single logged entry. Meal entries edit their ingredient snapshot
 // (this instance only); plain foods edit grams. Both can be deleted.
@@ -13,6 +20,7 @@ export default function EntryEditor({ entry, onClose }: { entry: LogEntry; onClo
   const isMeal = Array.isArray(entry.components);
   const [components, setComponents] = useState<MealComponent[]>(entry.components ?? []);
   const [grams, setGrams] = useState(entry.grams);
+  const [meal, setMeal] = useState<MealSlot | null>(isMealSlot(entry.meal) ? entry.meal : null);
   const [busy, setBusy] = useState(false);
 
   async function save() {
@@ -20,6 +28,7 @@ export default function EntryEditor({ entry, onClose }: { entry: LogEntry; onClo
     setBusy(true);
     if (isMeal) await updateEntryComponents(entry.id, components);
     else await updateEntryGrams(entry.id, grams);
+    if (meal && meal !== entry.meal) await updateEntryMeal(entry.id, meal);
     onClose();
   }
 
@@ -62,6 +71,11 @@ export default function EntryEditor({ entry, onClose }: { entry: LogEntry; onClo
             </span>
           </label>
         )}
+
+        <div className="mt-4">
+          <span className="mb-1.5 block text-xs font-medium text-base-content/50">Meal</span>
+          <MealPicker value={meal} onChange={setMeal} />
+        </div>
 
         <div className="mt-3 flex gap-2">
           <button className="btn btn-ghost flex-1 text-error" disabled={busy} onClick={remove}>

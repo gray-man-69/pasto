@@ -18,7 +18,8 @@ import {
   weekStart,
 } from "@/lib/db";
 import { fmtNum, scale, sum } from "@/lib/macros";
-import type { LogEntry } from "@/lib/types";
+import { MEAL_SLOTS, isMealSlot } from "@/lib/mealSlots";
+import type { LogEntry, MealSlot } from "@/lib/types";
 
 function scaleSnapshot(e: LogEntry) {
   return scale(e.per100g, e.grams);
@@ -52,6 +53,17 @@ export default function TodayPage() {
 
   const scaled = (entries ?? []).map(scaleSnapshot);
   const totals = sum(scaled);
+
+  // Group the day's entries by meal. Entries with no meal (logged before this
+  // feature, or via the planner) fall into "other".
+  const grouped = new Map<MealSlot | "other", LogEntry[]>();
+  for (const e of entries ?? []) {
+    const key = isMealSlot(e.meal) ? e.meal : "other";
+    const arr = grouped.get(key);
+    if (arr) arr.push(e);
+    else grouped.set(key, [e]);
+  }
+  const other = grouped.get("other") ?? [];
   const goalKcal = goals?.kcal ?? 0;
   // The calorie total is the sum of each food's *displayed* (whole-number) kcal,
   // so the parts always add up to the total on screen (no round(sum) vs sum(round)).
@@ -169,8 +181,8 @@ export default function TodayPage() {
           </div>
         </section>
 
-        {/* Log */}
-        <section className="flex flex-col gap-2.5">
+        {/* Log — grouped into meals */}
+        <section className="flex flex-col gap-4">
           <div className="flex items-center justify-between px-1">
             <h2 className="text-xs font-semibold uppercase tracking-wide text-base-content/40">
               Logged
@@ -190,52 +202,118 @@ export default function TodayPage() {
 
           {entries === undefined ? (
             <div className="py-10 text-center text-base-content/30">Loading…</div>
-          ) : entries.length > 0 ? (
-            <ul className="flex flex-col gap-1.5">
-              {entries.map((e) => {
-                const mm = scaleSnapshot(e);
-                return (
-                  <li
-                    key={e.id}
-                    className="flex items-center justify-between gap-2 rounded-2xl border border-base-300/60 bg-base-100 px-4 py-3"
-                  >
-                    <button
-                      className="min-w-0 flex-1 text-left"
-                      onClick={() => setEditing(e)}
-                      aria-label={`Edit ${e.foodName}`}
-                    >
-                      <div className="truncate font-medium">{e.foodName}</div>
-                      <div className="mt-0.5 text-xs text-base-content/40">
-                        {e.mealId ? "meal" : `${e.grams} g`} · {Math.round(mm.kcal)} kcal · P{" "}
-                        {mm.protein_g} / C {mm.carbs_g} / F {mm.fat_g} / Fib {mm.fiber_g}
-                      </div>
-                    </button>
-                    <button
-                      className="grid h-8 w-8 shrink-0 place-items-center rounded-full text-base-content/30 hover:bg-base-300/60 hover:text-error"
-                      onClick={() => e.id != null && deleteEntry(e.id)}
-                      aria-label={`Remove ${e.foodName}`}
-                    >
-                      ✕
-                    </button>
-                  </li>
-                );
-              })}
-            </ul>
           ) : (
-            <div className="flex flex-col items-center gap-1 py-12 text-center lg:rounded-3xl lg:border lg:border-dashed lg:border-base-300">
-              <div className="text-sm text-base-content/40">Nothing logged yet.</div>
-              <Link
-                href={`/add?date=${selected}`}
-                className="text-sm font-medium text-primary hover:underline"
-              >
-                Add your first food →
-              </Link>
-            </div>
+            <>
+              {MEAL_SLOTS.map((s) => (
+                <MealSection
+                  key={s.id}
+                  slot={s.id}
+                  label={s.label}
+                  emoji={s.emoji}
+                  entries={grouped.get(s.id) ?? []}
+                  date={selected}
+                  onEdit={setEditing}
+                />
+              ))}
+              {other.length > 0 && (
+                <MealSection
+                  slot={null}
+                  label="Other"
+                  emoji="🗂️"
+                  entries={other}
+                  date={selected}
+                  onEdit={setEditing}
+                />
+              )}
+            </>
           )}
         </section>
       </div>
 
       {editing && <EntryEditor entry={editing} onClose={() => setEditing(null)} />}
     </div>
+  );
+}
+
+function MealSection({
+  slot,
+  label,
+  emoji,
+  entries,
+  date,
+  onEdit,
+}: {
+  slot: MealSlot | null;
+  label: string;
+  emoji: string;
+  entries: LogEntry[];
+  date: string;
+  onEdit: (e: LogEntry) => void;
+}) {
+  const kcal = entries.reduce((s, e) => s + Math.round(scaleSnapshot(e).kcal), 0);
+  const addHref = slot ? `/add?date=${date}&meal=${slot}` : `/add?date=${date}`;
+  return (
+    <div className="flex flex-col gap-1.5">
+      <div className="flex items-center justify-between px-1">
+        <h3 className="flex items-center gap-2 text-sm font-semibold">
+          <span aria-hidden>{emoji}</span>
+          {label}
+        </h3>
+        <div className="flex items-center gap-3">
+          {entries.length > 0 && (
+            <span className="text-xs tabular-nums text-base-content/40">{kcal} kcal</span>
+          )}
+          {slot && (
+            <Link
+              href={addHref}
+              aria-label={`Add to ${label}`}
+              className="grid h-7 w-7 place-items-center rounded-full text-lg leading-none text-primary hover:bg-primary/10"
+            >
+              ＋
+            </Link>
+          )}
+        </div>
+      </div>
+      {entries.length > 0 ? (
+        <ul className="flex flex-col gap-1.5">
+          {entries.map((e) => (
+            <EntryRow key={e.id} entry={e} onEdit={onEdit} />
+          ))}
+        </ul>
+      ) : (
+        <Link
+          href={addHref}
+          className="rounded-2xl border border-dashed border-base-300/70 px-4 py-2.5 text-xs text-base-content/35 transition-colors hover:border-primary/40 hover:text-base-content/60"
+        >
+          Add {label.toLowerCase()}…
+        </Link>
+      )}
+    </div>
+  );
+}
+
+function EntryRow({ entry, onEdit }: { entry: LogEntry; onEdit: (e: LogEntry) => void }) {
+  const mm = scaleSnapshot(entry);
+  return (
+    <li className="flex items-center justify-between gap-2 rounded-2xl border border-base-300/60 bg-base-100 px-4 py-3">
+      <button
+        className="min-w-0 flex-1 text-left"
+        onClick={() => onEdit(entry)}
+        aria-label={`Edit ${entry.foodName}`}
+      >
+        <div className="truncate font-medium">{entry.foodName}</div>
+        <div className="mt-0.5 text-xs text-base-content/40">
+          {entry.mealId ? "meal" : `${entry.grams} g`} · {Math.round(mm.kcal)} kcal · P{" "}
+          {mm.protein_g} / C {mm.carbs_g} / F {mm.fat_g} / Fib {mm.fiber_g}
+        </div>
+      </button>
+      <button
+        className="grid h-8 w-8 shrink-0 place-items-center rounded-full text-base-content/30 hover:bg-base-300/60 hover:text-error"
+        onClick={() => entry.id != null && deleteEntry(entry.id)}
+        aria-label={`Remove ${entry.foodName}`}
+      >
+        ✕
+      </button>
+    </li>
   );
 }

@@ -7,12 +7,14 @@ import { useLiveQuery } from "dexie-react-hooks";
 import BarcodeScanner from "@/components/BarcodeScanner";
 import ComponentsEditor from "@/components/ComponentsEditor";
 import FoodEditor from "@/components/FoodEditor";
+import MealPicker from "@/components/MealPicker";
 import NumberField from "@/components/NumberField";
 import { addEntry, allCustomFoods, allMeals, localDate, logMeal, saveCustomFood } from "@/lib/db";
 import { searchAllFoods } from "@/lib/foods";
+import { defaultMealSlot, isMealSlot } from "@/lib/mealSlots";
 import { lookupBarcode } from "@/lib/off";
 import { scale } from "@/lib/macros";
-import type { Food, Meal, MealComponent } from "@/lib/types";
+import type { Food, Meal, MealComponent, MealSlot } from "@/lib/types";
 
 function dayLabel(date: string): string {
   if (date === localDate()) return "today";
@@ -26,11 +28,15 @@ function dayLabel(date: string): string {
 export default function AddPage() {
   const router = useRouter();
   const [date, setDate] = useState(() => localDate());
+  const [meal, setMeal] = useState<MealSlot>(() => defaultMealSlot());
 
-  // The day to log to is passed from Today via /add?date=YYYY-MM-DD.
+  // The day + meal to log to are passed from Today via /add?date=…&meal=….
   useEffect(() => {
-    const d = new URLSearchParams(window.location.search).get("date");
+    const params = new URLSearchParams(window.location.search);
+    const d = params.get("date");
     if (d) setDate(d);
+    const m = params.get("meal");
+    if (isMealSlot(m)) setMeal(m);
   }, []);
 
   const meals = useLiveQuery(() => allMeals(), []);
@@ -85,14 +91,14 @@ export default function AddPage() {
   async function logFood() {
     if (!food) return;
     setSaving(true);
-    await addEntry({ date, foodId: food.id, foodName: food.name, grams, per100g: food.per100g });
+    await addEntry({ date, foodId: food.id, foodName: food.name, grams, per100g: food.per100g, meal });
     back();
   }
 
   async function logMealInstance() {
     if (!mealDraft || mealDraft.components.length === 0) return;
     setSaving(true);
-    await logMeal(mealDraft.meal, date, mealDraft.components);
+    await logMeal(mealDraft.meal, date, mealDraft.components, meal);
     back();
   }
 
@@ -115,6 +121,7 @@ export default function AddPage() {
           Adjust this serving for <span className="font-medium">{dayLabel(date)}</span> — the saved
           meal won&apos;t change.
         </p>
+        <MealPicker value={meal} onChange={setMeal} />
         <ComponentsEditor
           components={mealDraft.components}
           onChange={(c) => setMealDraft({ ...mealDraft, components: c })}
@@ -278,6 +285,7 @@ export default function AddPage() {
                 <Stat label="C" value={preview.carbs_g} />
                 <Stat label="F" value={preview.fat_g} />
               </div>
+              <MealPicker value={meal} onChange={setMeal} />
               <button className="btn btn-primary w-full" disabled={saving || grams <= 0} onClick={logFood}>
                 {saving ? "Adding…" : `Add to ${dayLabel(date)}`}
               </button>

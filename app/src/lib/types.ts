@@ -43,6 +43,10 @@ export interface Synced {
   updatedAt?: number;
 }
 
+// Which part of the day a logged food belongs to. Optional: entries logged
+// before this feature (or via the planner) simply have none and show under "Other".
+export type MealSlot = "breakfast" | "lunch" | "dinner" | "snack";
+
 export interface LogEntry extends Synced {
   id?: number;
   date: string; // local YYYY-MM-DD
@@ -50,6 +54,7 @@ export interface LogEntry extends Synced {
   foodName: string;
   grams: number;
   per100g: Nutrients; // snapshot at time of logging
+  meal?: MealSlot; // breakfast / lunch / dinner / snack grouping
   mealId?: number; // set when this entry came from logging a saved Meal
   components?: MealComponent[]; // ingredient snapshot for meal entries (editable per-instance)
 }
