@@ -99,9 +99,10 @@ export default function LabelCropper({
     const cw = Math.max(1, Math.round(rect.w * nw));
     const ch = Math.max(1, Math.round(rect.h * nh));
 
-    // Upscale the crop so small text is legible to OCR, but cap the long side so
-    // we don't build a giant canvas.
-    const scale = clamp(1500 / Math.max(cw, ch), 1, 3);
+    // Aim for ~1700px on the long side: enlarge small crops so text is legible,
+    // and SHRINK big ones (a full-res iPhone crop is many MB — over the OCR
+    // service's size limit, which makes it silently read nothing).
+    const scale = clamp(1700 / Math.max(cw, ch), 0.15, 3);
     const canvas = document.createElement("canvas");
     canvas.width = Math.round(cw * scale);
     canvas.height = Math.round(ch * scale);
@@ -123,8 +124,13 @@ export default function LabelCropper({
       px[i] = px[i + 1] = px[i + 2] = g;
     }
     ctx.putImageData(id, 0, 0);
-    // JPEG (not PNG) so the upload stays well under the OCR free-tier size limit.
-    canvas.toBlob((b) => b && onConfirm(b), "image/jpeg", 0.85);
+    // JPEG, and re-encode at lower quality if it's still over ~900KB so the
+    // upload stays safely under the OCR free-tier size limit.
+    const send = (b: Blob | null) => b && onConfirm(b);
+    canvas.toBlob((b) => {
+      if (b && b.size > 900_000) canvas.toBlob((b2) => send(b2 ?? b), "image/jpeg", 0.55);
+      else send(b);
+    }, "image/jpeg", 0.82);
   }
 
   const pct = (n: number) => `${n * 100}%`;
