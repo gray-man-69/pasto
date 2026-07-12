@@ -188,17 +188,9 @@ export default function TodayPage() {
             <h2 className="text-xs font-semibold uppercase tracking-wide text-base-content/40">
               Logged
             </h2>
-            <div className="flex items-center gap-2">
-              <Link href={`/plan?date=${selected}`} className="btn btn-ghost btn-sm rounded-full">
-                ⚖ Plan
-              </Link>
-              <Link
-                href={`/add?date=${selected}`}
-                className="btn btn-primary btn-sm rounded-full px-4 shadow-lg shadow-primary/20"
-              >
-                ＋ Add
-              </Link>
-            </div>
+            <Link href={`/plan?date=${selected}`} className="btn btn-ghost btn-sm rounded-full">
+              ⚖ Plan
+            </Link>
           </div>
 
           {entries === undefined ? (
