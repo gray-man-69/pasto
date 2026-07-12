@@ -1,8 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import NumberField from "@/components/NumberField";
 import { deleteCustomFood, newCustomFoodId, saveCustomFood } from "@/lib/db";
+import { ocrLabel } from "@/lib/labelOcr";
 import { emptyNutrients } from "@/lib/macros";
 import type { Food, Nutrients } from "@/lib/types";
 
@@ -41,9 +42,36 @@ export default function FoodEditor({
   const [category, setCategory] = useState(base?.category ?? "Custom");
   const [n, setN] = useState<Nutrients>(base ? { ...base.per100g } : emptyNutrients());
   const [busy, setBusy] = useState(false);
+  const labelInput = useRef<HTMLInputElement>(null);
+  const [ocrBusy, setOcrBusy] = useState(false);
+  const [ocrMsg, setOcrMsg] = useState<string | null>(null);
 
   const set = (key: keyof Nutrients, value: number) =>
     setN((prev) => ({ ...prev, [key]: value }));
+
+  async function handleLabelPhoto(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (labelInput.current) labelInput.current.value = "";
+    if (!file) return;
+    setOcrBusy(true);
+    setOcrMsg("Reading the label…");
+    try {
+      const { values } = await ocrLabel(file, (p) =>
+        setOcrMsg(`Reading the label… ${Math.round(p * 100)}%`),
+      );
+      const filled = Object.keys(values).length;
+      if (filled === 0) {
+        setOcrMsg("Couldn't read it — try a straight, well-lit photo of the nutrition table, or type it in.");
+      } else {
+        setN((prev) => ({ ...prev, ...values }));
+        setOcrMsg(`Filled ${filled} value${filled === 1 ? "" : "s"} — please double-check them.`);
+      }
+    } catch {
+      setOcrMsg("Label scan failed — type the values in instead.");
+    } finally {
+      setOcrBusy(false);
+    }
+  }
 
   // CREA calories are measured, not derived, but a from-macros estimate is a
   // handy sanity check / starting point for a scratch food.
@@ -115,6 +143,24 @@ export default function FoodEditor({
             className="input input-bordered input-sm w-full"
           />
         </label>
+
+        {/* Scan the nutrition label to auto-fill the values below */}
+        <input
+          ref={labelInput}
+          type="file"
+          accept="image/*"
+          capture="environment"
+          className="hidden"
+          onChange={handleLabelPhoto}
+        />
+        <button
+          onClick={() => labelInput.current?.click()}
+          disabled={ocrBusy}
+          className="btn btn-outline btn-sm mb-1 gap-2"
+        >
+          📷 {ocrBusy ? "Reading…" : "Scan nutrition label"}
+        </button>
+        {ocrMsg && <div className="mb-1 text-xs text-base-content/60">{ocrMsg}</div>}
 
         <div className="flex flex-col divide-y divide-base-300 rounded-2xl border border-base-300">
           {FIELDS.map((f) => (
