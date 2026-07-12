@@ -71,17 +71,36 @@ export default function LabelCropper({
   }
 
   async function confirm() {
-    const img = imgRef.current;
-    if (!img) return;
-    const nw = img.naturalWidth;
-    const nh = img.naturalHeight;
+    const imgEl = imgRef.current;
+    if (!imgEl) return;
+
+    // Decode the real pixels with createImageBitmap (orientation-corrected). This
+    // avoids two iOS traps: EXIF-rotated iPhone photos (the <img> shows them
+    // rotated but naturalWidth/Height are the un-rotated size, so cropping from
+    // the element cuts the wrong region) and large-photo subsampling. Fall back
+    // to the <img> element if the browser lacks createImageBitmap.
+    let src: CanvasImageSource = imgEl;
+    let nw = imgEl.naturalWidth;
+    let nh = imgEl.naturalHeight;
+    try {
+      // `as` guards against older TS DOM libs that don't list "from-image".
+      const opts = { imageOrientation: "from-image" } as unknown as ImageBitmapOptions;
+      const bmp = await createImageBitmap(file, opts);
+      src = bmp;
+      nw = bmp.width;
+      nh = bmp.height;
+    } catch {
+      /* keep the <img> element */
+    }
+    if (!nw || !nh) return;
+
     const cx = Math.round(rect.x * nw);
     const cy = Math.round(rect.y * nh);
     const cw = Math.max(1, Math.round(rect.w * nw));
     const ch = Math.max(1, Math.round(rect.h * nh));
 
-    // Upscale the crop so small text lands near tesseract's sweet spot, but cap
-    // the long side so we don't build a giant canvas.
+    // Upscale the crop so small text is legible to OCR, but cap the long side so
+    // we don't build a giant canvas.
     const scale = clamp(1500 / Math.max(cw, ch), 1, 3);
     const canvas = document.createElement("canvas");
     canvas.width = Math.round(cw * scale);
@@ -90,7 +109,7 @@ export default function LabelCropper({
     if (!ctx) return;
     ctx.imageSmoothingEnabled = true;
     ctx.imageSmoothingQuality = "high";
-    ctx.drawImage(img, cx, cy, cw, ch, 0, 0, canvas.width, canvas.height);
+    ctx.drawImage(src, cx, cy, cw, ch, 0, 0, canvas.width, canvas.height);
 
     // Grayscale + contrast stretch — packaging often has low black-on-color
     // contrast that tesseract struggles with.
