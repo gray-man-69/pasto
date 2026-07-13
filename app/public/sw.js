@@ -2,7 +2,7 @@
 // this just caches the app shell + foods.json so the PWA opens without a network.
 // Base path this SW is served under ("" at root, "/pasto" on GitHub Pages).
 const BASE = self.location.pathname.replace(/\/sw\.js.*$/, "");
-const CACHE = "pasto-v6";
+const CACHE = "pasto-v7";
 const PRECACHE = [`${BASE}/`, `${BASE}/foods.json`, `${BASE}/manifest.json`, `${BASE}/icon.svg`];
 
 self.addEventListener("install", (event) => {
@@ -26,7 +26,10 @@ self.addEventListener("fetch", (event) => {
   const url = new URL(request.url);
   if (url.origin !== self.location.origin) return;
 
-  const isAppData = request.mode === "navigate" || url.pathname === `${BASE}/foods.json`;
+  const isAppData =
+    request.mode === "navigate" ||
+    url.pathname === `${BASE}/foods.json` ||
+    url.pathname === `${BASE}/exercises.json`;
   if (isAppData) {
     event.respondWith(
       fetch(request)
