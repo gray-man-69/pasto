@@ -2,6 +2,7 @@
 // device (via Dexie). No server, no login.
 import Dexie, { type Table } from "dexie";
 import type {
+  Exercise,
   Food,
   Goals,
   LogEntry,
@@ -9,9 +10,11 @@ import type {
   MealComponent,
   MealSlot,
   Nutrients,
+  Routine,
   Unit,
   Tombstone,
   Water,
+  WorkoutSession,
 } from "./types";
 import { scale, sum } from "./macros";
 
@@ -32,6 +35,9 @@ class PastoDB extends Dexie {
   customFoods!: Table<Food, string>;
   tombstones!: Table<Tombstone, string>;
   water!: Table<Water, string>;
+  routines!: Table<Routine, number>;
+  sessions!: Table<WorkoutSession, number>;
+  customExercises!: Table<Exercise, string>;
 
   constructor() {
     super("pasto");
@@ -88,6 +94,19 @@ class PastoDB extends Dexie {
       customFoods: "id, name, basedOn",
       tombstones: "syncId",
       water: "date, syncId",
+    });
+    // v6 adds strength training: routines (split days), logged sessions, and
+    // user-created exercises. Bundled exercises come from a static asset instead.
+    this.version(6).stores({
+      entries: "++id, date, foodId, mealId, syncId",
+      goals: "id",
+      meals: "++id, name, syncId",
+      customFoods: "id, name, basedOn",
+      tombstones: "syncId",
+      water: "date, syncId",
+      routines: "++id, order, syncId",
+      sessions: "++id, date, routineId, syncId",
+      customExercises: "id, name, syncId",
     });
   }
 }
@@ -180,6 +199,61 @@ export async function addGlasses(date: string, delta: number): Promise<number> {
   await db.water.put({ date, glasses, syncId: cur?.syncId ?? `water-${date}`, updatedAt: now() });
   touched();
   return glasses;
+}
+
+// ---- Training: routines, sessions, custom exercises ------------------------
+
+export function allRoutines() {
+  return db.routines.orderBy("order").toArray();
+}
+export function getRoutine(id: number) {
+  return db.routines.get(id);
+}
+export async function saveRoutine(routine: Routine) {
+  const existing = routine.id != null ? await db.routines.get(routine.id) : undefined;
+  const syncId = existing?.syncId ?? routine.syncId ?? newSyncId();
+  const id = await db.routines.put({ ...routine, syncId, updatedAt: now() });
+  touched();
+  return id;
+}
+export async function deleteRoutine(id: number) {
+  const r = await db.routines.get(id);
+  await db.routines.delete(id);
+  if (r?.syncId) await tombstone(r.syncId);
+  touched();
+}
+
+export function allCustomExercises() {
+  return db.customExercises.toArray();
+}
+export async function saveCustomExercise(ex: Exercise) {
+  await db.customExercises.put({ ...ex, custom: true, updatedAt: now() });
+  touched();
+  return ex.id;
+}
+
+export function allSessions() {
+  return db.sessions.orderBy("date").reverse().toArray();
+}
+export function getSession(id: number) {
+  return db.sessions.get(id);
+}
+/** The in-progress workout, if any (no endedAt yet). */
+export async function activeSession(): Promise<WorkoutSession | undefined> {
+  return db.sessions.filter((s) => !s.endedAt).last();
+}
+export async function saveSession(session: WorkoutSession) {
+  const existing = session.id != null ? await db.sessions.get(session.id) : undefined;
+  const syncId = existing?.syncId ?? session.syncId ?? newSyncId();
+  const id = await db.sessions.put({ ...session, syncId, updatedAt: now() });
+  touched();
+  return id;
+}
+export async function deleteSession(id: number) {
+  const s = await db.sessions.get(id);
+  await db.sessions.delete(id);
+  if (s?.syncId) await tombstone(s.syncId);
+  touched();
 }
 
 // ---- Backup & restore ------------------------------------------------------

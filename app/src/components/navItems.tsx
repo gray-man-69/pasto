@@ -41,6 +41,15 @@ function AddIcon() {
   );
 }
 
+function TrainingIcon() {
+  // a dumbbell
+  return (
+    <svg {...iconProps}>
+      <path d="M6.5 6.5v11M17.5 6.5v11M4 9v6M20 9v6M6.5 12h11" />
+    </svg>
+  );
+}
+
 function MoreIcon() {
   return (
     <svg {...iconProps}>
@@ -57,6 +66,7 @@ export const NAV_ITEMS: NavItem[] = [
   { href: "/", label: "Today", icon: <TodayIcon /> },
   { href: "/week", label: "Week", icon: <WeekIcon /> },
   { href: "/add", label: "Add", icon: <AddIcon /> },
+  { href: "/training", label: "Training", icon: <TrainingIcon /> },
   { href: "/more", label: "More", icon: <MoreIcon /> },
 ];
 

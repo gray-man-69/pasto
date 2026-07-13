@@ -103,3 +103,73 @@ export interface Water extends Synced {
   date: string; // YYYY-MM-DD (primary key)
   glasses: number;
 }
+
+// ---- Training --------------------------------------------------------------
+
+export type WeightUnit = "kg" | "lb";
+export type SetType = "normal" | "warmup";
+
+// An exercise-library record. Bundled ones come from the public-domain
+// free-exercise-db (app/public/exercises.json); custom ones live in IndexedDB
+// and sync. Muscle groups drive weekly-volume tracking.
+export interface Exercise {
+  id: string;
+  name: string;
+  category?: string; // strength, stretching, cardio…
+  equipment?: string; // barbell, dumbbell, machine…
+  level?: string; // beginner / intermediate / expert
+  mechanic?: string; // compound / isolation
+  force?: string; // push / pull / static
+  primaryMuscles: string[];
+  secondaryMuscles?: string[];
+  custom?: boolean; // user-created
+  updatedAt?: number;
+}
+
+// A prescribed exercise inside a routine (a "split day"). Carries the current
+// working weight + rep range + increment that the double-progression engine uses.
+export interface RoutineExercise {
+  exerciseId: string;
+  name: string; // snapshot for display
+  targetSets: number;
+  repMin: number;
+  repMax: number;
+  weight: number; // current working weight, in `weightUnit`
+  weightUnit: WeightUnit;
+  increment: number; // load added on a successful double-progression step
+}
+
+// A routine = one day of the split (e.g. "Push A"). User data → syncs.
+export interface Routine extends Synced {
+  id?: number;
+  name: string;
+  order: number;
+  exercises: RoutineExercise[];
+}
+
+// A single performed set inside a logged workout.
+export interface PerformedSet {
+  weight: number;
+  reps: number;
+  type?: SetType; // defaults to "normal"; "warmup" sets don't count toward volume
+  rpe?: number; // optional reps-in-reserve/effort
+  done?: boolean;
+}
+
+export interface SessionExercise {
+  exerciseId: string;
+  name: string; // snapshot
+  sets: PerformedSet[];
+}
+
+// A logged workout. Stores a snapshot of what was performed (like meal entries),
+// so history stays correct even if the routine later changes. User data → syncs.
+export interface WorkoutSession extends Synced {
+  id?: number;
+  date: string; // YYYY-MM-DD
+  routineId?: number;
+  routineName?: string;
+  startedAt?: number;
+  endedAt?: number; // set when finished; absent = in progress
+  exercises: SessionExercise[];
+}
