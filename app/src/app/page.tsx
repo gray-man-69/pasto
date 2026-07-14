@@ -239,8 +239,8 @@ function MealSection({
   date: string;
   onEdit: (e: LogEntry) => void;
 }) {
-  // Collapsible: open when there's food, collapsed when empty (compact row).
-  const [open, setOpen] = useState(entries.length > 0);
+  // Collapsible; collapsed by default — tap a meal to expand it.
+  const [open, setOpen] = useState(false);
   const kcal = entries.reduce((s, e) => s + Math.round(scaleSnapshot(e).kcal), 0);
   const macros = sum(entries.map(scaleSnapshot));
   const addHref = slot ? `/add?date=${date}&meal=${slot}` : `/add?date=${date}`;

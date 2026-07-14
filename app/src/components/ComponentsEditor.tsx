@@ -1,9 +1,10 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useLiveQuery } from "dexie-react-hooks";
 import NumberField from "@/components/NumberField";
-import { computePerServing } from "@/lib/db";
-import { searchFoods } from "@/lib/foods";
+import { allCustomFoods, computePerServing } from "@/lib/db";
+import { searchAllFoods } from "@/lib/foods";
 import { scale } from "@/lib/macros";
 import type { Food, MealComponent } from "@/lib/types";
 
@@ -16,17 +17,20 @@ export default function ComponentsEditor({
   components: MealComponent[];
   onChange: (next: MealComponent[]) => void;
 }) {
+  const customFoods = useLiveQuery(() => allCustomFoods(), []);
   const [query, setQuery] = useState("");
   const [results, setResults] = useState<Food[]>([]);
 
   useEffect(() => {
     if (!query.trim()) return setResults([]);
     let active = true;
-    searchFoods(query, 8).then((r) => active && setResults(r));
+    // Include the user's custom foods (they rank first), so meals can be built
+    // from them too — not just the bundled CREA database.
+    searchAllFoods(query, customFoods ?? [], 8).then((r) => active && setResults(r));
     return () => {
       active = false;
     };
-  }, [query]);
+  }, [query, customFoods]);
 
   const perServing = computePerServing(components);
 
@@ -84,9 +88,16 @@ export default function ComponentsEditor({
             <li key={f.id}>
               <button
                 onClick={() => addFood(f)}
-                className="flex w-full items-center justify-between rounded-xl border border-base-300 bg-base-100 px-3 py-1.5 text-left text-sm hover:border-primary/40"
+                className="flex w-full items-center justify-between gap-2 rounded-xl border border-base-300 bg-base-100 px-3 py-1.5 text-left text-sm hover:border-primary/40"
               >
-                <span className="truncate">{f.name}</span>
+                <span className="flex min-w-0 items-center gap-1.5">
+                  <span className="truncate">{f.name}</span>
+                  {f.custom && (
+                    <span className="shrink-0 rounded-full bg-primary/15 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-primary">
+                      custom
+                    </span>
+                  )}
+                </span>
                 <span className="shrink-0 text-xs text-base-content/50">{f.per100g.kcal} kcal/100g</span>
               </button>
             </li>
