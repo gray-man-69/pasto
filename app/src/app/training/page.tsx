@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useLiveQuery } from "dexie-react-hooks";
-import { activeSession, allRoutines, completedSessions } from "@/lib/db";
+import { activeSession, allRoutines, completedSessions, deleteSession } from "@/lib/db";
 import { groupOfMuscle } from "@/lib/exercises";
 import { sessionVolume } from "@/lib/progression";
 import type { Routine, WorkoutSession } from "@/lib/types";
@@ -118,8 +118,8 @@ function RecentRow({ s }: { s: WorkoutSession }) {
   const sets = s.exercises.reduce((n, e) => n + e.sets.filter((x) => x.done).length, 0);
   const vol = Math.round(sessionVolume(s));
   return (
-    <li className="flex items-center justify-between gap-2 rounded-2xl border border-base-300/60 bg-base-100 px-4 py-2.5">
-      <span className="min-w-0">
+    <li className="flex items-center gap-2 rounded-2xl border border-base-300/60 bg-base-100 px-4 py-2.5">
+      <span className="min-w-0 flex-1">
         <span className="block truncate text-sm font-medium">{s.routineName ?? "Workout"}</span>
         <span className="block text-xs text-base-content/50">{dayLabel(s.date)}</span>
       </span>
@@ -127,6 +127,13 @@ function RecentRow({ s }: { s: WorkoutSession }) {
         {sets} sets
         <span className="block text-base-content/35">{vol.toLocaleString()} kg vol</span>
       </span>
+      <button
+        onClick={() => s.id != null && deleteSession(s.id)}
+        className="grid h-8 w-8 shrink-0 place-items-center rounded-full text-base-content/30 hover:bg-base-300/60 hover:text-error"
+        aria-label={`Delete ${s.routineName ?? "workout"} from ${dayLabel(s.date)}`}
+      >
+        ✕
+      </button>
     </li>
   );
 }
