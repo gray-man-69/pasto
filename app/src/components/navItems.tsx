@@ -73,10 +73,13 @@ export const NAV_ITEMS: NavItem[] = [
 // Pages that live under the "More" hub — so the More tab stays highlighted
 // while you're on any of them.
 const MORE_ROUTES = ["/more", "/goals", "/settings", "/meals", "/history", "/plan"];
+// Sub-pages of the Training tab.
+const TRAINING_ROUTES = ["/training", "/routine", "/exercises", "/workout"];
 
 /** True when `href` is the active route for `pathname`. */
 export function isActive(href: string, pathname: string): boolean {
   if (href === "/") return pathname === "/";
   if (href === "/more") return MORE_ROUTES.some((r) => pathname.startsWith(r));
+  if (href === "/training") return TRAINING_ROUTES.some((r) => pathname.startsWith(r));
   return pathname.startsWith(href);
 }

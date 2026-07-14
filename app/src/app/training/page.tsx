@@ -1,82 +1,73 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import Link from "next/link";
 import { useLiveQuery } from "dexie-react-hooks";
-import { MuscleThumb } from "@/components/MuscleMap";
-import { allCustomExercises } from "@/lib/db";
-import { searchExercises } from "@/lib/exercises";
-import type { Exercise } from "@/lib/types";
+import { allRoutines } from "@/lib/db";
+import { groupOfMuscle } from "@/lib/exercises";
+import type { Routine } from "@/lib/types";
 
 export default function TrainingPage() {
-  const customExercises = useLiveQuery(() => allCustomExercises(), []);
-  const [query, setQuery] = useState("");
-  const [results, setResults] = useState<Exercise[]>([]);
-
-  useEffect(() => {
-    let active = true;
-    searchExercises(query, customExercises ?? []).then((r) => active && setResults(r));
-    return () => {
-      active = false;
-    };
-  }, [query, customExercises]);
+  const routines = useLiveQuery(() => allRoutines(), []);
 
   return (
     <div className="mx-auto flex w-full max-w-xl flex-col gap-4">
-      <h1 className="text-xl font-bold">Training</h1>
-
-      {/* What's coming — honest placeholder while the rest is built out. */}
-      <div className="rounded-2xl border border-dashed border-base-300 p-4 text-sm text-base-content/50">
-        <span className="font-medium text-base-content/70">Your split lives here soon.</span>{" "}
-        Building your routines (split days), logging live workouts, and progressive-overload
-        suggestions land next. For now, explore the exercise library.
+      <div className="flex items-center justify-between">
+        <h1 className="text-xl font-bold">Training</h1>
+        <Link href="/exercises" className="btn btn-ghost btn-sm">
+          Exercises
+        </Link>
       </div>
 
-      <div>
-        <h2 className="mb-2 px-1 text-xs font-semibold uppercase tracking-wide text-base-content/40">
-          Exercise library
+      <div className="flex items-center justify-between px-1">
+        <h2 className="text-xs font-semibold uppercase tracking-wide text-base-content/40">
+          Your routines
         </h2>
-        <input
-          type="search"
-          value={query}
-          onChange={(e) => setQuery(e.target.value)}
-          placeholder="Search exercises… (e.g. bench, squat, biceps)"
-          className="input input-bordered w-full"
-        />
-        <ul className="mt-2 flex flex-col gap-1.5">
-          {results.map((ex) => (
-            <li
-              key={ex.id}
-              className="flex items-center gap-3 rounded-2xl border border-base-300/60 bg-base-100 px-3 py-2"
-            >
-              <MuscleThumb primary={ex.primaryMuscles} secondary={ex.secondaryMuscles ?? []} />
-              <div className="min-w-0 flex-1">
-                <div className="flex items-center gap-1.5">
-                  <span className="truncate font-medium">{ex.name}</span>
-                  {ex.custom && (
-                    <span className="shrink-0 rounded-full bg-primary/15 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-primary">
-                      custom
-                    </span>
-                  )}
-                </div>
-                <div className="mt-0.5 truncate text-xs capitalize text-base-content/50">
-                  {ex.primaryMuscles.join(", ")}
-                  {ex.equipment ? ` · ${ex.equipment}` : ""}
-                </div>
-              </div>
-              {ex.mechanic && (
-                <span className="shrink-0 rounded-full bg-base-200 px-2 py-0.5 text-[10px] uppercase tracking-wide text-base-content/50">
-                  {ex.mechanic}
-                </span>
-              )}
-            </li>
-          ))}
-          {results.length === 0 && query.trim() && (
-            <li className="px-1 py-6 text-center text-sm text-base-content/40">
-              No exercises match “{query.trim()}”.
-            </li>
-          )}
-        </ul>
+        <Link href="/routine" className="btn btn-primary btn-sm rounded-full px-4 shadow-lg shadow-primary/20">
+          ＋ New
+        </Link>
       </div>
+
+      {routines === undefined ? (
+        <div className="py-10 text-center text-base-content/30">Loading…</div>
+      ) : routines.length === 0 ? (
+        <div className="flex flex-col items-center gap-2 rounded-2xl border border-dashed border-base-300 py-12 text-center">
+          <div className="text-sm text-base-content/50">No routines yet.</div>
+          <Link href="/routine" className="text-sm font-medium text-primary hover:underline">
+            Create your first split day →
+          </Link>
+        </div>
+      ) : (
+        <ul className="flex flex-col gap-2">
+          {routines.map((r) => (
+            <RoutineCard key={r.id} r={r} />
+          ))}
+        </ul>
+      )}
     </div>
+  );
+}
+
+function RoutineCard({ r }: { r: Routine }) {
+  const groups = [...new Set(r.exercises.map((e) => groupOfMuscle(e.primaryMuscles[0])))];
+  return (
+    <li>
+      <Link
+        href={`/routine?id=${r.id}`}
+        className="flex items-center justify-between gap-3 rounded-2xl border border-base-300/60 bg-base-100 px-4 py-3.5 transition-colors hover:border-primary/40"
+      >
+        <span className="min-w-0">
+          <span className="block truncate font-medium">{r.name}</span>
+          <span className="mt-0.5 block truncate text-xs text-base-content/50">
+            {r.exercises.length} exercise{r.exercises.length === 1 ? "" : "s"}
+            {groups.length ? ` · ${groups.join(", ")}` : ""}
+          </span>
+        </span>
+        <span className="shrink-0 text-base-content/30">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="h-4 w-4">
+            <path d="m9 6 6 6-6 6" strokeLinecap="round" strokeLinejoin="round" />
+          </svg>
+        </span>
+      </Link>
+    </li>
   );
 }

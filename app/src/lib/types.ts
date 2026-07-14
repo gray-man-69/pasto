@@ -131,6 +131,8 @@ export interface Exercise {
 export interface RoutineExercise {
   exerciseId: string;
   name: string; // snapshot for display
+  primaryMuscles: string[]; // snapshot → thumbnails + volume without a lookup
+  secondaryMuscles?: string[];
   targetSets: number;
   repMin: number;
   repMax: number;
