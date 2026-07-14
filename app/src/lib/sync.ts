@@ -6,10 +6,30 @@
 import { doc, getDoc, onSnapshot, setDoc } from "firebase/firestore";
 import { firestore } from "./firebase";
 import { applySyncState, getSyncState, onLocalChange, type SyncState } from "./db";
-import type { Food, Goals, LogEntry, Meal, Tombstone, Water } from "./types";
+import type {
+  Exercise,
+  Food,
+  Goals,
+  LogEntry,
+  Meal,
+  Routine,
+  Tombstone,
+  Water,
+  WorkoutSession,
+} from "./types";
 
 function emptyState(): SyncState {
-  return { goals: null, entries: [], meals: [], customFoods: [], water: [], tombstones: [] };
+  return {
+    goals: null,
+    entries: [],
+    meals: [],
+    customFoods: [],
+    water: [],
+    routines: [],
+    sessions: [],
+    customExercises: [],
+    tombstones: [],
+  };
 }
 
 function normalize(d: Partial<SyncState> | undefined): SyncState {
@@ -19,6 +39,9 @@ function normalize(d: Partial<SyncState> | undefined): SyncState {
     meals: d?.meals ?? [],
     customFoods: d?.customFoods ?? [],
     water: d?.water ?? [],
+    routines: d?.routines ?? [],
+    sessions: d?.sessions ?? [],
+    customExercises: d?.customExercises ?? [],
     tombstones: d?.tombstones ?? [],
   };
 }
@@ -53,11 +76,27 @@ export function mergeState(local: SyncState, remote: SyncState): SyncState {
   const meals = pick<Meal>([...local.meals, ...remote.meals], (m) => m.syncId);
   const customFoods = pick<Food>([...local.customFoods, ...remote.customFoods], (f) => f.id);
   const water = pick<Water>([...local.water, ...remote.water], (w) => w.syncId);
+  const routines = pick<Routine>([...local.routines, ...remote.routines], (r) => r.syncId);
+  const sessions = pick<WorkoutSession>([...local.sessions, ...remote.sessions], (x) => x.syncId);
+  const customExercises = pick<Exercise>(
+    [...local.customExercises, ...remote.customExercises],
+    (e) => e.id,
+  );
 
   const goalCandidates = [local.goals, remote.goals].filter(Boolean) as Goals[];
   goalCandidates.sort((a, b) => (b.updatedAt ?? 0) - (a.updatedAt ?? 0));
 
-  return { goals: goalCandidates[0] ?? null, entries, meals, customFoods, water, tombstones };
+  return {
+    goals: goalCandidates[0] ?? null,
+    entries,
+    meals,
+    customFoods,
+    water,
+    routines,
+    sessions,
+    customExercises,
+    tombstones,
+  };
 }
 
 let unsub: (() => void) | null = null;

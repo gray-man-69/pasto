@@ -235,6 +235,11 @@ export async function saveCustomExercise(ex: Exercise) {
 export function allSessions() {
   return db.sessions.orderBy("date").reverse().toArray();
 }
+/** Finished workouts, newest first (by end time). */
+export async function completedSessions(): Promise<WorkoutSession[]> {
+  const all = await db.sessions.toArray();
+  return all.filter((s) => s.endedAt).sort((a, b) => (b.endedAt ?? 0) - (a.endedAt ?? 0));
+}
 export function getSession(id: number) {
   return db.sessions.get(id);
 }
@@ -269,23 +274,36 @@ export interface Backup {
   goals: Goals[];
   meals: Meal[];
   customFoods: Food[];
+  water?: Water[];
+  routines?: Routine[];
+  sessions?: WorkoutSession[];
+  customExercises?: Exercise[];
 }
 
 export async function exportData(): Promise<Backup> {
-  const [entries, goals, meals, customFoods] = await Promise.all([
-    db.entries.toArray(),
-    db.goals.toArray(),
-    db.meals.toArray(),
-    db.customFoods.toArray(),
-  ]);
+  const [entries, goals, meals, customFoods, water, routines, sessions, customExercises] =
+    await Promise.all([
+      db.entries.toArray(),
+      db.goals.toArray(),
+      db.meals.toArray(),
+      db.customFoods.toArray(),
+      db.water.toArray(),
+      db.routines.toArray(),
+      db.sessions.toArray(),
+      db.customExercises.toArray(),
+    ]);
   return {
     app: "pasto",
-    version: 3,
+    version: 4,
     exportedAt: new Date().toISOString(),
     entries,
     goals,
     meals,
     customFoods,
+    water,
+    routines,
+    sessions,
+    customExercises,
   };
 }
 
@@ -293,12 +311,20 @@ export async function importData(
   data: Partial<Backup>,
 ): Promise<{ entries: number; meals: number; customFoods: number }> {
   if (data.app && data.app !== "pasto") throw new Error("Not a Pasto backup file.");
-  await db.transaction("rw", db.entries, db.goals, db.meals, db.customFoods, async () => {
-    if (data.goals?.length) await db.goals.bulkPut(data.goals);
-    if (data.meals?.length) await db.meals.bulkPut(data.meals);
-    if (data.customFoods?.length) await db.customFoods.bulkPut(data.customFoods);
-    if (data.entries?.length) await db.entries.bulkPut(data.entries);
-  });
+  await db.transaction(
+    "rw",
+    [db.entries, db.goals, db.meals, db.customFoods, db.water, db.routines, db.sessions, db.customExercises],
+    async () => {
+      if (data.goals?.length) await db.goals.bulkPut(data.goals);
+      if (data.meals?.length) await db.meals.bulkPut(data.meals);
+      if (data.customFoods?.length) await db.customFoods.bulkPut(data.customFoods);
+      if (data.entries?.length) await db.entries.bulkPut(data.entries);
+      if (data.water?.length) await db.water.bulkPut(data.water);
+      if (data.routines?.length) await db.routines.bulkPut(data.routines);
+      if (data.sessions?.length) await db.sessions.bulkPut(data.sessions);
+      if (data.customExercises?.length) await db.customExercises.bulkPut(data.customExercises);
+    },
+  );
   return {
     entries: data.entries?.length ?? 0,
     meals: data.meals?.length ?? 0,
@@ -479,19 +505,26 @@ export interface SyncState {
   meals: Meal[];
   customFoods: Food[];
   water: Water[];
+  routines: Routine[];
+  sessions: WorkoutSession[];
+  customExercises: Exercise[];
   tombstones: Tombstone[];
 }
 
 export async function getSyncState(): Promise<SyncState> {
-  const [goals, entries, meals, customFoods, water, tombstones] = await Promise.all([
-    db.goals.get(1),
-    db.entries.toArray(),
-    db.meals.toArray(),
-    db.customFoods.toArray(),
-    db.water.toArray(),
-    db.tombstones.toArray(),
-  ]);
-  return { goals: goals ?? null, entries, meals, customFoods, water, tombstones };
+  const [goals, entries, meals, customFoods, water, routines, sessions, customExercises, tombstones] =
+    await Promise.all([
+      db.goals.get(1),
+      db.entries.toArray(),
+      db.meals.toArray(),
+      db.customFoods.toArray(),
+      db.water.toArray(),
+      db.routines.toArray(),
+      db.sessions.toArray(),
+      db.customExercises.toArray(),
+      db.tombstones.toArray(),
+    ]);
+  return { goals: goals ?? null, entries, meals, customFoods, water, routines, sessions, customExercises, tombstones };
 }
 
 /** Write a merged state into the local DB. Loss-averse: upserts every alive
@@ -502,7 +535,7 @@ export async function applySyncState(s: SyncState): Promise<void> {
   const dead = new Set(s.tombstones.map((t) => t.syncId));
   await db.transaction(
     "rw",
-    [db.entries, db.goals, db.meals, db.customFoods, db.water, db.tombstones],
+    [db.entries, db.goals, db.meals, db.customFoods, db.water, db.routines, db.sessions, db.customExercises, db.tombstones],
     async () => {
       if (s.tombstones.length) await db.tombstones.bulkPut(s.tombstones);
       if (s.goals) await db.goals.put({ ...s.goals, id: 1 });
@@ -539,6 +572,36 @@ export async function applySyncState(s: SyncState): Promise<void> {
       }
       const localFoods = await db.customFoods.toArray();
       for (const f of localFoods) if (dead.has(f.id)) await db.customFoods.delete(f.id);
+
+      // Routines & sessions: numeric id is device-local, matched by syncId.
+      const localRoutines = await db.routines.toArray();
+      const rBySync = new Map(localRoutines.filter((r) => r.syncId).map((r) => [r.syncId!, r]));
+      for (const r of s.routines) {
+        if (!r.syncId || dead.has(r.syncId)) continue;
+        const { id: _drop, ...rest } = r;
+        const local = rBySync.get(r.syncId);
+        if (local) await db.routines.update(local.id!, rest);
+        else await db.routines.add(rest as Routine);
+      }
+      for (const r of localRoutines) if (r.syncId && dead.has(r.syncId)) await db.routines.delete(r.id!);
+
+      const localSessions = await db.sessions.toArray();
+      const sBySync = new Map(localSessions.filter((x) => x.syncId).map((x) => [x.syncId!, x]));
+      for (const x of s.sessions) {
+        if (!x.syncId || dead.has(x.syncId)) continue;
+        const { id: _drop, ...rest } = x;
+        const local = sBySync.get(x.syncId);
+        if (local) await db.sessions.update(local.id!, rest);
+        else await db.sessions.add(rest as WorkoutSession);
+      }
+      for (const x of localSessions) if (x.syncId && dead.has(x.syncId)) await db.sessions.delete(x.id!);
+
+      // Custom exercises: keyed by their own id (like custom foods).
+      for (const ex of s.customExercises) {
+        if (!dead.has(ex.id)) await db.customExercises.put(ex);
+      }
+      const localEx = await db.customExercises.toArray();
+      for (const ex of localEx) if (dead.has(ex.id)) await db.customExercises.delete(ex.id);
     },
   );
 }

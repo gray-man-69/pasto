@@ -161,6 +161,10 @@ export interface PerformedSet {
 export interface SessionExercise {
   exerciseId: string;
   name: string; // snapshot
+  primaryMuscles?: string[]; // snapshot → thumbnails + volume
+  secondaryMuscles?: string[];
+  note?: string; // this session's double-progression target hint
+  lastSummary?: string; // previous session reference, e.g. "20 kg × 8, 8, 7"
   sets: PerformedSet[];
 }
 
