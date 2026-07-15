@@ -100,64 +100,66 @@ export default function WeekSummary({
         })}
       </div>
 
-      {/* Calories per day — single series, read against the dashed goal line. */}
-      <div>
-        <div className="mb-2 flex items-center justify-between">
-          <span className="text-xs font-semibold uppercase tracking-wide text-base-content/40">
-            Calories / day
-          </span>
-          <span className="text-[11px] text-base-content/40">goal {fmt(goalKcal)}</span>
-        </div>
-        <div className="relative h-24">
-          <div
-            className="absolute inset-x-0 z-10 border-t border-dashed border-base-content/25"
-            style={{ bottom: `${goalPct}%` }}
-          />
-          <div className="flex h-full items-end gap-1.5">
-            {days.map((d) => {
-              const kcal = dayTotals.get(d)?.kcal ?? 0;
-              const isLogged = kcal > 0;
-              const h = isLogged ? Math.max(4, (kcal / chartMax) * 100) : 0;
-              const dd = new Date(d + "T00:00:00");
-              const label = dd.toLocaleDateString("en-GB", {
-                weekday: "short",
-                day: "numeric",
-                month: "short",
-              });
-              return (
-                <div key={d} className="flex flex-1 items-end justify-center self-stretch">
-                  {isLogged ? (
-                    <div
-                      title={`${label}: ${fmt(kcal)} kcal`}
-                      className={`w-full rounded-t-md transition-[height] ${
-                        d === today ? "bg-primary" : "bg-primary/80"
-                      }`}
-                      style={{ height: `${h}%` }}
-                    />
-                  ) : (
-                    <div
-                      title={`${label}: no log`}
-                      className="h-[3px] w-full rounded bg-base-300/60"
-                    />
-                  )}
-                </div>
-              );
-            })}
-          </div>
-        </div>
-        <div className="mt-1.5 flex gap-1.5">
-          {days.map((d, i) => (
-            <span
-              key={d}
-              className={`flex-1 text-center text-[10px] ${
-                d === today ? "font-bold text-base-content" : "text-base-content/40"
-              }`}
-            >
-              {DOW[i]}
+      {/* Calories per day — single series, read against the dashed goal line.
+          Hidden for very long ranges where per-day bars stop being readable. */}
+      {days.length <= 92 ? (
+        <div>
+          <div className="mb-2 flex items-center justify-between">
+            <span className="text-xs font-semibold uppercase tracking-wide text-base-content/40">
+              Calories / day
             </span>
-          ))}
+            <span className="text-[11px] text-base-content/40">goal {fmt(goalKcal)}</span>
+          </div>
+          <div className="relative h-24">
+            <div
+              className="absolute inset-x-0 z-10 border-t border-dashed border-base-content/25"
+              style={{ bottom: `${goalPct}%` }}
+            />
+            <div className="flex h-full items-end gap-1.5 overflow-x-auto">
+              {days.map((d) => {
+                const kcal = dayTotals.get(d)?.kcal ?? 0;
+                const isLogged = kcal > 0;
+                const h = isLogged ? Math.max(4, (kcal / chartMax) * 100) : 0;
+                const dd = new Date(d + "T00:00:00");
+                const label = dd.toLocaleDateString("en-GB", {
+                  weekday: "short",
+                  day: "numeric",
+                  month: "short",
+                });
+                return (
+                  <div key={d} className="flex min-w-[7px] flex-1 items-end justify-center self-stretch">
+                    {isLogged ? (
+                      <div
+                        title={`${label}: ${fmt(kcal)} kcal`}
+                        className={`w-full rounded-t-md transition-[height] ${
+                          d === today ? "bg-primary" : "bg-primary/80"
+                        }`}
+                        style={{ height: `${h}%` }}
+                      />
+                    ) : (
+                      <div title={`${label}: no log`} className="h-[3px] w-full rounded bg-base-300/60" />
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+          {days.length === 7 && (
+            <div className="mt-1.5 flex gap-1.5">
+              {days.map((d, i) => (
+                <span
+                  key={d}
+                  className={`flex-1 text-center text-[10px] ${
+                    d === today ? "font-bold text-base-content" : "text-base-content/40"
+                  }`}
+                >
+                  {DOW[i]}
+                </span>
+              ))}
+            </div>
+          )}
         </div>
-      </div>
+      ) : null}
     </section>
   );
 }
