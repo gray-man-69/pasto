@@ -139,10 +139,11 @@ function Spark({
   const goalY = goal > 0 ? y(goal) : null;
   const onDay = hover != null && logged[hover];
   const shown = onDay ? val(days[hover!]) : avg;
+  const barPct = goal > 0 ? Math.min(100, (shown / goal) * 100) : 0;
 
   return (
     <div>
-      <div className="mb-0.5 flex items-center justify-between text-xs">
+      <div className="mb-1 flex items-center justify-between text-xs">
         <span className="flex items-center gap-1.5 font-medium">
           <span className={`h-2 w-2 rounded-full ${m.dot}`} />
           {m.label}
@@ -153,6 +154,10 @@ function Spark({
           {m.unit}
           <span className="text-base-content/35"> / {Math.round(goal)}</span>
         </span>
+      </div>
+      {/* Average (or hovered day) vs goal — magnitude at a glance */}
+      <div className="mb-1.5 h-1.5 overflow-hidden rounded-full bg-base-300/50">
+        <div className={`h-full rounded-full ${m.dot}`} style={{ width: `${barPct}%` }} />
       </div>
       <svg viewBox={`0 0 ${W} ${HH}`} width="100%" className={m.cls}>
         {goalY != null && (
