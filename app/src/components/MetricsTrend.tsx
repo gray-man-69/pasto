@@ -19,9 +19,9 @@ const METRICS: { key: Key; label: string; cls: string; dot: string; unit: string
 ];
 
 const W = 320;
-const HH = 28;
+const HH = 36;
 const PADX = 2;
-const PADY = 4;
+const PADY = 5;
 const IW = W - PADX * 2;
 const IH = HH - PADY * 2;
 
@@ -196,11 +196,17 @@ function Spark({
 }) {
   const v = (d: string) => val(dayTotals.get(d), m.key);
   const loggedVals = days.filter((_, i) => logged[i]).map(v);
-  const dataMax = loggedVals.length ? Math.max(...loggedVals) : 0;
-  const yMax = Math.max(goal, dataMax) * 1.12 || 1;
+  // Zoom the y-axis into the data's own range (not 0-based) so the trend is
+  // visible — magnitude-vs-goal is the scoreboard's job, not the sparkline's.
+  const dataMin = loggedVals.length ? Math.min(...loggedVals) : 0;
+  const dataMax = loggedVals.length ? Math.max(...loggedVals) : 1;
+  const span = dataMax - dataMin || Math.max(dataMax * 0.1, 1);
+  const lo = Math.max(0, dataMin - span * 0.2);
+  const hi = dataMax + span * 0.2;
 
   const x = (i: number) => PADX + (n <= 1 ? IW / 2 : (i / (n - 1)) * IW);
-  const y = (value: number) => PADY + IH - (Math.min(value, yMax) / yMax) * IH;
+  const y = (value: number) =>
+    PADY + IH - ((Math.max(lo, Math.min(hi, value)) - lo) / (hi - lo)) * IH;
 
   let d = "";
   let pen = false;
@@ -213,7 +219,8 @@ function Spark({
     pen = true;
   });
 
-  const goalY = goal > 0 ? y(goal) : null;
+  // Only draw the goal line when it falls within the zoomed range.
+  const goalY = goal > 0 && goal >= lo && goal <= hi ? y(goal) : null;
   const onDay = hover != null && logged[hover];
 
   return (
