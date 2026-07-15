@@ -3,10 +3,10 @@
 import { useRef, useState } from "react";
 import type { Goals, Nutrients } from "@/lib/types";
 
-// A multi-series daily trend. Calories (~2000) and macros (grams) live on very
-// different scales, so each metric is indexed to % of its daily goal — one shared
-// axis, 100% = goal. Lines carry the app's entity colors; hover shows the real
-// absolute numbers for the day.
+// Small multiples: one sparkline per metric, each on its own scale showing the
+// real (absolute) daily values with its goal line. Five separate charts read far
+// better than five overlapping lines, and each keeps its true units. A shared
+// hover highlights the same day across all of them.
 
 type Key = "kcal" | "protein_g" | "carbs_g" | "fat_g" | "fiber_g";
 const METRICS: { key: Key; label: string; cls: string; dot: string; unit: string }[] = [
@@ -17,197 +17,180 @@ const METRICS: { key: Key; label: string; cls: string; dot: string; unit: string
   { key: "fiber_g", label: "Fiber", cls: "text-emerald-400", dot: "bg-emerald-400", unit: "g" },
 ];
 
-const W = 340;
-const H = 150;
-const PADL = 26;
-const PADR = 8;
-const PADT = 10;
-const PADB = 8;
-const innerW = W - PADL - PADR;
-const innerH = H - PADT - PADB;
+const W = 320;
+const HH = 30;
+const PADX = 2;
+const PADY = 4;
+const IW = W - PADX * 2;
+const IH = HH - PADY * 2;
 
 export default function MetricsTrend({
   days,
   dayTotals,
   goals,
+  caption,
 }: {
   days: string[];
   dayTotals: Map<string, Nutrients>;
   goals: Goals;
+  caption?: string;
 }) {
-  const svgRef = useRef<SVGSVGElement>(null);
+  const wrapRef = useRef<HTMLDivElement>(null);
   const [hover, setHover] = useState<number | null>(null);
 
   const n = days.length;
   const logged = days.map((d) => (dayTotals.get(d)?.kcal ?? 0) > 0);
   const anyLogged = logged.some(Boolean);
 
-  const x = (i: number) => PADL + (n <= 1 ? innerW / 2 : (i / (n - 1)) * innerW);
-  const pct = (key: Key, d: string) => {
-    const g = goals[key] || 0;
-    return g > 0 ? ((dayTotals.get(d)?.[key] ?? 0) / g) * 100 : 0;
-  };
-
-  let maxPct = 100;
-  days.forEach((d, i) => {
-    if (logged[i]) for (const m of METRICS) maxPct = Math.max(maxPct, pct(m.key, d));
-  });
-  const yMax = Math.min(250, Math.max(125, Math.ceil(maxPct / 25) * 25));
-  const y = (p: number) => PADT + innerH - (Math.min(p, yMax) / yMax) * innerH;
-
-  function pathFor(key: Key): string {
-    let s = "";
-    let pen = false;
-    days.forEach((d, i) => {
-      if (!logged[i]) {
-        pen = false;
-        return;
-      }
-      s += `${pen ? "L" : "M"}${x(i).toFixed(1)} ${y(pct(key, d)).toFixed(1)} `;
-      pen = true;
-    });
-    return s.trim();
-  }
-
   function locate(e: React.PointerEvent) {
-    const rect = svgRef.current?.getBoundingClientRect();
-    if (!rect) return;
-    const px = ((e.clientX - rect.left) / rect.width) * W;
-    let best = 0;
-    let bd = Infinity;
-    for (let i = 0; i < n; i++) {
-      const dx = Math.abs(x(i) - px);
-      if (dx < bd) {
-        bd = dx;
-        best = i;
-      }
-    }
-    setHover(best);
+    const rect = wrapRef.current?.getBoundingClientRect();
+    if (!rect || n === 0) return;
+    const f = Math.min(1, Math.max(0, (e.clientX - rect.left) / rect.width));
+    setHover(Math.round(f * (n - 1)));
   }
 
-  const goalY = y(100);
-  const showPoints = n <= 31;
-  const hv = hover != null && logged[hover] ? hover : null;
+  const hoverDate =
+    hover != null
+      ? new Date(days[hover] + "T00:00:00").toLocaleDateString("en-GB", {
+          weekday: "short",
+          day: "numeric",
+          month: "short",
+        })
+      : null;
 
   return (
     <div>
-      <div className="mb-2 text-xs font-semibold uppercase tracking-wide text-base-content/40">
-        Trend · % of daily goal
+      <div className="mb-2 flex items-center justify-between">
+        <span className="text-xs font-semibold uppercase tracking-wide text-base-content/40">
+          Daily trend
+        </span>
+        <span className="text-[11px] tabular-nums text-base-content/50">
+          {hoverDate ?? caption ?? ""}
+        </span>
       </div>
 
       {!anyLogged ? (
-        <div className="py-8 text-center text-sm text-base-content/40">
+        <div className="py-6 text-center text-sm text-base-content/40">
           Nothing logged in this range.
         </div>
       ) : (
         <div
-          className="relative"
+          ref={wrapRef}
           onPointerMove={locate}
           onPointerDown={locate}
           onPointerLeave={() => setHover(null)}
+          className="flex flex-col gap-3"
         >
-          <svg ref={svgRef} viewBox={`0 0 ${W} ${H}`} width="100%" style={{ touchAction: "pan-y" }}>
-            <line
-              x1={PADL}
-              x2={W - PADR}
-              y1={goalY}
-              y2={goalY}
-              className="stroke-base-content/25"
-              strokeWidth={1}
-              strokeDasharray="3 3"
+          {METRICS.map((m) => (
+            <Spark
+              key={m.key}
+              m={m}
+              days={days}
+              logged={logged}
+              dayTotals={dayTotals}
+              goal={goals[m.key] || 0}
+              hover={hover}
+              n={n}
             />
-            <text x={2} y={goalY + 3} className="fill-base-content/40" fontSize={8}>
-              100%
-            </text>
-            <text x={2} y={PADT + 6} className="fill-base-content/30" fontSize={8}>
-              {yMax}%
-            </text>
-
-            {hv != null && (
-              <line
-                x1={x(hv)}
-                x2={x(hv)}
-                y1={PADT}
-                y2={PADT + innerH}
-                className="stroke-base-content/20"
-                strokeWidth={1}
-              />
-            )}
-
-            {METRICS.map((m) => (
-              <path
-                key={m.key}
-                d={pathFor(m.key)}
-                className={m.cls}
-                fill="none"
-                stroke="currentColor"
-                strokeWidth={2}
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              />
-            ))}
-
-            {showPoints &&
-              METRICS.map((m) =>
-                days.map((d, i) =>
-                  logged[i] ? (
-                    <circle
-                      key={m.key + i}
-                      cx={x(i)}
-                      cy={y(pct(m.key, d))}
-                      r={hv === i ? 2.8 : 1.7}
-                      className={m.cls}
-                      fill="currentColor"
-                    />
-                  ) : null,
-                ),
-              )}
-          </svg>
-
-          {hv != null && (
-            <Tooltip day={days[hv]} totals={dayTotals.get(days[hv])!} leftPct={(x(hv) / W) * 100} />
-          )}
+          ))}
         </div>
       )}
-
-      {/* Legend — identity is never color-alone */}
-      <div className="mt-2 flex flex-wrap gap-x-3 gap-y-1">
-        {METRICS.map((m) => (
-          <span key={m.key} className="flex items-center gap-1.5 text-[11px] text-base-content/60">
-            <span className={`h-2 w-2 rounded-full ${m.dot}`} />
-            {m.label}
-          </span>
-        ))}
-      </div>
     </div>
   );
 }
 
-function Tooltip({ day, totals, leftPct }: { day: string; totals: Nutrients; leftPct: number }) {
-  const label = new Date(day + "T00:00:00").toLocaleDateString("en-GB", {
-    weekday: "short",
-    day: "numeric",
-    month: "short",
+function Spark({
+  m,
+  days,
+  logged,
+  dayTotals,
+  goal,
+  hover,
+  n,
+}: {
+  m: (typeof METRICS)[number];
+  days: string[];
+  logged: boolean[];
+  dayTotals: Map<string, Nutrients>;
+  goal: number;
+  hover: number | null;
+  n: number;
+}) {
+  const val = (d: string) => dayTotals.get(d)?.[m.key] ?? 0;
+  const loggedVals = days.filter((_, i) => logged[i]).map((d) => val(d));
+  const dataMax = loggedVals.length ? Math.max(...loggedVals) : 0;
+  const yMax = Math.max(goal, dataMax) * 1.12 || 1;
+  const avg = loggedVals.length ? loggedVals.reduce((a, b) => a + b, 0) / loggedVals.length : 0;
+
+  const x = (i: number) => PADX + (n <= 1 ? IW / 2 : (i / (n - 1)) * IW);
+  const y = (v: number) => PADY + IH - (Math.min(v, yMax) / yMax) * IH;
+
+  let d = "";
+  let pen = false;
+  days.forEach((day, i) => {
+    if (!logged[i]) {
+      pen = false;
+      return;
+    }
+    d += `${pen ? "L" : "M"}${x(i).toFixed(1)} ${y(val(day)).toFixed(1)} `;
+    pen = true;
   });
-  const left = Math.min(Math.max(leftPct, 2), 58);
+
+  const goalY = goal > 0 ? y(goal) : null;
+  const onDay = hover != null && logged[hover];
+  const shown = onDay ? val(days[hover!]) : avg;
+
   return (
-    <div
-      className="pointer-events-none absolute top-0 z-20 rounded-xl border border-base-300 bg-base-100/95 px-2.5 py-1.5 text-[11px] shadow-lg backdrop-blur"
-      style={{ left: `${left}%` }}
-    >
-      <div className="mb-1 font-medium">{label}</div>
-      {METRICS.map((m) => (
-        <div key={m.key} className="flex items-center justify-between gap-4">
-          <span className="flex items-center gap-1.5 text-base-content/60">
-            <span className={`h-1.5 w-1.5 rounded-full ${m.dot}`} />
-            {m.label}
-          </span>
-          <span className="tabular-nums text-base-content/90">
-            {Math.round(totals[m.key])}
-            {m.unit}
-          </span>
-        </div>
-      ))}
+    <div>
+      <div className="mb-0.5 flex items-center justify-between text-xs">
+        <span className="flex items-center gap-1.5 font-medium">
+          <span className={`h-2 w-2 rounded-full ${m.dot}`} />
+          {m.label}
+        </span>
+        <span className="tabular-nums text-base-content/70">
+          {!onDay && <span className="text-base-content/35">avg </span>}
+          {Math.round(shown)}
+          {m.unit}
+          <span className="text-base-content/35"> / {Math.round(goal)}</span>
+        </span>
+      </div>
+      <svg viewBox={`0 0 ${W} ${HH}`} width="100%" className={m.cls}>
+        {goalY != null && (
+          <line
+            x1={PADX}
+            x2={W - PADX}
+            y1={goalY}
+            y2={goalY}
+            className="stroke-base-content/20"
+            strokeWidth={1}
+            strokeDasharray="4 4"
+            vectorEffect="non-scaling-stroke"
+          />
+        )}
+        {hover != null && (
+          <line
+            x1={x(hover)}
+            x2={x(hover)}
+            y1={PADY}
+            y2={PADY + IH}
+            className="stroke-base-content/20"
+            strokeWidth={1}
+            vectorEffect="non-scaling-stroke"
+          />
+        )}
+        <path
+          d={d}
+          fill="none"
+          stroke="currentColor"
+          strokeWidth={2}
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          vectorEffect="non-scaling-stroke"
+        />
+        {onDay && (
+          <circle cx={x(hover!)} cy={y(val(days[hover!]))} r={3.5} fill="currentColor" vectorEffect="non-scaling-stroke" />
+        )}
+      </svg>
     </div>
   );
 }

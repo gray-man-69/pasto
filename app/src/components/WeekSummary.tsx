@@ -3,23 +3,9 @@
 import MetricsTrend from "@/components/MetricsTrend";
 import type { Goals, Nutrients } from "@/lib/types";
 
-// Nutrition summary for a date range: the daily average of each macro vs its
-// goal, plus a multi-series daily trend (indexed to % of goal). Averages are
-// taken over *logged* days only, so an un-tracked or not-yet-happened day never
-// drags the numbers toward zero — the "over N logged days" caption keeps it honest.
-
-type MetricKey = "kcal" | "protein_g" | "carbs_g" | "fat_g" | "fiber_g";
-type Metric = { key: MetricKey; label: string; unit: string; color: string };
-
-const METRICS: Metric[] = [
-  { key: "kcal", label: "Calories", unit: "kcal", color: "bg-primary" },
-  { key: "protein_g", label: "Protein", unit: "g", color: "bg-sky-400" },
-  { key: "carbs_g", label: "Carbs", unit: "g", color: "bg-rose-400" },
-  { key: "fat_g", label: "Fat", unit: "g", color: "bg-orange-400" },
-  { key: "fiber_g", label: "Fiber", unit: "g", color: "bg-emerald-400" },
-];
-
-const fmt = (n: number) => Math.round(n).toLocaleString("en-US");
+// Nutrition summary for a date range: a small-multiples daily trend (one
+// sparkline per metric, each with its average + goal). Everything is taken over
+// *logged* days only, so an un-tracked or not-yet-happened day never counts.
 
 export default function WeekSummary({
   days,
@@ -38,7 +24,7 @@ export default function WeekSummary({
     return (
       <section className="rounded-3xl border border-base-300 bg-base-100 p-5">
         <div className="text-xs font-semibold uppercase tracking-wide text-base-content/40">
-          Daily average
+          Daily trend
         </div>
         <div className="py-8 text-center text-sm text-base-content/40">
           Nothing logged in this range yet.
@@ -47,51 +33,14 @@ export default function WeekSummary({
     );
   }
 
-  const avg = (key: MetricKey) =>
-    logged.reduce((s, d) => s + (dayTotals.get(d)?.[key] ?? 0), 0) / n;
-
   return (
-    <section className="flex flex-col gap-6 rounded-3xl border border-base-300 bg-base-100 p-5">
-      <div className="flex items-center justify-between">
-        <div className="text-xs font-semibold uppercase tracking-wide text-base-content/40">
-          Daily average
-        </div>
-        <div className="text-xs text-base-content/40">
-          over {n} logged {n === 1 ? "day" : "days"}
-        </div>
-      </div>
-
-      {/* Average vs goal, per macro */}
-      <div className="flex flex-col gap-3.5">
-        {METRICS.map((m) => {
-          const a = avg(m.key);
-          const goal = goals[m.key] || 0;
-          const pct = goal > 0 ? Math.min(100, (a / goal) * 100) : 0;
-          return (
-            <div key={m.key}>
-              <div className="flex items-center justify-between text-sm">
-                <span className="flex items-center gap-2">
-                  <span className={`h-2 w-2 rounded-full ${m.color}`} />
-                  <span className="font-medium">{m.label}</span>
-                </span>
-                <span className="tabular-nums">
-                  <span className="font-semibold">{fmt(a)}</span>
-                  <span className="text-base-content/40">
-                    {" "}
-                    / {fmt(goal)} {m.unit}
-                  </span>
-                </span>
-              </div>
-              <div className="mt-1.5 h-1.5 overflow-hidden rounded-full bg-base-300/60">
-                <div className={`h-full rounded-full ${m.color}`} style={{ width: `${pct}%` }} />
-              </div>
-            </div>
-          );
-        })}
-      </div>
-
-      {/* Daily trend — all metrics, indexed to % of goal */}
-      <MetricsTrend days={days} dayTotals={dayTotals} goals={goals} />
+    <section className="rounded-3xl border border-base-300 bg-base-100 p-5">
+      <MetricsTrend
+        days={days}
+        dayTotals={dayTotals}
+        goals={goals}
+        caption={`over ${n} logged ${n === 1 ? "day" : "days"}`}
+      />
     </section>
   );
 }
