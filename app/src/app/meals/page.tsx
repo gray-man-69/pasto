@@ -4,13 +4,12 @@ import { useState } from "react";
 import Link from "next/link";
 import { useLiveQuery } from "dexie-react-hooks";
 import ComponentsEditor from "@/components/ComponentsEditor";
-import NumberField from "@/components/NumberField";
 import { allMeals, deleteMeal, saveMeal } from "@/lib/db";
 import type { MealComponent } from "@/lib/types";
 
-type Draft = { id?: number; name: string; weeklyLimit: number; components: MealComponent[] };
+type Draft = { id?: number; name: string; components: MealComponent[] };
 
-const EMPTY: Draft = { name: "", weeklyLimit: 3, components: [] };
+const EMPTY: Draft = { name: "", components: [] };
 
 export default function MealsPage() {
   const meals = useLiveQuery(() => allMeals(), []);
@@ -40,15 +39,13 @@ export default function MealsPage() {
               <div className="min-w-0">
                 <div className="truncate font-medium">{m.name}</div>
                 <div className="text-xs text-base-content/50">
-                  {Math.round(m.perServing.kcal)} kcal · P {m.perServing.protein_g} · {m.weeklyLimit}×/week
+                  {Math.round(m.perServing.kcal)} kcal · P {m.perServing.protein_g} per serving
                 </div>
               </div>
               <div className="flex shrink-0 gap-1">
                 <button
                   className="btn btn-ghost btn-xs"
-                  onClick={() =>
-                    setDraft({ id: m.id, name: m.name, weeklyLimit: m.weeklyLimit, components: m.components })
-                  }
+                  onClick={() => setDraft({ id: m.id, name: m.name, components: m.components })}
                 >
                   Edit
                 </button>
@@ -74,12 +71,11 @@ export default function MealsPage() {
 
 function MealEditor({ draft, onClose }: { draft: Draft; onClose: () => void }) {
   const [name, setName] = useState(draft.name);
-  const [weeklyLimit, setWeeklyLimit] = useState(draft.weeklyLimit);
   const [components, setComponents] = useState<MealComponent[]>(draft.components);
 
   async function save() {
     if (!name.trim() || components.length === 0) return;
-    await saveMeal({ id: draft.id, name: name.trim(), weeklyLimit, components });
+    await saveMeal({ id: draft.id, name: name.trim(), components });
     onClose();
   }
 
@@ -93,16 +89,6 @@ function MealEditor({ draft, onClose }: { draft: Draft; onClose: () => void }) {
           placeholder="Meal name (e.g. Pasta al pomodoro)"
           className="input input-bordered w-full"
         />
-        <label className="flex items-center justify-between gap-3">
-          <span className="text-sm text-base-content/70">Times allowed per week</span>
-          <NumberField
-            inputMode="numeric"
-            min={1}
-            value={weeklyLimit}
-            onChange={setWeeklyLimit}
-            className="input input-bordered input-sm w-20 text-right tabular-nums"
-          />
-        </label>
 
         <div className="text-sm font-semibold text-base-content/60">Ingredients</div>
         <ComponentsEditor components={components} onChange={setComponents} />

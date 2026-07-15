@@ -480,22 +480,6 @@ export async function dailyTotalsBetween(
   return map;
 }
 
-/** How many times each meal has been logged in the week containing `date`. */
-export async function weeklyMealCounts(
-  date: string = localDate(),
-): Promise<Map<number, number>> {
-  const start = weekStart(date);
-  const end = addDays(start, 6);
-  const rows = await db.entries
-    .where("date")
-    .between(start, end, true, true)
-    .toArray();
-  const counts = new Map<number, number>();
-  for (const r of rows) {
-    if (r.mealId != null) counts.set(r.mealId, (counts.get(r.mealId) ?? 0) + 1);
-  }
-  return counts;
-}
 
 // ---- Sync state (read/apply for the cloud sync engine) ---------------------
 

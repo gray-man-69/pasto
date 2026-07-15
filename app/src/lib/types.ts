@@ -82,7 +82,7 @@ export interface MealComponent {
 export interface Meal extends Synced {
   id?: number;
   name: string;
-  weeklyLimit: number; // how many times per week you allow yourself this meal
+  weeklyLimit?: number; // deprecated: the per-week "meal allowance" feature was removed
   components: MealComponent[];
   perServing: Nutrients; // computed total of one serving (all components)
 }
