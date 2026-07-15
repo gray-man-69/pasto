@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useLiveQuery } from "dexie-react-hooks";
 import Ring from "@/components/Ring";
@@ -36,12 +36,35 @@ const MACROS = [
 export default function TodayPage() {
   const [selected, setSelected] = useState(() => localDate());
   const [editing, setEditing] = useState<LogEntry | null>(null);
-  const today = localDate();
+  const [today, setToday] = useState(() => localDate());
+  const todayRef = useRef(today);
+  todayRef.current = today;
 
   // Allow deep-linking a date from the History calendar (/?date=YYYY-MM-DD).
   useEffect(() => {
     const d = new URLSearchParams(window.location.search).get("date");
     if (d) setSelected(d);
+  }, []);
+
+  // A PWA kept in memory holds a stale "today". When the app becomes visible
+  // again (e.g. reopened the next morning), recompute the date — and if we were
+  // sitting on the old today, roll the view forward to the new today.
+  useEffect(() => {
+    function refresh() {
+      if (document.visibilityState === "hidden") return;
+      const t = localDate();
+      if (t !== todayRef.current) {
+        const old = todayRef.current;
+        setToday(t);
+        setSelected((sel) => (sel === old ? t : sel));
+      }
+    }
+    document.addEventListener("visibilitychange", refresh);
+    window.addEventListener("focus", refresh);
+    return () => {
+      document.removeEventListener("visibilitychange", refresh);
+      window.removeEventListener("focus", refresh);
+    };
   }, []);
 
   const ws = weekStart(selected);
