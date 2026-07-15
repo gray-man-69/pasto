@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { useLiveQuery } from "dexie-react-hooks";
+import CustomExerciseForm from "@/components/CustomExerciseForm";
 import { MuscleThumb } from "@/components/MuscleMap";
 import { allCustomExercises } from "@/lib/db";
 import { MUSCLE_GROUPS, groupOf, loadExercises } from "@/lib/exercises";
@@ -21,6 +22,7 @@ export default function ExercisePicker({
   const [all, setAll] = useState<Exercise[]>([]);
   const [query, setQuery] = useState("");
   const [group, setGroup] = useState<string | null>(null);
+  const [creating, setCreating] = useState(false);
 
   useEffect(() => {
     loadExercises().then((l) => setAll([...(custom ?? []), ...l]));
@@ -107,10 +109,27 @@ export default function ExercisePicker({
             )}
           </li>
         ))}
-        {results.length === 0 && (
-          <li className="px-1 py-6 text-center text-sm text-base-content/40">No exercises found.</li>
-        )}
       </ul>
+
+      <button
+        onClick={() => setCreating(true)}
+        className="flex items-center justify-center gap-2 rounded-2xl border border-dashed border-base-300 py-3 text-sm text-base-content/60 transition-colors hover:border-primary/50 hover:text-base-content"
+      >
+        <span className="text-base leading-none">＋</span>
+        {query.trim() ? `Create “${query.trim()}”` : "Create custom exercise"}
+      </button>
+
+      {creating && (
+        <CustomExerciseForm
+          initialName={query.trim()}
+          onClose={() => setCreating(false)}
+          onCreated={(ex) => {
+            setCreating(false);
+            setQuery("");
+            onSelect?.(ex);
+          }}
+        />
+      )}
     </div>
   );
 }

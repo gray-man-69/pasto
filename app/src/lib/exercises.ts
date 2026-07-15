@@ -23,6 +23,24 @@ const GROUP_OF: Record<string, string> = {
 };
 export const MUSCLE_GROUPS = ["Chest", "Back", "Shoulders", "Arms", "Legs", "Core"] as const;
 
+// The fine muscle names the app understands (drive the muscle map + volume).
+export const MUSCLES = [
+  "chest",
+  "shoulders",
+  "biceps",
+  "triceps",
+  "forearms",
+  "abdominals",
+  "traps",
+  "lats",
+  "middle back",
+  "lower back",
+  "quadriceps",
+  "hamstrings",
+  "glutes",
+  "calves",
+] as const;
+
 export function groupOfMuscle(muscle: string | undefined): string {
   return GROUP_OF[(muscle ?? "").toLowerCase()] ?? "Other";
 }

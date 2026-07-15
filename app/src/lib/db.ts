@@ -226,6 +226,9 @@ export async function deleteRoutine(id: number) {
 export function allCustomExercises() {
   return db.customExercises.toArray();
 }
+export function newCustomExerciseId(): string {
+  return `custom-ex-${crypto.randomUUID()}`;
+}
 export async function saveCustomExercise(ex: Exercise) {
   await db.customExercises.put({ ...ex, custom: true, updatedAt: now() });
   touched();

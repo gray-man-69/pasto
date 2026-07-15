@@ -24,9 +24,14 @@ export default function TrainingPage() {
     <div className="mx-auto flex w-full max-w-xl flex-col gap-4">
       <div className="flex items-center justify-between">
         <h1 className="text-xl font-bold">Training</h1>
-        <Link href="/exercises" className="btn btn-ghost btn-sm">
-          Exercises
-        </Link>
+        <div className="flex items-center gap-1">
+          <Link href="/progress" className="btn btn-ghost btn-sm">
+            Progress
+          </Link>
+          <Link href="/exercises" className="btn btn-ghost btn-sm">
+            Exercises
+          </Link>
+        </div>
       </div>
 
       {active && (

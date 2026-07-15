@@ -74,7 +74,7 @@ export const NAV_ITEMS: NavItem[] = [
 // while you're on any of them.
 const MORE_ROUTES = ["/more", "/goals", "/settings", "/meals", "/history", "/plan"];
 // Sub-pages of the Training tab.
-const TRAINING_ROUTES = ["/training", "/routine", "/exercises", "/workout"];
+const TRAINING_ROUTES = ["/training", "/routine", "/exercises", "/workout", "/progress"];
 
 /** True when `href` is the active route for `pathname`. */
 export function isActive(href: string, pathname: string): boolean {
