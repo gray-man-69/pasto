@@ -5,9 +5,11 @@
 // routine; weekly volume is surfaced separately.)
 import type { PerformedSet, RoutineExercise, WorkoutSession } from "./types";
 
-/** Sets that count toward progression: completed, non-warmup, with reps. */
+/** Sets that count as performed work: any non-warmup set with reps entered.
+ * The ✓ "done" flag is only a live progress aid — a set you logged reps for
+ * still counts even if you never ticked it (that's what you did). */
 export function workingSets(sets: PerformedSet[]): PerformedSet[] {
-  return sets.filter((s) => s.done && s.type !== "warmup" && s.reps > 0);
+  return sets.filter((s) => s.type !== "warmup" && s.reps > 0);
 }
 
 export type Target = { weight: number; reps: number; addWeight: boolean; note: string };

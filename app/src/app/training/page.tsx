@@ -20,7 +20,7 @@ import {
 } from "@/lib/db";
 import { groupOfMuscle } from "@/lib/exercises";
 import { isBlockActive, mesoWeek } from "@/lib/mesocycle";
-import { sessionVolume } from "@/lib/progression";
+import { sessionVolume, workingSets } from "@/lib/progression";
 import type { Mesocycle, Routine, WorkoutSession } from "@/lib/types";
 
 function dayLabel(date: string): string {
@@ -269,7 +269,7 @@ function PastBlockRow({ b }: { b: Mesocycle }) {
 }
 
 function TrashRow({ s }: { s: WorkoutSession }) {
-  const sets = s.exercises.reduce((n, e) => n + e.sets.filter((x) => x.done).length, 0);
+  const sets = s.exercises.reduce((n, e) => n + workingSets(e.sets).length, 0);
   return (
     <li className="flex items-center gap-2 rounded-xl bg-base-200/40 px-3 py-2">
       <span className="min-w-0 flex-1">
@@ -328,7 +328,7 @@ function RoutineCard({ r }: { r: Routine }) {
 }
 
 function RecentRow({ s }: { s: WorkoutSession }) {
-  const sets = s.exercises.reduce((n, e) => n + e.sets.filter((x) => x.done).length, 0);
+  const sets = s.exercises.reduce((n, e) => n + workingSets(e.sets).length, 0);
   const vol = Math.round(sessionVolume(s));
   return (
     <li className="flex items-center gap-1 rounded-2xl border border-base-300/60 bg-base-100 pr-2 transition-colors hover:border-primary/40">
