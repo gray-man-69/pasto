@@ -1,6 +1,6 @@
 // Progress analytics over logged workouts: weekly volume per muscle (the
 // science-based hypertrophy driver) and per-exercise strength progression / PRs.
-import { e1rm, workingSets } from "./progression";
+import { e1rm, volumeOf, workingSets } from "./progression";
 import type { WorkoutSession } from "./types";
 
 /** Hard sets per muscle across the given sessions (each working set counts once
@@ -26,6 +26,8 @@ export type ExerciseProgress = {
   secondaryMuscles?: string[];
   bestE1rm: number; // PR: best estimated 1RM
   bestWeight: number; // heaviest weight lifted
+  bestVolume: number; // PR: best single-session volume (Σ weight × reps)
+  lastVolume: number; // volume in the most recent session that trained it
   lastDate: string;
   points: number[]; // best e1RM per session, oldest → newest (for a sparkline)
 };
@@ -40,6 +42,7 @@ export function exerciseProgress(sessions: WorkoutSession[]): ExerciseProgress[]
       if (!ws.length) continue;
       const bestE = Math.max(...ws.map((st) => e1rm(st.weight, st.reps)));
       const topW = Math.max(...ws.map((st) => st.weight));
+      const vol = volumeOf(ex.sets);
       let p = byId.get(ex.exerciseId);
       if (!p) {
         p = {
@@ -49,6 +52,8 @@ export function exerciseProgress(sessions: WorkoutSession[]): ExerciseProgress[]
           secondaryMuscles: ex.secondaryMuscles,
           bestE1rm: 0,
           bestWeight: 0,
+          bestVolume: 0,
+          lastVolume: 0,
           lastDate: s.date,
           points: [],
         };
@@ -57,6 +62,8 @@ export function exerciseProgress(sessions: WorkoutSession[]): ExerciseProgress[]
       p.points.push(bestE);
       p.bestE1rm = Math.max(p.bestE1rm, bestE);
       p.bestWeight = Math.max(p.bestWeight, topW);
+      p.bestVolume = Math.max(p.bestVolume, vol);
+      p.lastVolume = vol; // chrono order → ends on the most recent session
       p.lastDate = s.date;
       p.name = ex.name;
     }

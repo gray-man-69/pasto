@@ -238,17 +238,24 @@ export async function saveCustomExercise(ex: Exercise) {
 export function allSessions() {
   return db.sessions.orderBy("date").reverse().toArray();
 }
-/** Finished workouts, newest first (by end time). */
+/** Finished, non-trashed workouts, newest first (by end time). */
 export async function completedSessions(): Promise<WorkoutSession[]> {
   const all = await db.sessions.toArray();
-  return all.filter((s) => s.endedAt).sort((a, b) => (b.endedAt ?? 0) - (a.endedAt ?? 0));
+  return all
+    .filter((s) => s.endedAt && !s.deletedAt)
+    .sort((a, b) => (b.endedAt ?? 0) - (a.endedAt ?? 0));
+}
+/** Soft-deleted workouts, most-recently-deleted first (the Trash). */
+export async function trashedSessions(): Promise<WorkoutSession[]> {
+  const all = await db.sessions.toArray();
+  return all.filter((s) => s.deletedAt).sort((a, b) => (b.deletedAt ?? 0) - (a.deletedAt ?? 0));
 }
 export function getSession(id: number) {
   return db.sessions.get(id);
 }
-/** The in-progress workout, if any (no endedAt yet). */
+/** The in-progress workout, if any (not finished, not trashed). */
 export async function activeSession(): Promise<WorkoutSession | undefined> {
-  return db.sessions.filter((s) => !s.endedAt).last();
+  return db.sessions.filter((s) => !s.endedAt && !s.deletedAt).last();
 }
 export async function saveSession(session: WorkoutSession) {
   const existing = session.id != null ? await db.sessions.get(session.id) : undefined;
@@ -257,7 +264,23 @@ export async function saveSession(session: WorkoutSession) {
   touched();
   return id;
 }
+/** Soft delete: move a workout to the Trash (recoverable). It stays in the DB —
+ * and syncs — carrying a deletedAt, so an accidental delete is never lost. */
 export async function deleteSession(id: number) {
+  const s = await db.sessions.get(id);
+  if (!s) return;
+  await db.sessions.update(id, { deletedAt: now(), updatedAt: now() });
+  touched();
+}
+/** Bring a trashed workout back. */
+export async function restoreSession(id: number) {
+  const s = await db.sessions.get(id);
+  if (!s) return;
+  await db.sessions.update(id, { deletedAt: undefined, updatedAt: now() });
+  touched();
+}
+/** Permanently remove a workout (tombstoned so the deletion propagates). */
+export async function purgeSession(id: number) {
   const s = await db.sessions.get(id);
   await db.sessions.delete(id);
   if (s?.syncId) await tombstone(s.syncId);
@@ -316,7 +339,7 @@ export async function importData(
   if (data.app && data.app !== "pasto") throw new Error("Not a Pasto backup file.");
   await db.transaction(
     "rw",
-    [db.entries, db.goals, db.meals, db.customFoods, db.water, db.routines, db.sessions, db.customExercises],
+    [db.entries, db.goals, db.meals, db.customFoods, db.water, db.routines, db.sessions, db.customExercises, db.tombstones],
     async () => {
       if (data.goals?.length) await db.goals.bulkPut(data.goals);
       if (data.meals?.length) await db.meals.bulkPut(data.meals);
@@ -326,6 +349,18 @@ export async function importData(
       if (data.routines?.length) await db.routines.bulkPut(data.routines);
       if (data.sessions?.length) await db.sessions.bulkPut(data.sessions);
       if (data.customExercises?.length) await db.customExercises.bulkPut(data.customExercises);
+      // Restoring from a backup should resurrect data — so drop any tombstone
+      // for a record the backup brings back (otherwise sync would re-delete it).
+      const restored = [
+        ...(data.entries ?? []).map((e) => e.syncId),
+        ...(data.meals ?? []).map((m) => m.syncId),
+        ...(data.customFoods ?? []).map((f) => f.id),
+        ...(data.water ?? []).map((w) => w.syncId),
+        ...(data.routines ?? []).map((r) => r.syncId),
+        ...(data.sessions ?? []).map((s) => s.syncId),
+        ...(data.customExercises ?? []).map((x) => x.id),
+      ].filter((k): k is string => !!k);
+      if (restored.length) await db.tombstones.bulkDelete(restored);
     },
   );
   return {

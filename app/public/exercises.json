@@ -1,1 +1,903 @@
-{"source":"curated (Pasto)","license":"n/a","count":72,"exercises":[{"id":"barbell-bench-press","name":"Barbell Bench Press","category":"strength","equipment":"barbell","mechanic":"compound","primaryMuscles":["chest"],"secondaryMuscles":["triceps","shoulders"]},{"id":"incline-barbell-bench-press","name":"Incline Barbell Bench Press","category":"strength","equipment":"barbell","mechanic":"compound","primaryMuscles":["chest"],"secondaryMuscles":["shoulders","triceps"]},{"id":"dumbbell-bench-press","name":"Dumbbell Bench Press","category":"strength","equipment":"dumbbell","mechanic":"compound","primaryMuscles":["chest"],"secondaryMuscles":["triceps","shoulders"]},{"id":"incline-dumbbell-press","name":"Incline Dumbbell Press","category":"strength","equipment":"dumbbell","mechanic":"compound","primaryMuscles":["chest"],"secondaryMuscles":["shoulders","triceps"]},{"id":"machine-chest-press","name":"Machine Chest Press","category":"strength","equipment":"machine","mechanic":"compound","primaryMuscles":["chest"],"secondaryMuscles":["triceps"]},{"id":"chest-dip","name":"Chest Dip","category":"strength","equipment":"body only","mechanic":"compound","primaryMuscles":["chest"],"secondaryMuscles":["triceps"]},{"id":"push-up","name":"Push-Up","category":"strength","equipment":"body only","mechanic":"compound","primaryMuscles":["chest"],"secondaryMuscles":["triceps","shoulders"]},{"id":"dumbbell-fly","name":"Dumbbell Fly","category":"strength","equipment":"dumbbell","mechanic":"isolation","primaryMuscles":["chest"]},{"id":"cable-crossover","name":"Cable Crossover","category":"strength","equipment":"cable","mechanic":"isolation","primaryMuscles":["chest"]},{"id":"pec-deck","name":"Pec Deck","category":"strength","equipment":"machine","mechanic":"isolation","primaryMuscles":["chest"]},{"id":"deadlift","name":"Deadlift","category":"strength","equipment":"barbell","mechanic":"compound","primaryMuscles":["lower back","hamstrings"],"secondaryMuscles":["glutes","traps","lats","forearms"]},{"id":"sumo-deadlift","name":"Sumo Deadlift","category":"strength","equipment":"barbell","mechanic":"compound","primaryMuscles":["glutes","hamstrings"],"secondaryMuscles":["lower back","quadriceps"]},{"id":"bent-over-barbell-row","name":"Bent-Over Barbell Row","category":"strength","equipment":"barbell","mechanic":"compound","primaryMuscles":["middle back","lats"],"secondaryMuscles":["biceps"]},{"id":"pendlay-row","name":"Pendlay Row","category":"strength","equipment":"barbell","mechanic":"compound","primaryMuscles":["middle back","lats"],"secondaryMuscles":["biceps"]},{"id":"one-arm-dumbbell-row","name":"One-Arm Dumbbell Row","category":"strength","equipment":"dumbbell","mechanic":"compound","primaryMuscles":["lats","middle back"],"secondaryMuscles":["biceps"]},{"id":"pull-up","name":"Pull-Up","category":"strength","equipment":"body only","mechanic":"compound","primaryMuscles":["lats"],"secondaryMuscles":["biceps"]},{"id":"chin-up","name":"Chin-Up","category":"strength","equipment":"body only","mechanic":"compound","primaryMuscles":["lats","biceps"]},{"id":"lat-pulldown","name":"Lat Pulldown","category":"strength","equipment":"cable","mechanic":"compound","primaryMuscles":["lats"],"secondaryMuscles":["biceps"]},{"id":"seated-cable-row","name":"Seated Cable Row","category":"strength","equipment":"cable","mechanic":"compound","primaryMuscles":["middle back","lats"],"secondaryMuscles":["biceps"]},{"id":"t-bar-row","name":"T-Bar Row","category":"strength","equipment":"barbell","mechanic":"compound","primaryMuscles":["middle back","lats"],"secondaryMuscles":["biceps"]},{"id":"machine-row","name":"Machine Row","category":"strength","equipment":"machine","mechanic":"compound","primaryMuscles":["middle back","lats"],"secondaryMuscles":["biceps"]},{"id":"face-pull","name":"Face Pull","category":"strength","equipment":"cable","mechanic":"isolation","primaryMuscles":["shoulders"],"secondaryMuscles":["middle back"]},{"id":"back-extension","name":"Back Extension","category":"strength","equipment":"body only","mechanic":"isolation","primaryMuscles":["lower back"],"secondaryMuscles":["glutes","hamstrings"]},{"id":"overhead-press","name":"Overhead Press","category":"strength","equipment":"barbell","mechanic":"compound","primaryMuscles":["shoulders"],"secondaryMuscles":["triceps"]},{"id":"dumbbell-shoulder-press","name":"Dumbbell Shoulder Press","category":"strength","equipment":"dumbbell","mechanic":"compound","primaryMuscles":["shoulders"],"secondaryMuscles":["triceps"]},{"id":"arnold-press","name":"Arnold Press","category":"strength","equipment":"dumbbell","mechanic":"compound","primaryMuscles":["shoulders"],"secondaryMuscles":["triceps"]},{"id":"lateral-raise","name":"Lateral Raise","category":"strength","equipment":"dumbbell","mechanic":"isolation","primaryMuscles":["shoulders"]},{"id":"cable-lateral-raise","name":"Cable Lateral Raise","category":"strength","equipment":"cable","mechanic":"isolation","primaryMuscles":["shoulders"]},{"id":"front-raise","name":"Front Raise","category":"strength","equipment":"dumbbell","mechanic":"isolation","primaryMuscles":["shoulders"]},{"id":"reverse-pec-deck","name":"Reverse Pec Deck","category":"strength","equipment":"machine","mechanic":"isolation","primaryMuscles":["shoulders"]},{"id":"upright-row","name":"Upright Row","category":"strength","equipment":"barbell","mechanic":"compound","primaryMuscles":["shoulders","traps"]},{"id":"barbell-shrug","name":"Barbell Shrug","category":"strength","equipment":"barbell","mechanic":"isolation","primaryMuscles":["traps"]},{"id":"dumbbell-shrug","name":"Dumbbell Shrug","category":"strength","equipment":"dumbbell","mechanic":"isolation","primaryMuscles":["traps"]},{"id":"barbell-curl","name":"Barbell Curl","category":"strength","equipment":"barbell","mechanic":"isolation","primaryMuscles":["biceps"]},{"id":"dumbbell-curl","name":"Dumbbell Curl","category":"strength","equipment":"dumbbell","mechanic":"isolation","primaryMuscles":["biceps"]},{"id":"hammer-curl","name":"Hammer Curl","category":"strength","equipment":"dumbbell","mechanic":"isolation","primaryMuscles":["biceps","forearms"]},{"id":"incline-dumbbell-curl","name":"Incline Dumbbell Curl","category":"strength","equipment":"dumbbell","mechanic":"isolation","primaryMuscles":["biceps"]},{"id":"preacher-curl","name":"Preacher Curl","category":"strength","equipment":"barbell","mechanic":"isolation","primaryMuscles":["biceps"]},{"id":"cable-curl","name":"Cable Curl","category":"strength","equipment":"cable","mechanic":"isolation","primaryMuscles":["biceps"]},{"id":"concentration-curl","name":"Concentration Curl","category":"strength","equipment":"dumbbell","mechanic":"isolation","primaryMuscles":["biceps"]},{"id":"tricep-pushdown","name":"Tricep Pushdown","category":"strength","equipment":"cable","mechanic":"isolation","primaryMuscles":["triceps"]},{"id":"overhead-tricep-extension","name":"Overhead Tricep Extension","category":"strength","equipment":"dumbbell","mechanic":"isolation","primaryMuscles":["triceps"]},{"id":"skullcrusher","name":"Skullcrusher","category":"strength","equipment":"barbell","mechanic":"isolation","primaryMuscles":["triceps"]},{"id":"close-grip-bench-press","name":"Close-Grip Bench Press","category":"strength","equipment":"barbell","mechanic":"compound","primaryMuscles":["triceps"],"secondaryMuscles":["chest"]},{"id":"tricep-dip","name":"Tricep Dip","category":"strength","equipment":"body only","mechanic":"compound","primaryMuscles":["triceps"],"secondaryMuscles":["chest"]},{"id":"cable-overhead-extension","name":"Cable Overhead Extension","category":"strength","equipment":"cable","mechanic":"isolation","primaryMuscles":["triceps"]},{"id":"dumbbell-kickback","name":"Dumbbell Kickback","category":"strength","equipment":"dumbbell","mechanic":"isolation","primaryMuscles":["triceps"]},{"id":"barbell-squat","name":"Barbell Squat","category":"strength","equipment":"barbell","mechanic":"compound","primaryMuscles":["quadriceps","glutes"],"secondaryMuscles":["hamstrings","lower back"]},{"id":"front-squat","name":"Front Squat","category":"strength","equipment":"barbell","mechanic":"compound","primaryMuscles":["quadriceps"],"secondaryMuscles":["glutes"]},{"id":"leg-press","name":"Leg Press","category":"strength","equipment":"machine","mechanic":"compound","primaryMuscles":["quadriceps","glutes"],"secondaryMuscles":["hamstrings"]},{"id":"hack-squat","name":"Hack Squat","category":"strength","equipment":"machine","mechanic":"compound","primaryMuscles":["quadriceps"],"secondaryMuscles":["glutes"]},{"id":"bulgarian-split-squat","name":"Bulgarian Split Squat","category":"strength","equipment":"dumbbell","mechanic":"compound","primaryMuscles":["quadriceps","glutes"],"secondaryMuscles":["hamstrings"]},{"id":"walking-lunge","name":"Walking Lunge","category":"strength","equipment":"dumbbell","mechanic":"compound","primaryMuscles":["quadriceps","glutes"],"secondaryMuscles":["hamstrings"]},{"id":"goblet-squat","name":"Goblet Squat","category":"strength","equipment":"dumbbell","mechanic":"compound","primaryMuscles":["quadriceps","glutes"]},{"id":"step-up","name":"Step-Up","category":"strength","equipment":"dumbbell","mechanic":"compound","primaryMuscles":["quadriceps","glutes"]},{"id":"leg-extension","name":"Leg Extension","category":"strength","equipment":"machine","mechanic":"isolation","primaryMuscles":["quadriceps"]},{"id":"romanian-deadlift","name":"Romanian Deadlift","category":"strength","equipment":"barbell","mechanic":"compound","primaryMuscles":["hamstrings","glutes"],"secondaryMuscles":["lower back"]},{"id":"lying-leg-curl","name":"Lying Leg Curl","category":"strength","equipment":"machine","mechanic":"isolation","primaryMuscles":["hamstrings"]},{"id":"seated-leg-curl","name":"Seated Leg Curl","category":"strength","equipment":"machine","mechanic":"isolation","primaryMuscles":["hamstrings"]},{"id":"hip-thrust","name":"Hip Thrust","category":"strength","equipment":"barbell","mechanic":"compound","primaryMuscles":["glutes"],"secondaryMuscles":["hamstrings"]},{"id":"glute-bridge","name":"Glute Bridge","category":"strength","equipment":"barbell","mechanic":"isolation","primaryMuscles":["glutes"]},{"id":"standing-calf-raise","name":"Standing Calf Raise","category":"strength","equipment":"machine","mechanic":"isolation","primaryMuscles":["calves"]},{"id":"seated-calf-raise","name":"Seated Calf Raise","category":"strength","equipment":"machine","mechanic":"isolation","primaryMuscles":["calves"]},{"id":"plank","name":"Plank","category":"strength","equipment":"body only","mechanic":"isolation","primaryMuscles":["abdominals"]},{"id":"crunch","name":"Crunch","category":"strength","equipment":"body only","mechanic":"isolation","primaryMuscles":["abdominals"]},{"id":"sit-up","name":"Sit-Up","category":"strength","equipment":"body only","mechanic":"isolation","primaryMuscles":["abdominals"]},{"id":"hanging-leg-raise","name":"Hanging Leg Raise","category":"strength","equipment":"body only","mechanic":"isolation","primaryMuscles":["abdominals"]},{"id":"cable-crunch","name":"Cable Crunch","category":"strength","equipment":"cable","mechanic":"isolation","primaryMuscles":["abdominals"]},{"id":"russian-twist","name":"Russian Twist","category":"strength","equipment":"body only","mechanic":"isolation","primaryMuscles":["abdominals"]},{"id":"ab-wheel-rollout","name":"Ab Wheel Rollout","category":"strength","equipment":"other","mechanic":"isolation","primaryMuscles":["abdominals"]},{"id":"wrist-curl","name":"Wrist Curl","category":"strength","equipment":"dumbbell","mechanic":"isolation","primaryMuscles":["forearms"]},{"id":"reverse-curl","name":"Reverse Curl","category":"strength","equipment":"barbell","mechanic":"isolation","primaryMuscles":["forearms","biceps"]}]}
+{
+  "source": "curated (Pasto)",
+  "license": "n/a",
+  "count": 76,
+  "exercises": [
+    {
+      "id": "barbell-bench-press",
+      "name": "Barbell Bench Press",
+      "category": "strength",
+      "equipment": "barbell",
+      "mechanic": "compound",
+      "primaryMuscles": [
+        "chest"
+      ],
+      "secondaryMuscles": [
+        "triceps",
+        "shoulders"
+      ]
+    },
+    {
+      "id": "incline-barbell-bench-press",
+      "name": "Incline Barbell Bench Press",
+      "category": "strength",
+      "equipment": "barbell",
+      "mechanic": "compound",
+      "primaryMuscles": [
+        "chest"
+      ],
+      "secondaryMuscles": [
+        "shoulders",
+        "triceps"
+      ]
+    },
+    {
+      "id": "dumbbell-bench-press",
+      "name": "Dumbbell Bench Press",
+      "category": "strength",
+      "equipment": "dumbbell",
+      "mechanic": "compound",
+      "primaryMuscles": [
+        "chest"
+      ],
+      "secondaryMuscles": [
+        "triceps",
+        "shoulders"
+      ]
+    },
+    {
+      "id": "incline-dumbbell-press",
+      "name": "Incline Dumbbell Press",
+      "category": "strength",
+      "equipment": "dumbbell",
+      "mechanic": "compound",
+      "primaryMuscles": [
+        "chest"
+      ],
+      "secondaryMuscles": [
+        "shoulders",
+        "triceps"
+      ]
+    },
+    {
+      "id": "machine-chest-press",
+      "name": "Machine Chest Press",
+      "category": "strength",
+      "equipment": "machine",
+      "mechanic": "compound",
+      "primaryMuscles": [
+        "chest"
+      ],
+      "secondaryMuscles": [
+        "triceps"
+      ]
+    },
+    {
+      "id": "chest-dip",
+      "name": "Chest Dip",
+      "category": "strength",
+      "equipment": "body only",
+      "mechanic": "compound",
+      "primaryMuscles": [
+        "chest"
+      ],
+      "secondaryMuscles": [
+        "triceps"
+      ]
+    },
+    {
+      "id": "push-up",
+      "name": "Push-Up",
+      "category": "strength",
+      "equipment": "body only",
+      "mechanic": "compound",
+      "primaryMuscles": [
+        "chest"
+      ],
+      "secondaryMuscles": [
+        "triceps",
+        "shoulders"
+      ]
+    },
+    {
+      "id": "dumbbell-fly",
+      "name": "Dumbbell Fly",
+      "category": "strength",
+      "equipment": "dumbbell",
+      "mechanic": "isolation",
+      "primaryMuscles": [
+        "chest"
+      ]
+    },
+    {
+      "id": "cable-crossover",
+      "name": "Cable Crossover",
+      "category": "strength",
+      "equipment": "cable",
+      "mechanic": "isolation",
+      "primaryMuscles": [
+        "chest"
+      ]
+    },
+    {
+      "id": "pec-deck",
+      "name": "Pec Deck",
+      "category": "strength",
+      "equipment": "machine",
+      "mechanic": "isolation",
+      "primaryMuscles": [
+        "chest"
+      ]
+    },
+    {
+      "id": "deadlift",
+      "name": "Deadlift",
+      "category": "strength",
+      "equipment": "barbell",
+      "mechanic": "compound",
+      "primaryMuscles": [
+        "lower back",
+        "hamstrings"
+      ],
+      "secondaryMuscles": [
+        "glutes",
+        "traps",
+        "lats",
+        "forearms"
+      ]
+    },
+    {
+      "id": "sumo-deadlift",
+      "name": "Sumo Deadlift",
+      "category": "strength",
+      "equipment": "barbell",
+      "mechanic": "compound",
+      "primaryMuscles": [
+        "glutes",
+        "hamstrings"
+      ],
+      "secondaryMuscles": [
+        "lower back",
+        "quadriceps"
+      ]
+    },
+    {
+      "id": "bent-over-barbell-row",
+      "name": "Bent-Over Barbell Row",
+      "category": "strength",
+      "equipment": "barbell",
+      "mechanic": "compound",
+      "primaryMuscles": [
+        "middle back",
+        "lats"
+      ],
+      "secondaryMuscles": [
+        "biceps"
+      ]
+    },
+    {
+      "id": "pendlay-row",
+      "name": "Pendlay Row",
+      "category": "strength",
+      "equipment": "barbell",
+      "mechanic": "compound",
+      "primaryMuscles": [
+        "middle back",
+        "lats"
+      ],
+      "secondaryMuscles": [
+        "biceps"
+      ]
+    },
+    {
+      "id": "one-arm-dumbbell-row",
+      "name": "One-Arm Dumbbell Row",
+      "category": "strength",
+      "equipment": "dumbbell",
+      "mechanic": "compound",
+      "primaryMuscles": [
+        "lats",
+        "middle back"
+      ],
+      "secondaryMuscles": [
+        "biceps"
+      ]
+    },
+    {
+      "id": "dumbbell-pullover",
+      "name": "Dumbbell Pullover",
+      "category": "strength",
+      "equipment": "dumbbell",
+      "mechanic": "isolation",
+      "primaryMuscles": [
+        "lats"
+      ],
+      "secondaryMuscles": [
+        "chest"
+      ]
+    },
+    {
+      "id": "pull-up",
+      "name": "Pull-Up",
+      "category": "strength",
+      "equipment": "body only",
+      "mechanic": "compound",
+      "primaryMuscles": [
+        "lats"
+      ],
+      "secondaryMuscles": [
+        "biceps"
+      ]
+    },
+    {
+      "id": "chin-up",
+      "name": "Chin-Up",
+      "category": "strength",
+      "equipment": "body only",
+      "mechanic": "compound",
+      "primaryMuscles": [
+        "lats",
+        "biceps"
+      ]
+    },
+    {
+      "id": "lat-pulldown",
+      "name": "Lat Pulldown",
+      "category": "strength",
+      "equipment": "cable",
+      "mechanic": "compound",
+      "primaryMuscles": [
+        "lats"
+      ],
+      "secondaryMuscles": [
+        "biceps"
+      ]
+    },
+    {
+      "id": "seated-cable-row",
+      "name": "Seated Cable Row",
+      "category": "strength",
+      "equipment": "cable",
+      "mechanic": "compound",
+      "primaryMuscles": [
+        "middle back",
+        "lats"
+      ],
+      "secondaryMuscles": [
+        "biceps"
+      ]
+    },
+    {
+      "id": "straight-arm-pulldown",
+      "name": "Straight-Arm Pulldown",
+      "category": "strength",
+      "equipment": "cable",
+      "mechanic": "isolation",
+      "primaryMuscles": [
+        "lats"
+      ],
+      "secondaryMuscles": [
+        "triceps"
+      ]
+    },
+    {
+      "id": "t-bar-row",
+      "name": "T-Bar Row",
+      "category": "strength",
+      "equipment": "barbell",
+      "mechanic": "compound",
+      "primaryMuscles": [
+        "middle back",
+        "lats"
+      ],
+      "secondaryMuscles": [
+        "biceps"
+      ]
+    },
+    {
+      "id": "machine-row",
+      "name": "Machine Row",
+      "category": "strength",
+      "equipment": "machine",
+      "mechanic": "compound",
+      "primaryMuscles": [
+        "middle back",
+        "lats"
+      ],
+      "secondaryMuscles": [
+        "biceps"
+      ]
+    },
+    {
+      "id": "face-pull",
+      "name": "Face Pull",
+      "category": "strength",
+      "equipment": "cable",
+      "mechanic": "isolation",
+      "primaryMuscles": [
+        "shoulders"
+      ],
+      "secondaryMuscles": [
+        "middle back"
+      ]
+    },
+    {
+      "id": "back-extension",
+      "name": "Back Extension",
+      "category": "strength",
+      "equipment": "body only",
+      "mechanic": "isolation",
+      "primaryMuscles": [
+        "lower back"
+      ],
+      "secondaryMuscles": [
+        "glutes",
+        "hamstrings"
+      ]
+    },
+    {
+      "id": "overhead-press",
+      "name": "Overhead Press",
+      "category": "strength",
+      "equipment": "barbell",
+      "mechanic": "compound",
+      "primaryMuscles": [
+        "shoulders"
+      ],
+      "secondaryMuscles": [
+        "triceps"
+      ]
+    },
+    {
+      "id": "dumbbell-shoulder-press",
+      "name": "Dumbbell Shoulder Press",
+      "category": "strength",
+      "equipment": "dumbbell",
+      "mechanic": "compound",
+      "primaryMuscles": [
+        "shoulders"
+      ],
+      "secondaryMuscles": [
+        "triceps"
+      ]
+    },
+    {
+      "id": "machine-shoulder-press",
+      "name": "Machine Shoulder Press",
+      "category": "strength",
+      "equipment": "machine",
+      "mechanic": "compound",
+      "primaryMuscles": [
+        "shoulders"
+      ],
+      "secondaryMuscles": [
+        "triceps"
+      ]
+    },
+    {
+      "id": "arnold-press",
+      "name": "Arnold Press",
+      "category": "strength",
+      "equipment": "dumbbell",
+      "mechanic": "compound",
+      "primaryMuscles": [
+        "shoulders"
+      ],
+      "secondaryMuscles": [
+        "triceps"
+      ]
+    },
+    {
+      "id": "lateral-raise",
+      "name": "Lateral Raise",
+      "category": "strength",
+      "equipment": "dumbbell",
+      "mechanic": "isolation",
+      "primaryMuscles": [
+        "shoulders"
+      ]
+    },
+    {
+      "id": "cable-lateral-raise",
+      "name": "Cable Lateral Raise",
+      "category": "strength",
+      "equipment": "cable",
+      "mechanic": "isolation",
+      "primaryMuscles": [
+        "shoulders"
+      ]
+    },
+    {
+      "id": "front-raise",
+      "name": "Front Raise",
+      "category": "strength",
+      "equipment": "dumbbell",
+      "mechanic": "isolation",
+      "primaryMuscles": [
+        "shoulders"
+      ]
+    },
+    {
+      "id": "reverse-pec-deck",
+      "name": "Reverse Pec Deck",
+      "category": "strength",
+      "equipment": "machine",
+      "mechanic": "isolation",
+      "primaryMuscles": [
+        "shoulders"
+      ]
+    },
+    {
+      "id": "rear-delt-fly",
+      "name": "Rear Delt Fly",
+      "category": "strength",
+      "equipment": "dumbbell",
+      "mechanic": "isolation",
+      "primaryMuscles": [
+        "shoulders"
+      ],
+      "secondaryMuscles": []
+    },
+    {
+      "id": "upright-row",
+      "name": "Upright Row",
+      "category": "strength",
+      "equipment": "barbell",
+      "mechanic": "compound",
+      "primaryMuscles": [
+        "shoulders",
+        "traps"
+      ]
+    },
+    {
+      "id": "barbell-shrug",
+      "name": "Barbell Shrug",
+      "category": "strength",
+      "equipment": "barbell",
+      "mechanic": "isolation",
+      "primaryMuscles": [
+        "traps"
+      ]
+    },
+    {
+      "id": "dumbbell-shrug",
+      "name": "Dumbbell Shrug",
+      "category": "strength",
+      "equipment": "dumbbell",
+      "mechanic": "isolation",
+      "primaryMuscles": [
+        "traps"
+      ]
+    },
+    {
+      "id": "barbell-curl",
+      "name": "Barbell Curl",
+      "category": "strength",
+      "equipment": "barbell",
+      "mechanic": "isolation",
+      "primaryMuscles": [
+        "biceps"
+      ]
+    },
+    {
+      "id": "dumbbell-curl",
+      "name": "Dumbbell Curl",
+      "category": "strength",
+      "equipment": "dumbbell",
+      "mechanic": "isolation",
+      "primaryMuscles": [
+        "biceps"
+      ]
+    },
+    {
+      "id": "hammer-curl",
+      "name": "Hammer Curl",
+      "category": "strength",
+      "equipment": "dumbbell",
+      "mechanic": "isolation",
+      "primaryMuscles": [
+        "biceps",
+        "forearms"
+      ]
+    },
+    {
+      "id": "incline-dumbbell-curl",
+      "name": "Incline Dumbbell Curl",
+      "category": "strength",
+      "equipment": "dumbbell",
+      "mechanic": "isolation",
+      "primaryMuscles": [
+        "biceps"
+      ]
+    },
+    {
+      "id": "preacher-curl",
+      "name": "Preacher Curl",
+      "category": "strength",
+      "equipment": "barbell",
+      "mechanic": "isolation",
+      "primaryMuscles": [
+        "biceps"
+      ]
+    },
+    {
+      "id": "cable-curl",
+      "name": "Cable Curl",
+      "category": "strength",
+      "equipment": "cable",
+      "mechanic": "isolation",
+      "primaryMuscles": [
+        "biceps"
+      ]
+    },
+    {
+      "id": "concentration-curl",
+      "name": "Concentration Curl",
+      "category": "strength",
+      "equipment": "dumbbell",
+      "mechanic": "isolation",
+      "primaryMuscles": [
+        "biceps"
+      ]
+    },
+    {
+      "id": "tricep-pushdown",
+      "name": "Tricep Pushdown",
+      "category": "strength",
+      "equipment": "cable",
+      "mechanic": "isolation",
+      "primaryMuscles": [
+        "triceps"
+      ]
+    },
+    {
+      "id": "overhead-tricep-extension",
+      "name": "Overhead Tricep Extension",
+      "category": "strength",
+      "equipment": "dumbbell",
+      "mechanic": "isolation",
+      "primaryMuscles": [
+        "triceps"
+      ]
+    },
+    {
+      "id": "skullcrusher",
+      "name": "Skullcrusher",
+      "category": "strength",
+      "equipment": "barbell",
+      "mechanic": "isolation",
+      "primaryMuscles": [
+        "triceps"
+      ]
+    },
+    {
+      "id": "close-grip-bench-press",
+      "name": "Close-Grip Bench Press",
+      "category": "strength",
+      "equipment": "barbell",
+      "mechanic": "compound",
+      "primaryMuscles": [
+        "triceps"
+      ],
+      "secondaryMuscles": [
+        "chest"
+      ]
+    },
+    {
+      "id": "tricep-dip",
+      "name": "Tricep Dip",
+      "category": "strength",
+      "equipment": "body only",
+      "mechanic": "compound",
+      "primaryMuscles": [
+        "triceps"
+      ],
+      "secondaryMuscles": [
+        "chest"
+      ]
+    },
+    {
+      "id": "cable-overhead-extension",
+      "name": "Cable Overhead Extension",
+      "category": "strength",
+      "equipment": "cable",
+      "mechanic": "isolation",
+      "primaryMuscles": [
+        "triceps"
+      ]
+    },
+    {
+      "id": "dumbbell-kickback",
+      "name": "Dumbbell Kickback",
+      "category": "strength",
+      "equipment": "dumbbell",
+      "mechanic": "isolation",
+      "primaryMuscles": [
+        "triceps"
+      ]
+    },
+    {
+      "id": "barbell-squat",
+      "name": "Barbell Squat",
+      "category": "strength",
+      "equipment": "barbell",
+      "mechanic": "compound",
+      "primaryMuscles": [
+        "quadriceps",
+        "glutes"
+      ],
+      "secondaryMuscles": [
+        "hamstrings",
+        "lower back"
+      ]
+    },
+    {
+      "id": "front-squat",
+      "name": "Front Squat",
+      "category": "strength",
+      "equipment": "barbell",
+      "mechanic": "compound",
+      "primaryMuscles": [
+        "quadriceps"
+      ],
+      "secondaryMuscles": [
+        "glutes"
+      ]
+    },
+    {
+      "id": "leg-press",
+      "name": "Leg Press",
+      "category": "strength",
+      "equipment": "machine",
+      "mechanic": "compound",
+      "primaryMuscles": [
+        "quadriceps",
+        "glutes"
+      ],
+      "secondaryMuscles": [
+        "hamstrings"
+      ]
+    },
+    {
+      "id": "hack-squat",
+      "name": "Hack Squat",
+      "category": "strength",
+      "equipment": "machine",
+      "mechanic": "compound",
+      "primaryMuscles": [
+        "quadriceps"
+      ],
+      "secondaryMuscles": [
+        "glutes"
+      ]
+    },
+    {
+      "id": "bulgarian-split-squat",
+      "name": "Bulgarian Split Squat",
+      "category": "strength",
+      "equipment": "dumbbell",
+      "mechanic": "compound",
+      "primaryMuscles": [
+        "quadriceps",
+        "glutes"
+      ],
+      "secondaryMuscles": [
+        "hamstrings"
+      ]
+    },
+    {
+      "id": "walking-lunge",
+      "name": "Walking Lunge",
+      "category": "strength",
+      "equipment": "dumbbell",
+      "mechanic": "compound",
+      "primaryMuscles": [
+        "quadriceps",
+        "glutes"
+      ],
+      "secondaryMuscles": [
+        "hamstrings"
+      ]
+    },
+    {
+      "id": "goblet-squat",
+      "name": "Goblet Squat",
+      "category": "strength",
+      "equipment": "dumbbell",
+      "mechanic": "compound",
+      "primaryMuscles": [
+        "quadriceps",
+        "glutes"
+      ]
+    },
+    {
+      "id": "step-up",
+      "name": "Step-Up",
+      "category": "strength",
+      "equipment": "dumbbell",
+      "mechanic": "compound",
+      "primaryMuscles": [
+        "quadriceps",
+        "glutes"
+      ]
+    },
+    {
+      "id": "leg-extension",
+      "name": "Leg Extension",
+      "category": "strength",
+      "equipment": "machine",
+      "mechanic": "isolation",
+      "primaryMuscles": [
+        "quadriceps"
+      ]
+    },
+    {
+      "id": "romanian-deadlift",
+      "name": "Romanian Deadlift",
+      "category": "strength",
+      "equipment": "barbell",
+      "mechanic": "compound",
+      "primaryMuscles": [
+        "hamstrings",
+        "glutes"
+      ],
+      "secondaryMuscles": [
+        "lower back"
+      ]
+    },
+    {
+      "id": "lying-leg-curl",
+      "name": "Lying Leg Curl",
+      "category": "strength",
+      "equipment": "machine",
+      "mechanic": "isolation",
+      "primaryMuscles": [
+        "hamstrings"
+      ]
+    },
+    {
+      "id": "seated-leg-curl",
+      "name": "Seated Leg Curl",
+      "category": "strength",
+      "equipment": "machine",
+      "mechanic": "isolation",
+      "primaryMuscles": [
+        "hamstrings"
+      ]
+    },
+    {
+      "id": "hip-thrust",
+      "name": "Hip Thrust",
+      "category": "strength",
+      "equipment": "barbell",
+      "mechanic": "compound",
+      "primaryMuscles": [
+        "glutes"
+      ],
+      "secondaryMuscles": [
+        "hamstrings"
+      ]
+    },
+    {
+      "id": "glute-bridge",
+      "name": "Glute Bridge",
+      "category": "strength",
+      "equipment": "barbell",
+      "mechanic": "isolation",
+      "primaryMuscles": [
+        "glutes"
+      ]
+    },
+    {
+      "id": "standing-calf-raise",
+      "name": "Standing Calf Raise",
+      "category": "strength",
+      "equipment": "machine",
+      "mechanic": "isolation",
+      "primaryMuscles": [
+        "calves"
+      ]
+    },
+    {
+      "id": "seated-calf-raise",
+      "name": "Seated Calf Raise",
+      "category": "strength",
+      "equipment": "machine",
+      "mechanic": "isolation",
+      "primaryMuscles": [
+        "calves"
+      ]
+    },
+    {
+      "id": "plank",
+      "name": "Plank",
+      "category": "strength",
+      "equipment": "body only",
+      "mechanic": "isolation",
+      "primaryMuscles": [
+        "abdominals"
+      ]
+    },
+    {
+      "id": "crunch",
+      "name": "Crunch",
+      "category": "strength",
+      "equipment": "body only",
+      "mechanic": "isolation",
+      "primaryMuscles": [
+        "abdominals"
+      ]
+    },
+    {
+      "id": "sit-up",
+      "name": "Sit-Up",
+      "category": "strength",
+      "equipment": "body only",
+      "mechanic": "isolation",
+      "primaryMuscles": [
+        "abdominals"
+      ]
+    },
+    {
+      "id": "hanging-leg-raise",
+      "name": "Hanging Leg Raise",
+      "category": "strength",
+      "equipment": "body only",
+      "mechanic": "isolation",
+      "primaryMuscles": [
+        "abdominals"
+      ]
+    },
+    {
+      "id": "cable-crunch",
+      "name": "Cable Crunch",
+      "category": "strength",
+      "equipment": "cable",
+      "mechanic": "isolation",
+      "primaryMuscles": [
+        "abdominals"
+      ]
+    },
+    {
+      "id": "russian-twist",
+      "name": "Russian Twist",
+      "category": "strength",
+      "equipment": "body only",
+      "mechanic": "isolation",
+      "primaryMuscles": [
+        "abdominals"
+      ]
+    },
+    {
+      "id": "ab-wheel-rollout",
+      "name": "Ab Wheel Rollout",
+      "category": "strength",
+      "equipment": "other",
+      "mechanic": "isolation",
+      "primaryMuscles": [
+        "abdominals"
+      ]
+    },
+    {
+      "id": "wrist-curl",
+      "name": "Wrist Curl",
+      "category": "strength",
+      "equipment": "dumbbell",
+      "mechanic": "isolation",
+      "primaryMuscles": [
+        "forearms"
+      ]
+    },
+    {
+      "id": "reverse-curl",
+      "name": "Reverse Curl",
+      "category": "strength",
+      "equipment": "barbell",
+      "mechanic": "isolation",
+      "primaryMuscles": [
+        "forearms",
+        "biceps"
+      ]
+    }
+  ]
+}

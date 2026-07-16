@@ -73,3 +73,24 @@ export function volumeOf(sets: PerformedSet[]): number {
 export function sessionVolume(session: WorkoutSession): number {
   return session.exercises.reduce((v, e) => v + volumeOf(e.sets), 0);
 }
+
+/** Previous and best working-set volume for one exercise across history.
+ * `last` = the most recent session that trained it; `best` = its PR volume. */
+export function volumeStatsForExercise(
+  sessions: WorkoutSession[],
+  exerciseId: string,
+): { last: number; best: number } {
+  // completedSessions() gives newest-first; use endedAt to be order-independent.
+  const withEx = sessions
+    .map((s) => ({
+      at: s.endedAt ?? 0,
+      vol: s.exercises
+        .filter((e) => e.exerciseId === exerciseId)
+        .reduce((v, e) => v + volumeOf(e.sets), 0),
+    }))
+    .filter((x) => x.vol > 0);
+  if (!withEx.length) return { last: 0, best: 0 };
+  const last = withEx.reduce((a, b) => (b.at > a.at ? b : a)).vol;
+  const best = Math.max(...withEx.map((x) => x.vol));
+  return { last, best };
+}

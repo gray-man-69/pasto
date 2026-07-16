@@ -107,7 +107,9 @@ export interface Water extends Synced {
 // ---- Training --------------------------------------------------------------
 
 export type WeightUnit = "kg" | "lb";
-export type SetType = "normal" | "warmup";
+// "warmup" sets don't count toward working volume; "dropset" does (it's a
+// working set taken past failure by dropping weight).
+export type SetType = "normal" | "warmup" | "dropset";
 
 // An exercise-library record. Bundled ones come from the public-domain
 // free-exercise-db (app/public/exercises.json); custom ones live in IndexedDB
@@ -139,6 +141,7 @@ export interface RoutineExercise {
   weight: number; // current working weight, in `weightUnit`
   weightUnit: WeightUnit;
   increment: number; // load added on a successful double-progression step
+  superset?: string; // group id: adjacent exercises sharing it are a superset
 }
 
 // A routine = one day of the split (e.g. "Push A"). User data → syncs.
@@ -163,7 +166,9 @@ export interface SessionExercise {
   name: string; // snapshot
   primaryMuscles?: string[]; // snapshot → thumbnails + volume
   secondaryMuscles?: string[];
-  note?: string; // this session's double-progression target hint
+  note?: string; // this session's double-progression target hint (auto)
+  userNote?: string; // free-text note the user adds during the workout
+  superset?: string; // group id: adjacent exercises sharing it are a superset
   lastSummary?: string; // previous session reference, e.g. "20 kg × 8, 8, 7"
   sets: PerformedSet[];
 }
@@ -177,5 +182,6 @@ export interface WorkoutSession extends Synced {
   routineName?: string;
   startedAt?: number;
   endedAt?: number; // set when finished; absent = in progress
+  deletedAt?: number; // soft-deleted → in Trash, recoverable (absent = live)
   exercises: SessionExercise[];
 }

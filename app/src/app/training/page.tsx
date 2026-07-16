@@ -2,7 +2,15 @@
 
 import Link from "next/link";
 import { useLiveQuery } from "dexie-react-hooks";
-import { activeSession, allRoutines, completedSessions, deleteSession } from "@/lib/db";
+import {
+  activeSession,
+  allRoutines,
+  completedSessions,
+  deleteSession,
+  purgeSession,
+  restoreSession,
+  trashedSessions,
+} from "@/lib/db";
 import { groupOfMuscle } from "@/lib/exercises";
 import { sessionVolume } from "@/lib/progression";
 import type { Routine, WorkoutSession } from "@/lib/types";
@@ -19,6 +27,7 @@ export default function TrainingPage() {
   const routines = useLiveQuery(() => allRoutines(), []);
   const active = useLiveQuery(() => activeSession(), []);
   const recent = useLiveQuery(() => completedSessions(), []);
+  const trashed = useLiveQuery(() => trashedSessions(), []);
 
   return (
     <div className="mx-auto flex w-full max-w-xl flex-col gap-4">
@@ -85,7 +94,49 @@ export default function TrainingPage() {
           </ul>
         </div>
       )}
+
+      {trashed && trashed.length > 0 && (
+        <details className="mt-2 rounded-2xl border border-base-300/60 bg-base-100/50">
+          <summary className="cursor-pointer list-none px-4 py-2.5 text-xs font-semibold uppercase tracking-wide text-base-content/40">
+            🗑 Recently deleted · {trashed.length}
+          </summary>
+          <ul className="flex flex-col gap-1.5 px-2 pb-2">
+            {trashed.map((s) => (
+              <TrashRow key={s.id} s={s} />
+            ))}
+          </ul>
+        </details>
+      )}
     </div>
+  );
+}
+
+function TrashRow({ s }: { s: WorkoutSession }) {
+  const sets = s.exercises.reduce((n, e) => n + e.sets.filter((x) => x.done).length, 0);
+  return (
+    <li className="flex items-center gap-2 rounded-xl bg-base-200/40 px-3 py-2">
+      <span className="min-w-0 flex-1">
+        <span className="block truncate text-sm">{s.routineName ?? "Workout"}</span>
+        <span className="block text-xs text-base-content/40">
+          {dayLabel(s.date)} · {sets} sets
+        </span>
+      </span>
+      <button
+        onClick={() => s.id != null && restoreSession(s.id)}
+        className="shrink-0 rounded-full bg-primary/15 px-3 py-1 text-xs font-semibold text-primary hover:bg-primary/25"
+      >
+        Restore
+      </button>
+      <button
+        onClick={() => {
+          if (s.id != null && confirm("Permanently delete this workout? This cannot be undone.")) purgeSession(s.id);
+        }}
+        className="grid h-7 w-7 shrink-0 place-items-center rounded-full text-base-content/30 hover:bg-base-300/60 hover:text-error"
+        aria-label="Delete permanently"
+      >
+        ✕
+      </button>
+    </li>
   );
 }
 

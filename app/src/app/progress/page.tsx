@@ -113,6 +113,10 @@ function ProgRow({ p }: { p: ExerciseProgress }) {
         <div className="mt-0.5 text-[11px] text-base-content/50">
           PR {Math.round(p.bestE1rm)} kg e1RM · top {p.bestWeight} kg
         </div>
+        <div className="text-[11px] tabular-nums text-base-content/40">
+          Vol last {Math.round(p.lastVolume).toLocaleString()} · best{" "}
+          {Math.round(p.bestVolume).toLocaleString()} kg
+        </div>
       </div>
       <MiniSpark points={p.points} />
     </li>
