@@ -102,6 +102,8 @@ function buildSessionExercise(ex: Exercise, completed: WorkoutSession[]): Sessio
 
 // normal → warmup → dropset → normal
 const NEXT_TYPE: Record<SetType, SetType> = { normal: "warmup", warmup: "dropset", dropset: "normal" };
+// RIR pill cycles: unset → 0 → 1 → 2 → 3 → 4 → unset
+const RIR_CYCLE: (number | undefined)[] = [undefined, 0, 1, 2, 3, 4];
 
 export default function WorkoutPage() {
   const router = useRouter();
@@ -228,6 +230,22 @@ export default function WorkoutPage() {
           i !== ei ? e : { ...e, sets: e.sets.map((s, j) => (j === si ? { ...s, ...patch } : s)) },
         ),
       save,
+    );
+  }
+  function cycleRir(ei: number, si: number) {
+    patchExercises((list) =>
+      list.map((e, i) =>
+        i !== ei
+          ? e
+          : {
+              ...e,
+              sets: e.sets.map((s, j) => {
+                if (j !== si) return s;
+                const idx = RIR_CYCLE.findIndex((v) => v === s.rir);
+                return { ...s, rir: RIR_CYCLE[(idx + 1) % RIR_CYCLE.length] };
+              }),
+            },
+      ),
     );
   }
   function cycleSetType(ei: number, si: number) {
@@ -654,22 +672,22 @@ export default function WorkoutPage() {
                       onBlur={flushSave}
                       className="input input-bordered input-xs w-12 text-right tabular-nums"
                     />
-                    <select
-                      value={s.rir ?? ""}
-                      onChange={(e) =>
-                        editSet(ei, si, { rir: e.target.value === "" ? undefined : Number(e.target.value) }, true)
-                      }
-                      className="select select-ghost select-xs w-14 px-1 text-xs text-base-content/60"
-                      aria-label="Reps in reserve"
-                      title="Reps in reserve — how many more you could have done (0 = to failure)"
+                    <button
+                      onClick={() => cycleRir(ei, si)}
+                      className={`h-7 shrink-0 rounded-full px-2 text-[11px] font-medium tabular-nums transition-colors ${
+                        s.rir == null
+                          ? "border border-dashed border-base-300 text-base-content/40"
+                          : s.rir <= 1
+                            ? "bg-primary/15 text-primary"
+                            : s.rir >= 4
+                              ? "bg-amber-400/15 text-amber-500"
+                              : "bg-base-200 text-base-content/70"
+                      }`}
+                      aria-label="Reps in reserve — tap to set effort"
+                      title="Reps in reserve — how many more reps you had (0 = to failure). Tap to cycle."
                     >
-                      <option value="">RIR</option>
-                      <option value="0">0</option>
-                      <option value="1">1</option>
-                      <option value="2">2</option>
-                      <option value="3">3</option>
-                      <option value="4">4+</option>
-                    </select>
+                      {s.rir == null ? "RIR" : `RIR ${s.rir}${s.rir >= 4 ? "+" : ""}`}
+                    </button>
                     <button
                       onClick={() => editSet(ei, si, { done: !s.done }, true)}
                       className={`ml-auto grid h-7 w-7 place-items-center rounded-full ${
