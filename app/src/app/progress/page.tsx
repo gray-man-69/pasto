@@ -213,7 +213,7 @@ export default function ProgressPage() {
           {/* Per-exercise PRs + trend */}
           <section className="flex flex-col gap-2">
             <h2 className="px-1 text-xs font-semibold uppercase tracking-wide text-base-content/40">
-              Exercises · best est. 1RM
+              Exercises · PR &amp; volume
             </h2>
             <ul className="flex flex-col gap-1.5">
               {progress.map((p) => (
@@ -285,14 +285,13 @@ function ProgRow({ p }: { p: ExerciseProgress }) {
         <div className="min-w-0 flex-1">
           <div className="truncate font-medium">{p.name}</div>
           <div className="mt-0.5 text-[11px] text-base-content/50">
-            PR {Math.round(p.bestE1rm)} kg e1RM · top {p.bestWeight} kg
+            PR {p.bestWeight} kg · best vol {Math.round(p.bestVolume).toLocaleString()} kg
           </div>
           <div className="text-[11px] tabular-nums text-base-content/40">
-            Vol last {Math.round(p.lastVolume).toLocaleString()} · best{" "}
-            {Math.round(p.bestVolume).toLocaleString()} kg
+            Vol last {Math.round(p.lastVolume).toLocaleString()} kg
           </div>
         </div>
-        <MiniSpark points={p.points} />
+        <MiniSpark points={p.volumes} />
         {canChart && (
           <svg viewBox="0 0 24 24" className={`h-4 w-4 shrink-0 text-base-content/30 transition-transform ${open ? "rotate-90" : ""}`} fill="none" stroke="currentColor" strokeWidth={2}>
             <path d="M9 6l6 6-6 6" strokeLinecap="round" strokeLinejoin="round" />
@@ -304,27 +303,23 @@ function ProgRow({ p }: { p: ExerciseProgress }) {
   );
 }
 
-type Metric = "weight" | "e1rm" | "volume";
+type Metric = "volume" | "weight";
 
 function ExerciseDetail({ p }: { p: ExerciseProgress }) {
-  const [metric, setMetric] = useState<Metric>("weight");
-  const series = metric === "e1rm" ? p.points : metric === "volume" ? p.volumes : p.weights;
+  const [metric, setMetric] = useState<Metric>("volume");
+  const series = metric === "volume" ? p.volumes : p.weights;
   const caption: Record<Metric, string> = {
+    volume: "Total work per session (Σ weight × reps) — your growth signal over time.",
     weight: "Heaviest weight lifted each session — your working-weight PR over time.",
-    e1rm: "Estimated 1-rep max from your best set (Epley). A strength number — best for heavy lifts, less meaningful for light isolation.",
-    volume: "Total work per session (Σ weight × reps) — good for tracking isolation.",
   };
   return (
     <div className="border-t border-base-300/60 px-3 py-3">
       <div className="mb-2 flex items-center gap-1.5">
-        <MetricChip active={metric === "weight"} onClick={() => setMetric("weight")}>
-          Top weight
-        </MetricChip>
-        <MetricChip active={metric === "e1rm"} onClick={() => setMetric("e1rm")}>
-          Est. 1RM
-        </MetricChip>
         <MetricChip active={metric === "volume"} onClick={() => setMetric("volume")}>
           Volume
+        </MetricChip>
+        <MetricChip active={metric === "weight"} onClick={() => setMetric("weight")}>
+          Top weight (PR)
         </MetricChip>
         <span className="ml-auto text-[10px] font-medium tracking-wide text-base-content/35">kg</span>
       </div>
