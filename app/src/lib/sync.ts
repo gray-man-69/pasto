@@ -12,6 +12,7 @@ import type {
   Goals,
   LogEntry,
   Meal,
+  Mesocycle,
   Routine,
   Tombstone,
   Water,
@@ -28,6 +29,7 @@ function emptyState(): SyncState {
     routines: [],
     sessions: [],
     customExercises: [],
+    mesocycle: null,
     tombstones: [],
   };
 }
@@ -42,6 +44,7 @@ function normalize(d: Partial<SyncState> | undefined): SyncState {
     routines: d?.routines ?? [],
     sessions: d?.sessions ?? [],
     customExercises: d?.customExercises ?? [],
+    mesocycle: d?.mesocycle ?? null,
     tombstones: d?.tombstones ?? [],
   };
 }
@@ -86,6 +89,9 @@ export function mergeState(local: SyncState, remote: SyncState): SyncState {
   const goalCandidates = [local.goals, remote.goals].filter(Boolean) as Goals[];
   goalCandidates.sort((a, b) => (b.updatedAt ?? 0) - (a.updatedAt ?? 0));
 
+  const mesoCandidates = [local.mesocycle, remote.mesocycle].filter(Boolean) as Mesocycle[];
+  mesoCandidates.sort((a, b) => (b.updatedAt ?? 0) - (a.updatedAt ?? 0));
+
   return {
     goals: goalCandidates[0] ?? null,
     entries,
@@ -95,6 +101,7 @@ export function mergeState(local: SyncState, remote: SyncState): SyncState {
     routines,
     sessions,
     customExercises,
+    mesocycle: mesoCandidates[0] ?? null,
     tombstones,
   };
 }

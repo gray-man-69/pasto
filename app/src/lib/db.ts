@@ -9,6 +9,7 @@ import type {
   Meal,
   MealComponent,
   MealSlot,
+  Mesocycle,
   Nutrients,
   Routine,
   Unit,
@@ -38,6 +39,7 @@ class PastoDB extends Dexie {
   routines!: Table<Routine, number>;
   sessions!: Table<WorkoutSession, number>;
   customExercises!: Table<Exercise, string>;
+  mesocycle!: Table<Mesocycle, number>;
 
   constructor() {
     super("pasto");
@@ -107,6 +109,20 @@ class PastoDB extends Dexie {
       routines: "++id, order, syncId",
       sessions: "++id, date, routineId, syncId",
       customExercises: "id, name, syncId",
+    });
+    // v7 adds the training block (mesocycle) — a single active block that
+    // auto-ramps weekly volume and deloads. Stored as a singleton (id 1).
+    this.version(7).stores({
+      entries: "++id, date, foodId, mealId, syncId",
+      goals: "id",
+      meals: "++id, name, syncId",
+      customFoods: "id, name, basedOn",
+      tombstones: "syncId",
+      water: "date, syncId",
+      routines: "++id, order, syncId",
+      sessions: "++id, date, routineId, syncId",
+      customExercises: "id, name, syncId",
+      mesocycle: "id",
     });
   }
 }
@@ -287,6 +303,25 @@ export async function purgeSession(id: number) {
   touched();
 }
 
+// ---- Mesocycle (single active training block) ------------------------------
+
+export function getMesocycle() {
+  return db.mesocycle.get(1);
+}
+export async function saveMesocycle(meso: Omit<Mesocycle, "id">) {
+  const existing = await db.mesocycle.get(1);
+  const syncId = existing?.syncId ?? meso.syncId ?? "mesocycle";
+  await db.mesocycle.put({ ...meso, id: 1, syncId, updatedAt: now() });
+  touched();
+}
+/** End the current block (kept, but no longer active). */
+export async function endMesocycle() {
+  const m = await db.mesocycle.get(1);
+  if (!m) return;
+  await db.mesocycle.update(1, { endedAt: now(), updatedAt: now() });
+  touched();
+}
+
 // ---- Backup & restore ------------------------------------------------------
 // Local-first data lives only in this browser's IndexedDB. Export writes a JSON
 // snapshot the user can save anywhere; import merges one back in (idempotent —
@@ -304,10 +339,11 @@ export interface Backup {
   routines?: Routine[];
   sessions?: WorkoutSession[];
   customExercises?: Exercise[];
+  mesocycle?: Mesocycle[];
 }
 
 export async function exportData(): Promise<Backup> {
-  const [entries, goals, meals, customFoods, water, routines, sessions, customExercises] =
+  const [entries, goals, meals, customFoods, water, routines, sessions, customExercises, mesocycle] =
     await Promise.all([
       db.entries.toArray(),
       db.goals.toArray(),
@@ -317,10 +353,11 @@ export async function exportData(): Promise<Backup> {
       db.routines.toArray(),
       db.sessions.toArray(),
       db.customExercises.toArray(),
+      db.mesocycle.toArray(),
     ]);
   return {
     app: "pasto",
-    version: 4,
+    version: 5,
     exportedAt: new Date().toISOString(),
     entries,
     goals,
@@ -330,6 +367,7 @@ export async function exportData(): Promise<Backup> {
     routines,
     sessions,
     customExercises,
+    mesocycle,
   };
 }
 
@@ -339,7 +377,7 @@ export async function importData(
   if (data.app && data.app !== "pasto") throw new Error("Not a Pasto backup file.");
   await db.transaction(
     "rw",
-    [db.entries, db.goals, db.meals, db.customFoods, db.water, db.routines, db.sessions, db.customExercises, db.tombstones],
+    [db.entries, db.goals, db.meals, db.customFoods, db.water, db.routines, db.sessions, db.customExercises, db.mesocycle, db.tombstones],
     async () => {
       if (data.goals?.length) await db.goals.bulkPut(data.goals);
       if (data.meals?.length) await db.meals.bulkPut(data.meals);
@@ -349,6 +387,7 @@ export async function importData(
       if (data.routines?.length) await db.routines.bulkPut(data.routines);
       if (data.sessions?.length) await db.sessions.bulkPut(data.sessions);
       if (data.customExercises?.length) await db.customExercises.bulkPut(data.customExercises);
+      if (data.mesocycle?.length) await db.mesocycle.bulkPut(data.mesocycle);
       // Restoring from a backup should resurrect data — so drop any tombstone
       // for a record the backup brings back (otherwise sync would re-delete it).
       const restored = [
@@ -530,11 +569,12 @@ export interface SyncState {
   routines: Routine[];
   sessions: WorkoutSession[];
   customExercises: Exercise[];
+  mesocycle: Mesocycle | null;
   tombstones: Tombstone[];
 }
 
 export async function getSyncState(): Promise<SyncState> {
-  const [goals, entries, meals, customFoods, water, routines, sessions, customExercises, tombstones] =
+  const [goals, entries, meals, customFoods, water, routines, sessions, customExercises, mesocycle, tombstones] =
     await Promise.all([
       db.goals.get(1),
       db.entries.toArray(),
@@ -544,9 +584,10 @@ export async function getSyncState(): Promise<SyncState> {
       db.routines.toArray(),
       db.sessions.toArray(),
       db.customExercises.toArray(),
+      db.mesocycle.get(1),
       db.tombstones.toArray(),
     ]);
-  return { goals: goals ?? null, entries, meals, customFoods, water, routines, sessions, customExercises, tombstones };
+  return { goals: goals ?? null, entries, meals, customFoods, water, routines, sessions, customExercises, mesocycle: mesocycle ?? null, tombstones };
 }
 
 /** Write a merged state into the local DB. Loss-averse: upserts every alive
@@ -557,10 +598,11 @@ export async function applySyncState(s: SyncState): Promise<void> {
   const dead = new Set(s.tombstones.map((t) => t.syncId));
   await db.transaction(
     "rw",
-    [db.entries, db.goals, db.meals, db.customFoods, db.water, db.routines, db.sessions, db.customExercises, db.tombstones],
+    [db.entries, db.goals, db.meals, db.customFoods, db.water, db.routines, db.sessions, db.customExercises, db.mesocycle, db.tombstones],
     async () => {
       if (s.tombstones.length) await db.tombstones.bulkPut(s.tombstones);
       if (s.goals) await db.goals.put({ ...s.goals, id: 1 });
+      if (s.mesocycle) await db.mesocycle.put({ ...s.mesocycle, id: 1 });
 
       for (const w of s.water) {
         if (!w.syncId || dead.has(w.syncId)) continue;

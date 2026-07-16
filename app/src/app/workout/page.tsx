@@ -9,12 +9,14 @@ import {
   activeSession,
   completedSessions,
   deleteSession,
+  getMesocycle,
   getRoutine,
   getSession,
   localDate,
   saveSession,
 } from "@/lib/db";
 import { defaultRoutineExercise } from "@/lib/exercises";
+import { DELOAD_LOAD_FACTOR, isBlockActive, mesoWeek, rampedSets } from "@/lib/mesocycle";
 import {
   lastForExercise,
   nextTarget,
@@ -25,6 +27,7 @@ import {
 } from "@/lib/progression";
 import type {
   Exercise,
+  Mesocycle,
   PerformedSet,
   RoutineExercise,
   SessionExercise,
@@ -75,6 +78,7 @@ export default function WorkoutPage() {
   const router = useRouter();
   const [session, setSession] = useState<WorkoutSession | null>(null);
   const [history, setHistory] = useState<WorkoutSession[]>([]);
+  const [meso, setMeso] = useState<Mesocycle | null>(null);
   const [ready, setReady] = useState(false);
   const [menuFor, setMenuFor] = useState<number | null>(null);
   const [noteFor, setNoteFor] = useState<number | null>(null);
@@ -91,6 +95,8 @@ export default function WorkoutPage() {
       const routineRaw = params.get("routine");
       const completed = await completedSessions();
       setHistory(completed);
+      const mesoRec = await getMesocycle();
+      setMeso(mesoRec ?? null);
 
       if (idRaw) {
         setSession((await getSession(Number(idRaw))) ?? null);
@@ -110,23 +116,31 @@ export default function WorkoutPage() {
           setReady(true);
           return;
         }
+        const today = localDate();
+        const activeMeso = mesoRec && isBlockActive(mesoRec, today) ? mesoRec : null;
+        const phase = activeMeso ? mesoWeek(activeMeso, today).phase : null;
         const exercises: SessionExercise[] = routine.exercises.map((re) => {
           const last = lastForExercise(completed, re.exerciseId);
           const t = nextTarget(re, last);
-          const sets: PerformedSet[] = Array.from({ length: Math.max(1, re.targetSets) }, () => ({
-            weight: t.weight,
+          // Mesocycle: ramp the set count each week; deload halves volume + eases load.
+          const setCount = activeMeso ? rampedSets(re.targetSets, activeMeso, today) : Math.max(1, re.targetSets);
+          const deloading = phase === "deload";
+          const weight = deloading ? Math.round(t.weight * DELOAD_LOAD_FACTOR * 2) / 2 : t.weight;
+          const note = deloading ? "Deload — lighter, keep ~3 reps in reserve" : t.note;
+          const sets: PerformedSet[] = Array.from({ length: setCount }, () => ({
+            weight,
             reps: t.reps,
             type: "normal" as const,
             done: false,
           }));
-          // A dropset-prescribed exercise marks its final set as a dropset.
-          if (re.dropset && sets.length) sets[sets.length - 1].type = "dropset";
+          // A dropset-prescribed exercise marks its final set as a dropset (not on deload weeks).
+          if (re.dropset && sets.length && !deloading) sets[sets.length - 1].type = "dropset";
           return {
             exerciseId: re.exerciseId,
             name: re.name,
             primaryMuscles: re.primaryMuscles,
             secondaryMuscles: re.secondaryMuscles,
-            note: t.note,
+            note,
             superset: re.superset,
             repMin: re.repMin,
             repMax: re.repMax,
@@ -298,6 +312,7 @@ export default function WorkoutPage() {
 
   const doneCount = session.exercises.reduce((n, e) => n + e.sets.filter((s) => s.done).length, 0);
   const totalSets = session.exercises.reduce((n, e) => n + e.sets.length, 0);
+  const mesoInfo = meso && isBlockActive(meso, session.date) ? mesoWeek(meso, session.date) : null;
 
   return (
     <div className="mx-auto flex w-full max-w-xl flex-col gap-3 pb-28">
@@ -323,6 +338,17 @@ export default function WorkoutPage() {
             <span>
               {doneCount}/{totalSets} sets
             </span>
+            {mesoInfo && (
+              <span
+                className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 font-medium ${
+                  mesoInfo.phase === "deload"
+                    ? "bg-amber-400/15 text-amber-500"
+                    : "bg-secondary/15 text-secondary"
+                }`}
+              >
+                {mesoInfo.label}
+              </span>
+            )}
           </div>
           {editingDate && (
             <input

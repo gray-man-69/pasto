@@ -1,19 +1,25 @@
 "use client";
 
+import { useState } from "react";
 import Link from "next/link";
 import { useLiveQuery } from "dexie-react-hooks";
+import MesocycleForm from "@/components/MesocycleForm";
 import {
   activeSession,
   allRoutines,
   completedSessions,
   deleteSession,
+  endMesocycle,
+  getMesocycle,
+  localDate,
   purgeSession,
   restoreSession,
   trashedSessions,
 } from "@/lib/db";
 import { groupOfMuscle } from "@/lib/exercises";
+import { isBlockActive, mesoWeek } from "@/lib/mesocycle";
 import { sessionVolume } from "@/lib/progression";
-import type { Routine, WorkoutSession } from "@/lib/types";
+import type { Mesocycle, Routine, WorkoutSession } from "@/lib/types";
 
 function dayLabel(date: string): string {
   return new Date(date + "T00:00:00").toLocaleDateString("en-GB", {
@@ -28,6 +34,8 @@ export default function TrainingPage() {
   const active = useLiveQuery(() => activeSession(), []);
   const recent = useLiveQuery(() => completedSessions(), []);
   const trashed = useLiveQuery(() => trashedSessions(), []);
+  const meso = useLiveQuery(() => getMesocycle(), []);
+  const [startingBlock, setStartingBlock] = useState(false);
 
   return (
     <div className="mx-auto flex w-full max-w-xl flex-col gap-4">
@@ -55,6 +63,8 @@ export default function TrainingPage() {
           <span className="text-primary">▶</span>
         </Link>
       )}
+
+      <MesoCard meso={meso ?? null} onStart={() => setStartingBlock(true)} onEnd={() => endMesocycle()} />
 
       <div className="flex items-center justify-between px-1">
         <h2 className="text-xs font-semibold uppercase tracking-wide text-base-content/40">
@@ -107,7 +117,100 @@ export default function TrainingPage() {
           </ul>
         </details>
       )}
+
+      {startingBlock && <MesocycleForm onClose={() => setStartingBlock(false)} />}
     </div>
+  );
+}
+
+function MesoCard({
+  meso,
+  onStart,
+  onEnd,
+}: {
+  meso: Mesocycle | null;
+  onStart: () => void;
+  onEnd: () => void;
+}) {
+  const today = localDate();
+  const active = meso ? isBlockActive(meso, today) : false;
+  if (meso && active) {
+    const w = mesoWeek(meso, today);
+    const deloading = w.phase === "deload";
+    return (
+      <div
+        className={`rounded-2xl border p-3.5 ${
+          deloading ? "border-amber-400/40 bg-amber-400/5" : "border-secondary/40 bg-secondary/5"
+        }`}
+      >
+        <div className="flex items-start justify-between gap-2">
+          <div className="min-w-0">
+            <div className="text-[10px] font-semibold uppercase tracking-wide text-base-content/40">
+              Training block
+            </div>
+            <div className="truncate font-semibold">{meso.name}</div>
+          </div>
+          <button
+            onClick={() => {
+              if (confirm("End this training block?")) onEnd();
+            }}
+            className="shrink-0 text-xs text-base-content/40 hover:text-error"
+          >
+            End
+          </button>
+        </div>
+        <div className="mt-2.5 flex gap-1">
+          {Array.from({ length: meso.weeks }).map((_, i) => {
+            const isDeloadDot = meso.deload && i === meso.weeks - 1;
+            const current = i === w.index;
+            const filled = i <= w.index;
+            return (
+              <span
+                key={i}
+                className={`h-1.5 flex-1 rounded-full ${
+                  current
+                    ? isDeloadDot
+                      ? "bg-amber-400"
+                      : "bg-secondary"
+                    : filled
+                      ? "bg-secondary/40"
+                      : "bg-base-300"
+                }`}
+              />
+            );
+          })}
+        </div>
+        <div className="mt-1.5 text-xs text-base-content/60">
+          <span className={`font-semibold ${deloading ? "text-amber-500" : "text-secondary"}`}>
+            {w.label}
+          </span>{" "}
+          · {deloading ? "recover — volume halved, load eased" : "volume ramping toward your peak week"}
+        </div>
+      </div>
+    );
+  }
+  const hadBlock = meso != null; // a previous block exists (ended or ran its course)
+  return (
+    <button
+      onClick={onStart}
+      className="flex items-center gap-3 rounded-2xl border border-dashed border-base-300 px-4 py-3 text-left transition-colors hover:border-secondary/50"
+    >
+      <span className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-secondary/15 text-secondary">
+        <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth={2}>
+          <path d="M21 12a9 9 0 1 1-3-6.7M21 4v4h-4" strokeLinecap="round" strokeLinejoin="round" />
+        </svg>
+      </span>
+      <span className="min-w-0">
+        <span className="block text-sm font-semibold">
+          {hadBlock ? "Start a new training block" : "Start a training block"}
+        </span>
+        <span className="block text-xs text-base-content/50">
+          {hadBlock
+            ? "Last block complete — ramp your volume again"
+            : "Auto-ramp weekly volume, then deload — RP-style"}
+        </span>
+      </span>
+    </button>
   );
 }
 

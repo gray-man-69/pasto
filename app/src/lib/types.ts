@@ -180,6 +180,19 @@ export interface SessionExercise {
   sets: PerformedSet[];
 }
 
+// A training block (mesocycle). The routine's set counts are the week-1 base;
+// volume auto-ramps each accumulation week and the final week deloads. Single
+// active block at a time (a singleton, like goals). User data → syncs.
+export interface Mesocycle extends Synced {
+  id?: number;
+  name?: string;
+  startDate: string; // Monday (YYYY-MM-DD) of week 1
+  weeks: number; // total length incl. deload week
+  addSetsPerWeek: number; // sets added per exercise each accumulation week
+  deload: boolean; // last week is a deload (reduced volume + load)
+  endedAt?: number; // set when the block is ended (absent = active)
+}
+
 // A logged workout. Stores a snapshot of what was performed (like meal entries),
 // so history stays correct even if the routine later changes. User data → syncs.
 export interface WorkoutSession extends Synced {
