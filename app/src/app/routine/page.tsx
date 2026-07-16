@@ -57,6 +57,20 @@ export default function RoutinePage() {
       return next;
     });
   }
+  function toggleSuperset(i: number) {
+    setExercises((prev) => {
+      const ex = prev[i];
+      const prevSame = i > 0 && !!ex.superset && prev[i - 1].superset === ex.superset;
+      const nextSame = !!ex.superset && prev[i + 1]?.superset === ex.superset;
+      if (ex.superset && (prevSame || nextSame)) {
+        const g = ex.superset;
+        return prev.map((e) => (e.superset === g ? { ...e, superset: undefined } : e));
+      }
+      if (i + 1 >= prev.length) return prev;
+      const g = crypto.randomUUID();
+      return prev.map((e, idx) => (idx === i || idx === i + 1 ? { ...e, superset: g } : e));
+    });
+  }
 
   async function save() {
     if (!name.trim() || exercises.length === 0) return;
@@ -92,8 +106,23 @@ export default function RoutinePage() {
       </label>
 
       <div className="flex flex-col gap-2">
-        {exercises.map((e, i) => (
-          <div key={e.exerciseId} className="rounded-2xl border border-base-300/60 bg-base-100 p-3">
+        {exercises.map((e, i) => {
+          const grp = e.superset;
+          const prevSame = i > 0 && !!grp && exercises[i - 1].superset === grp;
+          const nextSame = !!grp && exercises[i + 1]?.superset === grp;
+          const inSuperset = !!grp && (prevSame || nextSame);
+          return (
+          <div
+            key={e.exerciseId}
+            className={`rounded-2xl border bg-base-100 p-3 ${
+              inSuperset ? "border-secondary/50 border-l-[3px] border-l-secondary" : "border-base-300/60"
+            }`}
+          >
+            {inSuperset && !prevSame && (
+              <div className="mb-1.5 inline-flex items-center gap-1 rounded-full bg-secondary/15 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-secondary">
+                ⛓ Superset
+              </div>
+            )}
             <div className="flex items-center gap-3">
               <MuscleThumb primary={e.primaryMuscles} secondary={e.secondaryMuscles ?? []} />
               <span className="min-w-0 flex-1 truncate font-medium">{e.name}</span>
@@ -121,8 +150,32 @@ export default function RoutinePage() {
                 <NumberField inputMode="decimal" min={0} value={e.increment} onChange={(v) => update(i, { increment: v })} className="input input-bordered input-xs w-16 text-right tabular-nums" />
               </Field>
             </div>
+            <div className="mt-2 flex flex-wrap gap-1.5 text-xs">
+              <button
+                onClick={() => toggleSuperset(i)}
+                disabled={!inSuperset && i + 1 >= exercises.length}
+                className={`rounded-full border px-3 py-1 font-medium transition-colors disabled:opacity-30 ${
+                  inSuperset
+                    ? "border-secondary/50 bg-secondary/10 text-secondary"
+                    : "border-base-300 text-base-content/70 hover:border-secondary/40"
+                }`}
+              >
+                {inSuperset ? "Split superset" : "⛓ Superset with next"}
+              </button>
+              <button
+                onClick={() => update(i, { dropset: !e.dropset })}
+                className={`rounded-full border px-3 py-1 font-medium transition-colors ${
+                  e.dropset
+                    ? "border-primary/50 bg-primary/10 text-primary"
+                    : "border-base-300 text-base-content/70 hover:border-primary/40"
+                }`}
+              >
+                {e.dropset ? "✓ Dropset" : "Dropset"}
+              </button>
+            </div>
           </div>
-        ))}
+          );
+        })}
 
         <button
           onClick={() => setPicking(true)}

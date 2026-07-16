@@ -142,6 +142,7 @@ export interface RoutineExercise {
   weightUnit: WeightUnit;
   increment: number; // load added on a successful double-progression step
   superset?: string; // group id: adjacent exercises sharing it are a superset
+  dropset?: boolean; // prescribe the final set as a dropset (marked in the session)
 }
 
 // A routine = one day of the split (e.g. "Push A"). User data → syncs.

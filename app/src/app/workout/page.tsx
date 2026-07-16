@@ -110,9 +110,11 @@ export default function WorkoutPage() {
           const sets: PerformedSet[] = Array.from({ length: Math.max(1, re.targetSets) }, () => ({
             weight: t.weight,
             reps: t.reps,
-            type: "normal",
+            type: "normal" as const,
             done: false,
           }));
+          // A dropset-prescribed exercise marks its final set as a dropset.
+          if (re.dropset && sets.length) sets[sets.length - 1].type = "dropset";
           return {
             exerciseId: re.exerciseId,
             name: re.name,
