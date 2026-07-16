@@ -18,6 +18,7 @@ import { defaultRoutineExercise } from "@/lib/exercises";
 import {
   lastForExercise,
   nextTarget,
+  overloadOptions,
   summarizeLast,
   volumeOf,
   volumeStatsForExercise,
@@ -25,6 +26,7 @@ import {
 import type {
   Exercise,
   PerformedSet,
+  RoutineExercise,
   SessionExercise,
   SetType,
   WorkoutSession,
@@ -57,6 +59,10 @@ function buildSessionExercise(ex: Exercise, completed: WorkoutSession[]): Sessio
     primaryMuscles: ex.primaryMuscles,
     secondaryMuscles: ex.secondaryMuscles,
     note: t.note,
+    repMin: re.repMin,
+    repMax: re.repMax,
+    targetSets: re.targetSets,
+    increment: re.increment,
     lastSummary: summarizeLast(last),
     sets,
   };
@@ -122,6 +128,10 @@ export default function WorkoutPage() {
             secondaryMuscles: re.secondaryMuscles,
             note: t.note,
             superset: re.superset,
+            repMin: re.repMin,
+            repMax: re.repMax,
+            targetSets: re.targetSets,
+            increment: re.increment,
             lastSummary: summarizeLast(last),
             sets,
           };
@@ -191,6 +201,18 @@ export default function WorkoutPage() {
   function removeSet(ei: number, si: number) {
     patchExercises((list) =>
       list.map((e, i) => (i === ei ? { ...e, sets: e.sets.filter((_, j) => j !== si) } : e)),
+    );
+  }
+  // Append a dropset: ~25% lighter than the last set, tagged as a dropset.
+  function addDropset(ei: number) {
+    patchExercises((list) =>
+      list.map((e, i) => {
+        if (i !== ei) return e;
+        const last = e.sets.at(-1);
+        const w = last ? Math.round(last.weight * 0.75 * 2) / 2 : 0;
+        const set: PerformedSet = { weight: w, reps: last?.reps ?? 0, type: "dropset", done: false };
+        return { ...e, sets: [...e.sets, set] };
+      }),
     );
   }
 
@@ -324,6 +346,19 @@ export default function WorkoutPage() {
         const inSuperset = !!grp && (prevSame || nextSame);
         const stats = volumeStatsForExercise(history, ex.exerciseId);
         const liveVol = Math.round(volumeOf(ex.sets));
+        const prescription: RoutineExercise = {
+          exerciseId: ex.exerciseId,
+          name: ex.name,
+          primaryMuscles: ex.primaryMuscles ?? [],
+          secondaryMuscles: ex.secondaryMuscles,
+          targetSets: ex.targetSets ?? ex.sets.length,
+          repMin: ex.repMin ?? 8,
+          repMax: ex.repMax ?? 12,
+          weight: ex.sets.at(-1)?.weight ?? 0,
+          weightUnit: "kg",
+          increment: ex.increment ?? 2.5,
+        };
+        const options = overloadOptions(prescription, lastForExercise(history, ex.exerciseId));
 
         return (
           <div
@@ -375,6 +410,40 @@ export default function WorkoutPage() {
                 </button>
               </div>
             </div>
+
+            <details className="group mt-2">
+              <summary className="flex cursor-pointer list-none items-center gap-1 text-[11px] font-medium text-base-content/50 hover:text-base-content">
+                <svg viewBox="0 0 24 24" className="h-3 w-3 transition-transform group-open:rotate-90" fill="none" stroke="currentColor" strokeWidth={2.5}>
+                  <path d="M9 6l6 6-6 6" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
+                Ways to progress
+              </summary>
+              <ul className="mt-1.5 flex flex-col gap-1.5">
+                {options.map((o) => (
+                  <li key={o.lever} className="rounded-xl bg-base-200/40 px-2.5 py-1.5">
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs font-semibold">{o.title}</span>
+                      {o.recommended && (
+                        <span className="rounded-full bg-primary/15 px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-wide text-primary">
+                          Recommended
+                        </span>
+                      )}
+                      {o.lever === "set" && (
+                        <button onClick={() => addSet(ei)} className="ml-auto shrink-0 rounded-full border border-base-300 px-2.5 py-0.5 text-[11px] font-medium text-base-content/70 hover:border-primary/40 hover:text-base-content">
+                          Add set
+                        </button>
+                      )}
+                      {o.lever === "dropset" && (
+                        <button onClick={() => addDropset(ei)} className="ml-auto shrink-0 rounded-full border border-secondary/40 px-2.5 py-0.5 text-[11px] font-medium text-secondary hover:bg-secondary/10">
+                          Add dropset
+                        </button>
+                      )}
+                    </div>
+                    <p className="mt-0.5 text-[11px] leading-snug text-base-content/50">{o.detail}</p>
+                  </li>
+                ))}
+              </ul>
+            </details>
 
             {menuFor === ei && (
               <div className="mt-2 flex flex-wrap gap-1.5 border-t border-base-300/60 pt-2 text-xs">

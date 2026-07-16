@@ -47,8 +47,9 @@ export default function ProgressPage() {
                 Weekly volume · sets per muscle
               </h2>
             </div>
-            <p className="mb-3 text-[11px] text-base-content/40">
-              ~10–20 hard sets per muscle per week is the hypertrophy range.
+            <p className="mb-3 text-[11px] leading-snug text-base-content/40">
+              ~10–20 hard sets per muscle per week drives growth (Schoenfeld 2017 dose-response;
+              RP volume landmarks). Below 10 → add sets next week; near 20 → you&apos;re at plenty.
             </p>
             {volume.length === 0 ? (
               <div className="py-6 text-center text-sm text-base-content/40">
@@ -83,23 +84,32 @@ export default function ProgressPage() {
 function VolRow({ muscle, sets }: { muscle: string; sets: number }) {
   const pct = Math.min(100, (sets / TARGET_MAX) * 100);
   const enough = sets >= MEV;
+  const hint =
+    sets < MEV
+      ? { text: `＋${MEV - sets} set${MEV - sets === 1 ? "" : "s"} to reach the growth range`, cls: "text-amber-500" }
+      : sets > TARGET_MAX
+        ? { text: "above 20 — plenty; make sure you're recovering", cls: "text-base-content/40" }
+        : { text: "in the 10–20 range 👍", cls: "text-primary/70" };
   return (
-    <div className="flex items-center gap-3">
-      <span className="w-24 shrink-0 text-sm capitalize">{muscle}</span>
-      <div className="relative h-2 flex-1 overflow-hidden rounded-full bg-base-300/50">
-        <div
-          className={`h-full rounded-full ${enough ? "bg-primary" : "bg-amber-400"}`}
-          style={{ width: `${pct}%` }}
-        />
-        {/* MEV marker at 10 sets */}
-        <div
-          className="absolute top-0 h-full w-px bg-base-content/30"
-          style={{ left: `${(MEV / TARGET_MAX) * 100}%` }}
-        />
+    <div className="flex flex-col gap-1">
+      <div className="flex items-center gap-3">
+        <span className="w-24 shrink-0 text-sm capitalize">{muscle}</span>
+        <div className="relative h-2 flex-1 overflow-hidden rounded-full bg-base-300/50">
+          <div
+            className={`h-full rounded-full ${enough ? "bg-primary" : "bg-amber-400"}`}
+            style={{ width: `${pct}%` }}
+          />
+          {/* MEV marker at 10 sets */}
+          <div
+            className="absolute top-0 h-full w-px bg-base-content/30"
+            style={{ left: `${(MEV / TARGET_MAX) * 100}%` }}
+          />
+        </div>
+        <span className="w-12 shrink-0 text-right text-xs tabular-nums text-base-content/70">
+          {sets} <span className="text-base-content/35">sets</span>
+        </span>
       </div>
-      <span className="w-12 shrink-0 text-right text-xs tabular-nums text-base-content/70">
-        {sets} <span className="text-base-content/35">sets</span>
-      </span>
+      <div className={`pl-24 text-[10px] ${hint.cls}`}>{hint.text}</div>
     </div>
   );
 }

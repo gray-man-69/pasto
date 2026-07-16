@@ -171,6 +171,12 @@ export interface SessionExercise {
   userNote?: string; // free-text note the user adds during the workout
   superset?: string; // group id: adjacent exercises sharing it are a superset
   lastSummary?: string; // previous session reference, e.g. "20 kg × 8, 8, 7"
+  // Prescription snapshot from the routine, so the workout can compute overload
+  // options (rep range / load step) without re-reading the routine.
+  repMin?: number;
+  repMax?: number;
+  targetSets?: number;
+  increment?: number;
   sets: PerformedSet[];
 }
 

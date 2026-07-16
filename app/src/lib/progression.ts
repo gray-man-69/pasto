@@ -38,6 +38,60 @@ export function nextTarget(re: RoutineExercise, lastSets?: PerformedSet[]): Targ
   };
 }
 
+// ---- Overload options ------------------------------------------------------
+// Progressive overload can be reached several evidence-based ways, not one:
+//  • load  — more weight (mechanical tension)
+//  • reps  — more reps in the range (grows muscle equally to load; Plotkin 2022)
+//  • set   — one more working set (weekly hard sets/muscle is the #1 driver)
+//  • dropset — a drop on the last set (≈ extra sets for growth in ~⅓ the time)
+// We still use double progression to pick the *recommended* micro-step, then
+// present the others as valid alternatives.
+
+export type OverloadLever = "weight" | "reps" | "set" | "dropset";
+export interface OverloadOption {
+  lever: OverloadLever;
+  title: string;
+  detail: string;
+  recommended?: boolean;
+}
+
+export function overloadOptions(re: RoutineExercise, lastSets?: PerformedSet[]): OverloadOption[] {
+  const working = workingSets(lastSets ?? []);
+  const hasHistory = working.length > 0;
+  const lastWeight = hasHistory ? Math.max(...working.map((s) => s.weight)) : re.weight;
+  const topSets = working.filter((s) => s.weight >= lastWeight - 0.001);
+  const allHitTop =
+    hasHistory && topSets.length >= re.targetSets && topSets.every((s) => s.reps >= re.repMax);
+  const nextW = Math.round((lastWeight + re.increment) * 100) / 100;
+
+  const options: OverloadOption[] = [
+    {
+      lever: "weight",
+      title: `Add weight → ${nextW} kg`,
+      detail: "More load = more tension. Best once you hit the top of the rep range on every set.",
+      recommended: allHitTop,
+    },
+    {
+      lever: "reps",
+      title: `Add reps → aim ${re.repMax}`,
+      detail: "Beating reps builds muscle just like adding weight — fill out the rep range first.",
+      recommended: hasHistory && !allHitTop,
+    },
+    {
+      lever: "set",
+      title: "Add a set",
+      detail: "Weekly hard sets per muscle is the top hypertrophy driver — ramp toward 10–20/week.",
+    },
+    {
+      lever: "dropset",
+      title: "Add a dropset",
+      detail: "Drop ~25% and rep to failure — ≈ extra sets for growth in a fraction of the time.",
+    },
+  ];
+  // Recommended first, otherwise keep the load → reps → set → dropset order.
+  return options.sort((a, b) => (b.recommended ? 1 : 0) - (a.recommended ? 1 : 0));
+}
+
 /** Most recent completed session's sets for an exercise (sessions newest-first). */
 export function lastForExercise(
   sessions: WorkoutSession[],
