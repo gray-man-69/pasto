@@ -273,21 +273,85 @@ function VolRow({ muscle, sets }: { muscle: string; sets: number }) {
 }
 
 function ProgRow({ p }: { p: ExerciseProgress }) {
+  const [open, setOpen] = useState(false);
+  const canChart = p.points.length >= 2;
   return (
-    <li className="flex items-center gap-3 rounded-2xl border border-base-300/60 bg-base-100 px-3 py-2">
-      <MuscleThumb primary={p.primaryMuscles} secondary={p.secondaryMuscles ?? []} />
-      <div className="min-w-0 flex-1">
-        <div className="truncate font-medium">{p.name}</div>
-        <div className="mt-0.5 text-[11px] text-base-content/50">
-          PR {Math.round(p.bestE1rm)} kg e1RM · top {p.bestWeight} kg
+    <li className="overflow-hidden rounded-2xl border border-base-300/60 bg-base-100">
+      <button
+        onClick={() => canChart && setOpen((o) => !o)}
+        className={`flex w-full items-center gap-3 px-3 py-2 text-left ${canChart ? "" : "cursor-default"}`}
+      >
+        <MuscleThumb primary={p.primaryMuscles} secondary={p.secondaryMuscles ?? []} />
+        <div className="min-w-0 flex-1">
+          <div className="truncate font-medium">{p.name}</div>
+          <div className="mt-0.5 text-[11px] text-base-content/50">
+            PR {Math.round(p.bestE1rm)} kg e1RM · top {p.bestWeight} kg
+          </div>
+          <div className="text-[11px] tabular-nums text-base-content/40">
+            Vol last {Math.round(p.lastVolume).toLocaleString()} · best{" "}
+            {Math.round(p.bestVolume).toLocaleString()} kg
+          </div>
         </div>
-        <div className="text-[11px] tabular-nums text-base-content/40">
-          Vol last {Math.round(p.lastVolume).toLocaleString()} · best{" "}
-          {Math.round(p.bestVolume).toLocaleString()} kg
+        <MiniSpark points={p.points} />
+        {canChart && (
+          <svg viewBox="0 0 24 24" className={`h-4 w-4 shrink-0 text-base-content/30 transition-transform ${open ? "rotate-90" : ""}`} fill="none" stroke="currentColor" strokeWidth={2}>
+            <path d="M9 6l6 6-6 6" strokeLinecap="round" strokeLinejoin="round" />
+          </svg>
+        )}
+      </button>
+      {open && canChart && (
+        <div className="border-t border-base-300/60 px-3 py-3">
+          <ExerciseChart points={p.points} dates={p.dates} />
         </div>
-      </div>
-      <MiniSpark points={p.points} />
+      )}
     </li>
+  );
+}
+
+const fmtDate = (d: string) =>
+  new Date(d + "T00:00:00").toLocaleDateString("en-GB", { day: "numeric", month: "short" });
+
+function ExerciseChart({ points, dates }: { points: number[]; dates: string[] }) {
+  const w = 320;
+  const h = 128;
+  const padX = 14;
+  const padT = 20;
+  const padB = 26;
+  const mn = Math.min(...points);
+  const mx = Math.max(...points);
+  const span = mx - mn || Math.max(mx * 0.1, 1);
+  const lo = mn - span * 0.18;
+  const hi = mx + span * 0.18;
+  const x = (i: number) => padX + (i / (points.length - 1)) * (w - 2 * padX);
+  const y = (v: number) => padT + (h - padT - padB) - ((v - lo) / (hi - lo)) * (h - padT - padB);
+  const d = points.map((v, i) => `${i ? "L" : "M"}${x(i).toFixed(1)} ${y(v).toFixed(1)}`).join(" ");
+  const showAll = points.length <= 6;
+  const labelIdx = showAll
+    ? points.map((_, i) => i)
+    : [0, Math.round((points.length - 1) / 2), points.length - 1];
+  const anchor = (i: number) => (i === 0 ? "start" : i === points.length - 1 ? "end" : "middle");
+
+  return (
+    <svg viewBox={`0 0 ${w} ${h}`} className="w-full text-primary" role="img" aria-label="Estimated 1RM over time">
+      {/* baseline */}
+      <line x1={padX} y1={h - padB} x2={w - padX} y2={h - padB} stroke="currentColor" strokeOpacity="0.12" />
+      <path d={d} fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+      {points.map((v, i) => (
+        <g key={i}>
+          <circle cx={x(i)} cy={y(v)} r={i === points.length - 1 ? 3.2 : 2.4} fill="currentColor" />
+          {(showAll || i === 0 || i === points.length - 1) && (
+            <text x={x(i)} y={y(v) - 7} textAnchor={anchor(i)} fontSize="10" fill="currentColor" className="tabular-nums">
+              {Math.round(v)}
+            </text>
+          )}
+        </g>
+      ))}
+      {labelIdx.map((i) => (
+        <text key={i} x={x(i)} y={h - 8} textAnchor={anchor(i)} fontSize="9.5" fill="currentColor" fillOpacity="0.5">
+          {fmtDate(dates[i])}
+        </text>
+      ))}
+    </svg>
   );
 }
 
