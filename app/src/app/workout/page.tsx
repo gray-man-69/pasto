@@ -54,14 +54,15 @@ function prefillSets(
   setCount: number,
   deloading: boolean,
 ): PerformedSet[] {
-  const t = nextTarget(re, last);
   const lastWorking = workingSets(last ?? []);
   return Array.from({ length: Math.max(1, setCount) }, (_, i) => {
+    // Repeat exactly what you did last time (weight × reps). Progressing the
+    // weight/reps is your call — the note suggests it, it isn't forced on you.
     let weight: number;
     let reps: number;
-    if (t.addWeight || lastWorking.length === 0) {
-      weight = t.weight;
-      reps = t.reps;
+    if (lastWorking.length === 0) {
+      weight = re.weight;
+      reps = re.repMin;
     } else {
       const prev = lastWorking[Math.min(i, lastWorking.length - 1)];
       weight = prev.weight;

@@ -29,14 +29,14 @@ export function nextTarget(re: RoutineExercise, lastSets?: PerformedSet[]): Targ
       weight,
       reps: re.repMin,
       addWeight: true,
-      note: `▲ ${weight} kg — you hit ${re.repMax} on every set`,
+      note: `You hit ${re.repMax} on every set — ready to add weight (try ${weight} kg)`,
     };
   }
   return {
     weight: lastWeight,
     reps: re.repMax,
     addWeight: false,
-    note: `Same weight — beat your reps (aim ${re.repMax})`,
+    note: `Beat last time — aim for ${re.repMax} reps`,
   };
 }
 
