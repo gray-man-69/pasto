@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import ExercisePicker from "@/components/ExercisePicker";
 import { MuscleThumb } from "@/components/MuscleMap";
@@ -171,15 +171,31 @@ export default function WorkoutPage() {
     })();
   }, [router]);
 
+  // Mirrors `session` synchronously so a field's onBlur can flush the just-typed
+  // value to the DB even before React re-renders (fixes edits to past workouts
+  // being lost, since number-field typing is kept in memory until a save).
+  const sessionRef = useRef<WorkoutSession | null>(null);
+  sessionRef.current = session;
+
   async function persist(next: WorkoutSession) {
+    sessionRef.current = next;
     setSession(next);
     await saveSession(next);
   }
   function patchExercises(fn: (list: SessionExercise[]) => SessionExercise[], save = true) {
     if (!session) return;
     const next = { ...session, exercises: fn(session.exercises) };
+    sessionRef.current = next;
     if (save) persist(next);
     else setSession(next);
+  }
+  /** Persist whatever is currently on screen (used on number-field blur / exit). */
+  function flushSave() {
+    return sessionRef.current ? saveSession(sessionRef.current) : Promise.resolve(undefined);
+  }
+  async function closeTo(path: string) {
+    await flushSave();
+    router.push(path);
   }
 
   function editSet(ei: number, si: number, patch: Partial<PerformedSet>, save = false) {
@@ -369,7 +385,7 @@ export default function WorkoutPage() {
             />
           )}
         </div>
-        <button className="btn btn-ghost btn-sm" onClick={() => router.push("/training")}>
+        <button className="btn btn-ghost btn-sm" onClick={() => closeTo("/training")}>
           Close
         </button>
       </div>
@@ -546,6 +562,7 @@ export default function WorkoutPage() {
                       min={0}
                       value={s.weight}
                       onChange={(v) => editSet(ei, si, { weight: v })}
+                      onBlur={flushSave}
                       className="input input-bordered input-xs w-16 text-right tabular-nums"
                     />
                     <span className="text-xs text-base-content/40">kg ×</span>
@@ -554,6 +571,7 @@ export default function WorkoutPage() {
                       min={0}
                       value={s.reps}
                       onChange={(v) => editSet(ei, si, { reps: v })}
+                      onBlur={flushSave}
                       className="input input-bordered input-xs w-14 text-right tabular-nums"
                     />
                     <button
@@ -597,7 +615,7 @@ export default function WorkoutPage() {
       <div className="fixed inset-x-0 bottom-[4.25rem] z-40 border-t border-base-300 bg-base-100/95 p-3 backdrop-blur lg:bottom-0">
         <div className="mx-auto w-full max-w-xl">
           {isFinished ? (
-            <button className="btn btn-primary w-full" onClick={() => router.push("/training")}>
+            <button className="btn btn-primary w-full" onClick={() => closeTo("/training")}>
               Done — changes saved
             </button>
           ) : (
