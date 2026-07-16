@@ -36,6 +36,7 @@ export default function TrainingPage() {
   const trashed = useLiveQuery(() => trashedSessions(), []);
   const meso = useLiveQuery(() => getMesocycle(), []);
   const [startingBlock, setStartingBlock] = useState(false);
+  const [showAllRecent, setShowAllRecent] = useState(false);
 
   return (
     <div className="mx-auto flex w-full max-w-xl flex-col gap-4">
@@ -95,13 +96,21 @@ export default function TrainingPage() {
       {recent && recent.length > 0 && (
         <div className="mt-2 flex flex-col gap-2">
           <h2 className="px-1 text-xs font-semibold uppercase tracking-wide text-base-content/40">
-            Recent workouts
+            Past workouts · tap to edit
           </h2>
           <ul className="flex flex-col gap-1.5">
-            {recent.slice(0, 5).map((s) => (
+            {(showAllRecent ? recent : recent.slice(0, 5)).map((s) => (
               <RecentRow key={s.id} s={s} />
             ))}
           </ul>
+          {recent.length > 5 && (
+            <button
+              onClick={() => setShowAllRecent((v) => !v)}
+              className="self-center py-1 text-xs font-medium text-primary hover:underline"
+            >
+              {showAllRecent ? "Show less" : `Show all ${recent.length}`}
+            </button>
+          )}
         </div>
       )}
 
@@ -277,15 +286,23 @@ function RecentRow({ s }: { s: WorkoutSession }) {
   const sets = s.exercises.reduce((n, e) => n + e.sets.filter((x) => x.done).length, 0);
   const vol = Math.round(sessionVolume(s));
   return (
-    <li className="flex items-center gap-2 rounded-2xl border border-base-300/60 bg-base-100 px-4 py-2.5">
-      <span className="min-w-0 flex-1">
-        <span className="block truncate text-sm font-medium">{s.routineName ?? "Workout"}</span>
-        <span className="block text-xs text-base-content/50">{dayLabel(s.date)}</span>
-      </span>
-      <span className="shrink-0 text-right text-xs tabular-nums text-base-content/50">
-        {sets} sets
-        <span className="block text-base-content/35">{vol.toLocaleString()} kg vol</span>
-      </span>
+    <li className="flex items-center gap-1 rounded-2xl border border-base-300/60 bg-base-100 pr-2 transition-colors hover:border-primary/40">
+      <Link
+        href={`/workout?id=${s.id}`}
+        className="flex min-w-0 flex-1 items-center gap-2 py-2.5 pl-4"
+      >
+        <span className="min-w-0 flex-1">
+          <span className="block truncate text-sm font-medium">{s.routineName ?? "Workout"}</span>
+          <span className="block text-xs text-base-content/50">{dayLabel(s.date)}</span>
+        </span>
+        <span className="shrink-0 text-right text-xs tabular-nums text-base-content/50">
+          {sets} sets
+          <span className="block text-base-content/35">{vol.toLocaleString()} kg vol</span>
+        </span>
+        <svg viewBox="0 0 24 24" className="h-4 w-4 shrink-0 text-base-content/25" fill="none" stroke="currentColor" strokeWidth={2}>
+          <path d="M9 6l6 6-6 6" strokeLinecap="round" strokeLinejoin="round" />
+        </svg>
+      </Link>
       <button
         onClick={() => s.id != null && deleteSession(s.id)}
         className="grid h-8 w-8 shrink-0 place-items-center rounded-full text-base-content/30 hover:bg-base-300/60 hover:text-error"

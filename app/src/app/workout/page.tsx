@@ -278,15 +278,18 @@ export default function WorkoutPage() {
     });
   }
 
-  function changeDate(date: string) {
-    if (!session || !date) return;
-    setEditingDate(false);
-    persist({ ...session, date });
-  }
   // A backdated workout should be timestamped on its own day (noon local) so it
   // sorts into history / progression chronologically — not as if it happened now.
   function endedAtForDate(date: string): number {
     return date === localDate() ? Date.now() : new Date(date + "T12:00:00").getTime();
+  }
+  function changeDate(date: string) {
+    if (!session || !date) return;
+    setEditingDate(false);
+    const next = { ...session, date };
+    // Keep a finished workout's timestamp in step with its (edited) day.
+    if (session.endedAt) next.endedAt = endedAtForDate(date);
+    persist(next);
   }
   async function finish() {
     if (!session) return;
@@ -294,7 +297,7 @@ export default function WorkoutPage() {
     router.push("/training");
   }
   async function discard() {
-    if (!confirm("Discard this workout? It moves to Trash and can be restored.")) return;
+    if (!confirm("Move this workout to Trash? You can restore it from the Training tab.")) return;
     if (session?.id != null) await deleteSession(session.id);
     router.push("/training");
   }
@@ -313,6 +316,7 @@ export default function WorkoutPage() {
   const doneCount = session.exercises.reduce((n, e) => n + e.sets.filter((s) => s.done).length, 0);
   const totalSets = session.exercises.reduce((n, e) => n + e.sets.length, 0);
   const mesoInfo = meso && isBlockActive(meso, session.date) ? mesoWeek(meso, session.date) : null;
+  const isFinished = session.endedAt != null;
 
   return (
     <div className="mx-auto flex w-full max-w-xl flex-col gap-3 pb-28">
@@ -573,14 +577,20 @@ export default function WorkoutPage() {
       </button>
 
       <button onClick={discard} className="self-center py-1 text-xs text-base-content/40 hover:text-error">
-        Discard workout
+        {isFinished ? "Delete workout" : "Discard workout"}
       </button>
 
       <div className="fixed inset-x-0 bottom-[4.25rem] z-40 border-t border-base-300 bg-base-100/95 p-3 backdrop-blur lg:bottom-0">
         <div className="mx-auto w-full max-w-xl">
-          <button className="btn btn-primary w-full" onClick={finish}>
-            Finish workout
-          </button>
+          {isFinished ? (
+            <button className="btn btn-primary w-full" onClick={() => router.push("/training")}>
+              Done — changes saved
+            </button>
+          ) : (
+            <button className="btn btn-primary w-full" onClick={finish}>
+              Finish workout
+            </button>
+          )}
         </div>
       </div>
 
