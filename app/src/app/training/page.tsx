@@ -5,12 +5,14 @@ import Link from "next/link";
 import { useLiveQuery } from "dexie-react-hooks";
 import MesocycleForm from "@/components/MesocycleForm";
 import {
+  activeMesocycle,
   activeSession,
+  allMesocycles,
   allRoutines,
   completedSessions,
+  deleteMesocycle,
   deleteSession,
   endMesocycle,
-  getMesocycle,
   localDate,
   purgeSession,
   restoreSession,
@@ -34,9 +36,11 @@ export default function TrainingPage() {
   const active = useLiveQuery(() => activeSession(), []);
   const recent = useLiveQuery(() => completedSessions(), []);
   const trashed = useLiveQuery(() => trashedSessions(), []);
-  const meso = useLiveQuery(() => getMesocycle(), []);
+  const meso = useLiveQuery(() => activeMesocycle(), []);
+  const blocks = useLiveQuery(() => allMesocycles(), []);
   const [startingBlock, setStartingBlock] = useState(false);
   const [showAllRecent, setShowAllRecent] = useState(false);
+  const pastBlocks = (blocks ?? []).filter((b) => b.id !== meso?.id);
 
   return (
     <div className="mx-auto flex w-full max-w-xl flex-col gap-4">
@@ -65,7 +69,24 @@ export default function TrainingPage() {
         </Link>
       )}
 
-      <MesoCard meso={meso ?? null} onStart={() => setStartingBlock(true)} onEnd={() => endMesocycle()} />
+      <MesoCard
+        meso={meso ?? null}
+        onStart={() => setStartingBlock(true)}
+        onEnd={() => meso?.id != null && endMesocycle(meso.id)}
+      />
+
+      {pastBlocks.length > 0 && (
+        <details className="rounded-2xl border border-base-300/60 bg-base-100/50">
+          <summary className="cursor-pointer list-none px-4 py-2.5 text-xs font-semibold uppercase tracking-wide text-base-content/40">
+            Past blocks · {pastBlocks.length}
+          </summary>
+          <ul className="flex flex-col gap-1.5 px-2 pb-2">
+            {pastBlocks.map((b) => (
+              <PastBlockRow key={b.id} b={b} />
+            ))}
+          </ul>
+        </details>
+      )}
 
       <div className="flex items-center justify-between px-1">
         <h2 className="text-xs font-semibold uppercase tracking-wide text-base-content/40">
@@ -198,7 +219,6 @@ function MesoCard({
       </div>
     );
   }
-  const hadBlock = meso != null; // a previous block exists (ended or ran its course)
   return (
     <button
       onClick={onStart}
@@ -210,16 +230,41 @@ function MesoCard({
         </svg>
       </span>
       <span className="min-w-0">
-        <span className="block text-sm font-semibold">
-          {hadBlock ? "Start a new training block" : "Start a training block"}
-        </span>
+        <span className="block text-sm font-semibold">Start a training block</span>
         <span className="block text-xs text-base-content/50">
-          {hadBlock
-            ? "Last block complete — ramp your volume again"
-            : "Auto-ramp weekly volume, then deload — RP-style"}
+          Auto-ramp weekly volume, then deload — RP-style
         </span>
       </span>
     </button>
+  );
+}
+
+function PastBlockRow({ b }: { b: Mesocycle }) {
+  const end = new Date(b.startDate + "T00:00:00");
+  end.setDate(end.getDate() + b.weeks * 7 - 1);
+  const range = `${dayLabel(b.startDate)} – ${end.toLocaleDateString("en-GB", { day: "numeric", month: "short" })}`;
+  return (
+    <li className="flex items-center gap-2 rounded-xl bg-base-200/40 px-3 py-2">
+      <Link href="/progress" className="min-w-0 flex-1">
+        <span className="block truncate text-sm">{b.name ?? "Block"}</span>
+        <span className="block text-xs text-base-content/40">
+          {range} · {b.weeks} weeks{b.endedAt ? " · ended early" : ""}
+        </span>
+      </Link>
+      <Link href="/progress" className="shrink-0 rounded-full bg-primary/15 px-3 py-1 text-xs font-semibold text-primary hover:bg-primary/25">
+        View
+      </Link>
+      <button
+        onClick={() => {
+          if (b.id != null && confirm("Delete this block? Your logged workouts are kept — only the plan is removed."))
+            deleteMesocycle(b.id);
+        }}
+        className="grid h-7 w-7 shrink-0 place-items-center rounded-full text-base-content/30 hover:bg-base-300/60 hover:text-error"
+        aria-label="Delete block"
+      >
+        ✕
+      </button>
+    </li>
   );
 }
 

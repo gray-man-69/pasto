@@ -6,10 +6,10 @@ import ExercisePicker from "@/components/ExercisePicker";
 import { MuscleThumb } from "@/components/MuscleMap";
 import NumberField from "@/components/NumberField";
 import {
+  activeMesocycle,
   activeSession,
   completedSessions,
   deleteSession,
-  getMesocycle,
   getRoutine,
   getSession,
   localDate,
@@ -95,7 +95,7 @@ export default function WorkoutPage() {
       const routineRaw = params.get("routine");
       const completed = await completedSessions();
       setHistory(completed);
-      const mesoRec = await getMesocycle();
+      const mesoRec = await activeMesocycle();
       setMeso(mesoRec ?? null);
 
       if (idRaw) {

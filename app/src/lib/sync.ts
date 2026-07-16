@@ -29,7 +29,7 @@ function emptyState(): SyncState {
     routines: [],
     sessions: [],
     customExercises: [],
-    mesocycle: null,
+    mesocycles: [],
     tombstones: [],
   };
 }
@@ -44,7 +44,7 @@ function normalize(d: Partial<SyncState> | undefined): SyncState {
     routines: d?.routines ?? [],
     sessions: d?.sessions ?? [],
     customExercises: d?.customExercises ?? [],
-    mesocycle: d?.mesocycle ?? null,
+    mesocycles: d?.mesocycles ?? [],
     tombstones: d?.tombstones ?? [],
   };
 }
@@ -85,12 +85,10 @@ export function mergeState(local: SyncState, remote: SyncState): SyncState {
     [...local.customExercises, ...remote.customExercises],
     (e) => e.id,
   );
+  const mesocycles = pick<Mesocycle>([...local.mesocycles, ...remote.mesocycles], (m) => m.syncId);
 
   const goalCandidates = [local.goals, remote.goals].filter(Boolean) as Goals[];
   goalCandidates.sort((a, b) => (b.updatedAt ?? 0) - (a.updatedAt ?? 0));
-
-  const mesoCandidates = [local.mesocycle, remote.mesocycle].filter(Boolean) as Mesocycle[];
-  mesoCandidates.sort((a, b) => (b.updatedAt ?? 0) - (a.updatedAt ?? 0));
 
   return {
     goals: goalCandidates[0] ?? null,
@@ -101,7 +99,7 @@ export function mergeState(local: SyncState, remote: SyncState): SyncState {
     routines,
     sessions,
     customExercises,
-    mesocycle: mesoCandidates[0] ?? null,
+    mesocycles,
     tombstones,
   };
 }

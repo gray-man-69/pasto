@@ -4,15 +4,16 @@ import { useState } from "react";
 import Link from "next/link";
 import { useLiveQuery } from "dexie-react-hooks";
 import { MuscleThumb } from "@/components/MuscleMap";
-import { addDays, completedSessions, getMesocycle, localDate, weekStart } from "@/lib/db";
-import { isBlockActive, mesoWeek } from "@/lib/mesocycle";
+import { activeMesocycle, addDays, allMesocycles, completedSessions, localDate, weekStart } from "@/lib/db";
+import { mesoWeek } from "@/lib/mesocycle";
 import { exerciseProgress, volumeByMuscle } from "@/lib/progress";
 import type { ExerciseProgress } from "@/lib/progress";
+import type { Mesocycle } from "@/lib/types";
 
 // Science-based hypertrophy target: ~10–20 hard sets per muscle per week.
 const MEV = 10;
 const TARGET_MAX = 20;
-const MAX_WEEKS = 8; // columns shown when no block is active
+const MAX_WEEKS = 8; // columns shown in the "recent weeks" view
 
 function shortWeek(start: string): string {
   return new Date(start + "T00:00:00").toLocaleDateString("en-GB", { day: "numeric", month: "short" });
@@ -29,26 +30,34 @@ function heat(sets: number): { bg: string; text: string } {
   return { bg: `rgba(182,242,89,${(0.2 + t * 0.4).toFixed(3)})`, text: "text-base-content" };
 }
 
+type Wk = { start: string; label: string; deload: boolean; future: boolean };
+
 export default function ProgressPage() {
   const sessions = useLiveQuery(() => completedSessions(), []);
-  const meso = useLiveQuery(() => getMesocycle(), []);
-  const [selected, setSelected] = useState<string | null>(null);
+  const active = useLiveQuery(() => activeMesocycle(), []);
+  const blocks = useLiveQuery(() => allMesocycles(), []);
+  const [selectedWeekState, setSelectedWeekState] = useState<string | null>(null);
+  const [view, setView] = useState<number | "recent" | null>(null);
 
   const today = localDate();
   const all = sessions ?? [];
-  const active = meso && isBlockActive(meso, today) ? meso : null;
+  const blockList = blocks ?? [];
 
-  // Columns: the block's weeks (labelled W1…Wn, deload marked) or the last 8
-  // weeks that have any data (plus the current week).
-  type Wk = { start: string; label: string; deload: boolean; future: boolean };
+  // Which block (or the rolling "recent weeks") to chart. Defaults to the active
+  // block, else the most recent block, else recent weeks.
+  const effectiveView = view ?? active?.id ?? blockList[0]?.id ?? "recent";
+  const selectedBlock: Mesocycle | null =
+    typeof effectiveView === "number" ? blockList.find((b) => b.id === effectiveView) ?? null : null;
+
+  // Columns
   let weeks: Wk[] = [];
-  if (active) {
-    for (let i = 0; i < active.weeks; i++) {
-      const start = addDays(active.startDate, i * 7);
+  if (selectedBlock) {
+    for (let i = 0; i < selectedBlock.weeks; i++) {
+      const start = addDays(selectedBlock.startDate, i * 7);
       weeks.push({
         start,
         label: `W${i + 1}`,
-        deload: !!active.deload && i === active.weeks - 1,
+        deload: !!selectedBlock.deload && i === selectedBlock.weeks - 1,
         future: start > weekStart(today),
       });
     }
@@ -61,7 +70,7 @@ export default function ProgressPage() {
       .map((start) => ({ start, label: shortWeek(start), deload: false, future: false }));
   }
 
-  // Per-week per-muscle set counts (reuses volumeByMuscle on each week's slice).
+  // Per-week per-muscle set counts.
   const perWeek = new Map<string, Map<string, number>>();
   const totals = new Map<string, number>();
   for (const w of weeks) {
@@ -76,22 +85,37 @@ export default function ProgressPage() {
 
   const thisWeek = weekStart(today);
   const selectedWeek =
-    selected ?? (weeks.some((w) => w.start === thisWeek) ? thisWeek : weeks.at(-1)?.start ?? null);
+    selectedWeekState && weeks.some((w) => w.start === selectedWeekState)
+      ? selectedWeekState
+      : weeks.some((w) => w.start === thisWeek)
+        ? thisWeek
+        : weeks[0]?.start ?? null;
   const detail = selectedWeek
     ? volumeByMuscle(all.filter((s) => weekStart(s.date) === selectedWeek))
     : [];
   const selectedMeta = weeks.find((w) => w.start === selectedWeek);
   const selectedLabel = (() => {
-    if (!selectedWeek) return "";
-    if (active) {
-      const w = mesoWeek(active, selectedWeek);
+    if (!selectedWeek) return "This week";
+    if (selectedBlock) {
+      const w = mesoWeek(selectedBlock, selectedWeek);
       if (w.phase === "accumulation") return `${w.label} · ramping`;
       if (w.phase === "deload") return `${w.label} · deload`;
+      if (w.phase === "upcoming") return `${w.label} · not started`;
     }
     return `Week of ${shortWeek(selectedWeek)}`;
   })();
 
+  // The heatmap only earns its place with 2+ weeks to trend across; with a single
+  // week it's the same numbers as the bars, so show only the bars.
+  const showHeatmap = weeks.length >= 2 && muscles.length > 0;
   const progress = exerciseProgress(all);
+
+  const caption = (
+    <p className="text-[11px] leading-snug text-base-content/40">
+      ~10–20 hard sets/muscle/week drives growth (Schoenfeld 2017; RP landmarks).
+      {showHeatmap ? " Read a row for a muscle's trend, a column for that week's balance. Tap a week for detail." : ""}
+    </p>
+  );
 
   return (
     <div className="mx-auto flex w-full max-w-xl flex-col gap-5">
@@ -113,32 +137,40 @@ export default function ProgressPage() {
         </div>
       ) : (
         <>
-          {/* Volume heatmap: muscles × weeks */}
-          <section className="rounded-3xl border border-base-300 bg-base-100 p-5">
-            <h2 className="text-xs font-semibold uppercase tracking-wide text-base-content/40">
-              Volume · sets per muscle{active ? " · this block" : ""}
-            </h2>
-            <p className="mb-3 mt-1 text-[11px] leading-snug text-base-content/40">
-              ~10–20 hard sets/muscle/week drives growth (Schoenfeld 2017; RP landmarks). Read a row
-              for a muscle&apos;s trend, a column for that week&apos;s balance. Tap a week for detail.
-            </p>
+          {/* Block selector */}
+          {blockList.length > 0 && (
+            <div className="flex gap-1.5 overflow-x-auto pb-1">
+              {blockList.map((b) => (
+                <Chip key={b.id} active={effectiveView === b.id} onClick={() => { setView(b.id!); setSelectedWeekState(null); }}>
+                  {b.id === active?.id && <span className="mr-1 inline-block h-1.5 w-1.5 rounded-full bg-primary align-middle" />}
+                  {b.name ?? shortWeek(b.startDate)}
+                </Chip>
+              ))}
+              <Chip active={effectiveView === "recent"} onClick={() => { setView("recent"); setSelectedWeekState(null); }}>
+                Recent weeks
+              </Chip>
+            </div>
+          )}
 
-            {muscles.length === 0 ? (
-              <div className="py-6 text-center text-sm text-base-content/40">No sets logged yet.</div>
-            ) : (
+          {/* Volume heatmap (only when there's a trend to show) */}
+          {showHeatmap && (
+            <section className="rounded-3xl border border-base-300 bg-base-100 p-5">
+              <h2 className="text-xs font-semibold uppercase tracking-wide text-base-content/40">
+                Volume · sets per muscle{selectedBlock ? ` · ${selectedBlock.name ?? "block"}` : ""}
+              </h2>
+              <div className="mb-3 mt-1">{caption}</div>
               <div className="overflow-x-auto">
                 <div
                   className="grid gap-1"
                   style={{ gridTemplateColumns: `5.5rem repeat(${weeks.length}, 2.25rem)` }}
                 >
-                  {/* header row */}
                   <div />
                   {weeks.map((w) => {
                     const isSel = w.start === selectedWeek;
                     return (
                       <button
                         key={w.start}
-                        onClick={() => setSelected(w.start)}
+                        onClick={() => setSelectedWeekState(w.start)}
                         className={`rounded-md py-1 text-center text-[10px] font-semibold tabular-nums ${
                           isSel ? "bg-base-300/60" : ""
                         } ${w.deload ? "text-amber-500" : w.future ? "text-base-content/25" : "text-base-content/50"}`}
@@ -148,8 +180,6 @@ export default function ProgressPage() {
                       </button>
                     );
                   })}
-
-                  {/* one row per muscle */}
                   {muscles.map((muscle) => (
                     <div key={muscle} className="contents">
                       <span className="flex items-center truncate pr-1 text-xs capitalize text-base-content/70">
@@ -162,7 +192,7 @@ export default function ProgressPage() {
                         return (
                           <button
                             key={w.start}
-                            onClick={() => setSelected(w.start)}
+                            onClick={() => setSelectedWeekState(w.start)}
                             style={{ backgroundColor: c.bg }}
                             className={`grid h-7 place-items-center rounded-md text-[11px] font-medium tabular-nums ${c.text} ${
                               isSel ? "ring-1 ring-inset ring-base-content/25" : ""
@@ -176,32 +206,32 @@ export default function ProgressPage() {
                   ))}
                 </div>
               </div>
-            )}
+              <div className="mt-3 flex items-center gap-3 text-[10px] text-base-content/40">
+                <span className="flex items-center gap-1">
+                  <span className="h-2.5 w-2.5 rounded-sm" style={{ backgroundColor: "rgba(251,191,36,0.4)" }} />
+                  below 10
+                </span>
+                <span className="flex items-center gap-1">
+                  <span className="h-2.5 w-2.5 rounded-sm" style={{ backgroundColor: "rgba(182,242,89,0.5)" }} />
+                  10–20 range
+                </span>
+                {selectedBlock?.deload && <span className="ml-auto text-amber-500">D = deload week</span>}
+              </div>
+            </section>
+          )}
 
-            <div className="mt-3 flex items-center gap-3 text-[10px] text-base-content/40">
-              <span className="flex items-center gap-1">
-                <span className="h-2.5 w-2.5 rounded-sm" style={{ backgroundColor: "rgba(251,191,36,0.4)" }} />
-                below 10
-              </span>
-              <span className="flex items-center gap-1">
-                <span className="h-2.5 w-2.5 rounded-sm" style={{ backgroundColor: "rgba(182,242,89,0.5)" }} />
-                10–20 range
-              </span>
-              {active && <span className="ml-auto text-amber-500">D = deload week</span>}
-            </div>
-          </section>
-
-          {/* Selected-week detail bars */}
-          <section className="flex flex-col gap-3">
-            <h2 className="px-1 text-xs font-semibold uppercase tracking-wide text-base-content/40">
-              {selectedLabel || "This week"}
+          {/* Selected-week detail bars (also the standalone view when no heatmap) */}
+          <section className={showHeatmap ? "flex flex-col gap-3" : "rounded-3xl border border-base-300 bg-base-100 p-5"}>
+            <h2 className={`text-xs font-semibold uppercase tracking-wide text-base-content/40 ${showHeatmap ? "px-1" : ""}`}>
+              {showHeatmap ? selectedLabel : "Volume · sets per muscle"}
             </h2>
+            {!showHeatmap && <div className="mb-3 mt-1">{caption}</div>}
             {detail.length === 0 ? (
               <div className="rounded-2xl border border-dashed border-base-300 py-6 text-center text-sm text-base-content/40">
                 {selectedMeta?.future ? "Upcoming week — not trained yet." : "No sets logged this week."}
               </div>
             ) : (
-              <div className="flex flex-col gap-2.5 rounded-2xl border border-base-300/60 bg-base-100 p-4">
+              <div className={`flex flex-col gap-2.5 ${showHeatmap ? "rounded-2xl border border-base-300/60 bg-base-100 p-4" : ""}`}>
                 {detail.map((v) => (
                   <VolRow key={v.muscle} muscle={v.muscle} sets={v.sets} />
                 ))}
@@ -226,6 +256,19 @@ export default function ProgressPage() {
   );
 }
 
+function Chip({ active, onClick, children }: { active: boolean; onClick: () => void; children: React.ReactNode }) {
+  return (
+    <button
+      onClick={onClick}
+      className={`shrink-0 whitespace-nowrap rounded-full px-3 py-1 text-xs font-medium transition-colors ${
+        active ? "bg-primary text-primary-content" : "bg-base-200 text-base-content/60 hover:bg-base-300"
+      }`}
+    >
+      {children}
+    </button>
+  );
+}
+
 function VolRow({ muscle, sets }: { muscle: string; sets: number }) {
   const pct = Math.min(100, (sets / TARGET_MAX) * 100);
   const enough = sets >= MEV;
@@ -244,7 +287,6 @@ function VolRow({ muscle, sets }: { muscle: string; sets: number }) {
             className={`h-full rounded-full ${enough ? "bg-primary" : "bg-amber-400"}`}
             style={{ width: `${pct}%` }}
           />
-          {/* MEV marker at 10 sets */}
           <div
             className="absolute top-0 h-full w-px bg-base-content/30"
             style={{ left: `${(MEV / TARGET_MAX) * 100}%` }}
@@ -293,14 +335,7 @@ function MiniSpark({ points }: { points: number[] }) {
   const d = points.map((v, i) => `${i ? "L" : "M"}${x(i).toFixed(1)} ${y(v).toFixed(1)}`).join(" ");
   return (
     <svg viewBox={`0 0 ${w} ${h}`} width={w} height={h} className="shrink-0 text-primary">
-      <path
-        d={d}
-        fill="none"
-        stroke="currentColor"
-        strokeWidth={1.6}
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
+      <path d={d} fill="none" stroke="currentColor" strokeWidth={1.6} strokeLinecap="round" strokeLinejoin="round" />
       {points.length === 1 && <circle cx={x(0)} cy={y(points[0])} r={2} fill="currentColor" />}
       {points.length > 1 && (
         <circle cx={x(points.length - 1)} cy={y(points[points.length - 1])} r={2} fill="currentColor" />
