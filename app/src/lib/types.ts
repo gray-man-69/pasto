@@ -158,7 +158,7 @@ export interface PerformedSet {
   weight: number;
   reps: number;
   type?: SetType; // defaults to "normal"; "warmup" sets don't count toward volume
-  rpe?: number; // optional reps-in-reserve/effort
+  rir?: number; // reps in reserve — how many more you could have done (0 = failure)
   done?: boolean;
 }
 

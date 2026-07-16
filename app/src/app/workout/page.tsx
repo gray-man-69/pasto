@@ -24,7 +24,6 @@ import {
   lastForExercise,
   nextTarget,
   overloadOptions,
-  reachTarget,
   sessionTarget,
   summarizeLast,
   volumeOf,
@@ -448,15 +447,14 @@ export default function WorkoutPage() {
         const last = lastForExercise(history, ex.exerciseId);
         const options = overloadOptions(prescription, last);
         const deloading = mesoInfo?.phase === "deload";
-        const target = sessionTarget(prescription, last, ex.sets.length, deloading);
-        const reach = reachTarget(ex.sets, target, prescription.increment, prescription.weight, prescription.repMax);
+        const target = sessionTarget(prescription, ex.sets, ex.sets.length, deloading);
         const hitTarget = target > 0 && liveVol >= target;
-        const reachFor: Record<string, string> = {
-          weight: reach.gap <= 0 ? "target already met" : `+${reach.kg} kg across your sets → hits target`,
-          reps: reach.gap <= 0 ? "target already met" : `+${reach.reps} rep${reach.reps === 1 ? "" : "s"} total → hits target`,
-          set: `one more set ≈ +${reach.perSet.toLocaleString()} kg`,
-          dropset: `a dropset ≈ +${Math.round(reach.perSet * 0.6).toLocaleString()} kg`,
-        };
+        const totalReps = workingSets(ex.sets).reduce((n, s) => n + s.reps, 0);
+        const repsToTop = Math.max(0, ex.sets.length * prescription.repMax - totalReps);
+        const ratedSets = workingSets(ex.sets).filter((s) => s.rir != null);
+        const avgRir = ratedSets.length
+          ? Math.round(ratedSets.reduce((n, s) => n + (s.rir ?? 0), 0) / ratedSets.length)
+          : null;
 
         return (
           <div
@@ -497,6 +495,11 @@ export default function WorkoutPage() {
                         style={{ width: `${Math.min(100, (liveVol / target) * 100)}%` }}
                       />
                     </div>
+                    <div className={`mt-0.5 text-[11px] ${hitTarget ? "text-primary/80" : "text-secondary"}`}>
+                      {hitTarget
+                        ? `Top of range hit — add weight next time (+${prescription.increment} kg)`
+                        : `+${repsToTop} rep${repsToTop === 1 ? "" : "s"} to hit the top of your range (${prescription.repMax})`}
+                    </div>
                     {stats.best > 0 && (
                       <div className="mt-0.5 text-[10px] tabular-nums text-base-content/35">
                         best {Math.round(stats.best).toLocaleString()} kg
@@ -508,6 +511,18 @@ export default function WorkoutPage() {
                   <div className="mt-0.5 text-[11px]">
                     <span className={muscleSets >= 10 ? "text-primary/70" : "text-amber-500"}>
                       <span className="capitalize">{primaryMuscle}</span> volume {muscleSets}/10–20 sets this week
+                    </span>
+                  </div>
+                )}
+                {avgRir != null && (
+                  <div className="mt-0.5 text-[11px]">
+                    <span className={avgRir >= 4 ? "text-amber-500" : "text-base-content/50"}>
+                      Effort ~{avgRir} RIR
+                      {avgRir >= 4
+                        ? " · too easy — add load"
+                        : mesoRir != null
+                          ? ` · block aims ~${mesoRir}`
+                          : ""}
                     </span>
                   </div>
                 )}
@@ -565,9 +580,6 @@ export default function WorkoutPage() {
                       )}
                     </div>
                     <p className="mt-0.5 text-[11px] leading-snug text-base-content/50">{o.detail}</p>
-                    {target > 0 && reachFor[o.lever] && (
-                      <p className="mt-0.5 text-[11px] font-medium text-secondary">{reachFor[o.lever]}</p>
-                    )}
                   </li>
                 ))}
               </ul>
@@ -631,17 +643,33 @@ export default function WorkoutPage() {
                       value={s.weight}
                       onChange={(v) => editSet(ei, si, { weight: v })}
                       onBlur={flushSave}
-                      className="input input-bordered input-xs w-16 text-right tabular-nums"
+                      className="input input-bordered input-xs w-14 text-right tabular-nums"
                     />
-                    <span className="text-xs text-base-content/40">kg ×</span>
+                    <span className="text-xs text-base-content/40">×</span>
                     <NumberField
                       inputMode="numeric"
                       min={0}
                       value={s.reps}
                       onChange={(v) => editSet(ei, si, { reps: v })}
                       onBlur={flushSave}
-                      className="input input-bordered input-xs w-14 text-right tabular-nums"
+                      className="input input-bordered input-xs w-12 text-right tabular-nums"
                     />
+                    <select
+                      value={s.rir ?? ""}
+                      onChange={(e) =>
+                        editSet(ei, si, { rir: e.target.value === "" ? undefined : Number(e.target.value) }, true)
+                      }
+                      className="select select-ghost select-xs w-14 px-1 text-xs text-base-content/60"
+                      aria-label="Reps in reserve"
+                      title="Reps in reserve — how many more you could have done (0 = to failure)"
+                    >
+                      <option value="">RIR</option>
+                      <option value="0">0</option>
+                      <option value="1">1</option>
+                      <option value="2">2</option>
+                      <option value="3">3</option>
+                      <option value="4">4+</option>
+                    </select>
                     <button
                       onClick={() => editSet(ei, si, { done: !s.done }, true)}
                       className={`ml-auto grid h-7 w-7 place-items-center rounded-full ${
