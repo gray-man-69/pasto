@@ -8,13 +8,16 @@ import NumberField from "@/components/NumberField";
 import {
   activeMesocycle,
   activeSession,
+  addDays,
   completedSessions,
   deleteSession,
   getRoutine,
   getSession,
   localDate,
   saveSession,
+  weekStart,
 } from "@/lib/db";
+import { volumeByMuscle } from "@/lib/progress";
 import { defaultRoutineExercise } from "@/lib/exercises";
 import { DELOAD_LOAD_FACTOR, isBlockActive, mesoWeek, rampedSetCounts, rirTarget } from "@/lib/mesocycle";
 import {
@@ -357,6 +360,16 @@ export default function WorkoutPage() {
   const mesoRir = mesoInfo && meso ? rirTarget(meso, session.date) : null;
   const isFinished = session.endedAt != null;
 
+  // Weekly hard sets per muscle (this week's finished workouts + this session) —
+  // the science target is 10–20 sets/muscle/week, shown per exercise in context.
+  const wkStart = weekStart(session.date);
+  const wkEnd = addDays(wkStart, 6);
+  const weekSessions = [
+    ...history.filter((s) => s.id !== session.id && s.date >= wkStart && s.date <= wkEnd),
+    session,
+  ];
+  const muscleWeek = new Map(volumeByMuscle(weekSessions).map((v) => [v.muscle, v.sets]));
+
   return (
     <div className="mx-auto flex w-full max-w-xl flex-col gap-3 pb-28">
       <div className="flex items-start justify-between">
@@ -416,6 +429,8 @@ export default function WorkoutPage() {
         const inSuperset = !!grp && (prevSame || nextSame);
         const stats = volumeStatsForExercise(history, ex.exerciseId);
         const liveVol = Math.round(volumeOf(ex.sets));
+        const primaryMuscle = ex.primaryMuscles?.[0];
+        const muscleSets = primaryMuscle ? muscleWeek.get(primaryMuscle) ?? 0 : 0;
         const prescription: RoutineExercise = {
           exerciseId: ex.exerciseId,
           name: ex.name,
@@ -465,6 +480,13 @@ export default function WorkoutPage() {
                     <span className="text-base-content/35">best {Math.round(stats.best).toLocaleString()} kg</span>
                   )}
                 </div>
+                {primaryMuscle && (
+                  <div className="mt-0.5 text-[11px]">
+                    <span className={muscleSets >= 10 ? "text-primary/70" : "text-amber-500"}>
+                      <span className="capitalize">{primaryMuscle}</span> volume {muscleSets}/10–20 sets this week
+                    </span>
+                  </div>
+                )}
               </div>
               <div className="flex shrink-0 flex-col items-center gap-0.5 text-base-content/40">
                 <div className="flex items-center gap-0.5">
