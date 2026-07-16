@@ -87,15 +87,17 @@ function RemindersCard() {
 }
 
 function SyncCard() {
-  const { user, ready, signIn, signUp, signOut } = useAuth();
+  const { user, ready, signIn, signUp, resetPassword, signOut } = useAuth();
   const [email, setEmail] = useState("");
   const [pw, setPw] = useState("");
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
+  const [msg, setMsg] = useState<string | null>(null);
 
   async function run(fn: () => Promise<void>) {
     setBusy(true);
     setErr(null);
+    setMsg(null);
     try {
       await fn();
     } catch (e) {
@@ -103,6 +105,17 @@ function SyncCard() {
     } finally {
       setBusy(false);
     }
+  }
+
+  async function forgotPassword() {
+    if (!email) {
+      setErr("Enter your email above first, then tap “Forgot password”.");
+      return;
+    }
+    await run(async () => {
+      await resetPassword(email);
+      setMsg(`Password-reset link sent to ${email.trim()}. Check your inbox (and spam).`);
+    });
   }
 
   return (
@@ -152,6 +165,7 @@ function SyncCard() {
               className="input input-bordered input-sm w-full"
             />
             {err && <div className="text-xs text-error">{err}</div>}
+            {msg && <div className="text-xs text-success">{msg}</div>}
             <div className="flex gap-2">
               <button
                 className="btn btn-primary btn-sm flex-1"
@@ -168,6 +182,13 @@ function SyncCard() {
                 Create account
               </button>
             </div>
+            <button
+              className="link link-hover self-start text-xs text-base-content/50"
+              disabled={busy}
+              onClick={forgotPassword}
+            >
+              Forgot password?
+            </button>
           </>
         )}
       </div>
@@ -183,6 +204,8 @@ function prettyAuthError(e: unknown): string {
     return "That email already has an account — use Sign in.";
   if (code.includes("weak-password")) return "Password must be at least 6 characters.";
   if (code.includes("invalid-email")) return "That doesn't look like a valid email.";
+  if (code.includes("user-not-found")) return "No account found for that email.";
+  if (code.includes("too-many-requests")) return "Too many attempts — wait a bit and try again.";
   if (code.includes("network")) return "Network error — check your connection.";
   return "Couldn't complete that. Please try again.";
 }

@@ -4,6 +4,7 @@ import { createContext, useContext, useEffect, useState, type ReactNode } from "
 import {
   createUserWithEmailAndPassword,
   onAuthStateChanged,
+  sendPasswordResetEmail,
   signInWithEmailAndPassword,
   signOut as fbSignOut,
   type User,
@@ -16,6 +17,7 @@ type AuthCtx = {
   ready: boolean;
   signIn: (email: string, password: string) => Promise<void>;
   signUp: (email: string, password: string) => Promise<void>;
+  resetPassword: (email: string) => Promise<void>;
   signOut: () => Promise<void>;
 };
 
@@ -49,6 +51,9 @@ export default function SyncProvider({ children }: { children: ReactNode }) {
     },
     signUp: async (email, password) => {
       await createUserWithEmailAndPassword(auth, email.trim(), password);
+    },
+    resetPassword: async (email) => {
+      await sendPasswordResetEmail(auth, email.trim());
     },
     signOut: async () => {
       await fbSignOut(auth);
