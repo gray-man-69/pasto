@@ -16,6 +16,7 @@ export default function RoutinePage() {
   const [name, setName] = useState("");
   const [exercises, setExercises] = useState<RoutineExercise[]>([]);
   const [picking, setPicking] = useState(false);
+  const [replacing, setReplacing] = useState<number | null>(null);
   const [saving, setSaving] = useState(false);
 
   // Load an existing routine when editing (?id=…); otherwise start blank.
@@ -47,6 +48,24 @@ export default function RoutinePage() {
   }
   function remove(i: number) {
     setExercises((prev) => prev.filter((_, idx) => idx !== i));
+  }
+  // Swap the movement in place, keeping the set/rep config, superset & dropset.
+  function replaceExercise(i: number, ex: Exercise) {
+    setExercises((prev) =>
+      prev.map((e, idx) =>
+        idx === i
+          ? {
+              ...defaultRoutineExercise(ex),
+              targetSets: e.targetSets,
+              repMin: e.repMin,
+              repMax: e.repMax,
+              superset: e.superset,
+              dropset: e.dropset,
+            }
+          : e,
+      ),
+    );
+    setReplacing(null);
   }
   function move(i: number, dir: -1 | 1) {
     setExercises((prev) => {
@@ -129,6 +148,7 @@ export default function RoutinePage() {
               <div className="flex shrink-0 items-center gap-0.5 text-base-content/40">
                 <button className="grid h-7 w-7 place-items-center rounded-full hover:bg-base-300/60 disabled:opacity-30" onClick={() => move(i, -1)} disabled={i === 0} aria-label="Move up">↑</button>
                 <button className="grid h-7 w-7 place-items-center rounded-full hover:bg-base-300/60 disabled:opacity-30" onClick={() => move(i, 1)} disabled={i === exercises.length - 1} aria-label="Move down">↓</button>
+                <button className="grid h-7 w-7 place-items-center rounded-full hover:bg-base-300/60 hover:text-primary" onClick={() => setReplacing(i)} aria-label="Replace exercise" title="Replace exercise">⇄</button>
                 <button className="grid h-7 w-7 place-items-center rounded-full hover:bg-base-300/60 hover:text-error" onClick={() => remove(i)} aria-label="Remove">✕</button>
               </div>
             </div>
@@ -200,16 +220,27 @@ export default function RoutinePage() {
         </div>
       </div>
 
-      {picking && (
+      {(picking || replacing !== null) && (
         <div className="fixed inset-0 z-[70] flex flex-col bg-base-100">
           <div className="flex items-center justify-between border-b border-base-300 px-4 py-3">
-            <span className="font-semibold">Add exercises</span>
-            <button className="btn btn-primary btn-sm" onClick={() => setPicking(false)}>
-              Done
+            <span className="font-semibold">
+              {replacing !== null ? `Replace ${exercises[replacing]?.name ?? "exercise"}` : "Add exercises"}
+            </span>
+            <button
+              className="btn btn-primary btn-sm"
+              onClick={() => {
+                setPicking(false);
+                setReplacing(null);
+              }}
+            >
+              {replacing !== null ? "Cancel" : "Done"}
             </button>
           </div>
           <div className="flex-1 overflow-y-auto p-4">
-            <ExercisePicker onSelect={toggleExercise} addedIds={exercises.map((e) => e.exerciseId)} />
+            <ExercisePicker
+              onSelect={replacing !== null ? (ex) => replaceExercise(replacing, ex) : toggleExercise}
+              addedIds={replacing !== null ? [] : exercises.map((e) => e.exerciseId)}
+            />
           </div>
         </div>
       )}

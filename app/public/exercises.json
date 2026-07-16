@@ -1,7 +1,7 @@
 {
   "source": "curated (Pasto)",
   "license": "n/a",
-  "count": 76,
+  "count": 77,
   "exercises": [
     {
       "id": "barbell-bench-press",
@@ -251,6 +251,20 @@
       ],
       "secondaryMuscles": [
         "biceps"
+      ]
+    },
+    {
+      "id": "close-grip-lat-pulldown",
+      "name": "Close-Grip Lat Pulldown",
+      "category": "strength",
+      "equipment": "cable",
+      "mechanic": "compound",
+      "primaryMuscles": [
+        "lats"
+      ],
+      "secondaryMuscles": [
+        "biceps",
+        "middle back"
       ]
     },
     {
