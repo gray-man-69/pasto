@@ -10,9 +10,17 @@ export default function SideNav() {
   const pathname = usePathname();
   return (
     <aside className="hidden w-60 shrink-0 flex-col border-r border-base-300 bg-base-100 lg:flex">
-      <Link href="/" className="flex items-center gap-2 px-6 py-6">
+      <Link href="/" className="flex items-center gap-2.5 px-6 py-6">
+        <svg viewBox="0 0 24 24" className="h-7 w-7 text-primary" aria-hidden="true">
+          <g fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round">
+            <path d="M3.6 9v6" />
+            <path d="M6.4 6v12" />
+            <path d="M17.6 6v12" />
+            <path d="M20.4 9v6" />
+          </g>
+          <path d="M13.4 7.5 L9.4 12 L12 12 L11 16.5 L15 11 L12.4 11 Z" fill="currentColor" />
+        </svg>
         <span className="text-xl font-bold tracking-tight">Pasto</span>
-        <span className="h-2 w-2 rounded-full bg-primary" />
       </Link>
       <nav className="flex flex-col gap-1 px-3">
         {NAV_ITEMS.map((tab) => {
