@@ -61,8 +61,10 @@ export function defaultRoutineExercise(ex: Exercise): RoutineExercise {
     primaryMuscles: ex.primaryMuscles,
     secondaryMuscles: ex.secondaryMuscles,
     targetSets: 3,
-    repMin: compound ? 6 : 10,
-    repMax: compound ? 10 : 15,
+    // Fixed rep target (ranges aren't more effective — just a progression tool):
+    // compounds ~8, isolation ~12. Both editable per exercise.
+    repMin: compound ? 8 : 12,
+    repMax: compound ? 8 : 12,
     weight,
     weightUnit: "kg",
     increment: lower && compound ? 5 : 2.5,

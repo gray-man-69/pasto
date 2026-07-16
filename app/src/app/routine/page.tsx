@@ -136,12 +136,8 @@ export default function RoutinePage() {
               <Field label="Sets">
                 <NumberField inputMode="numeric" min={1} value={e.targetSets} onChange={(v) => update(i, { targetSets: v })} className="input input-bordered input-xs w-14 text-right tabular-nums" />
               </Field>
-              <Field label="Rep range">
-                <span className="flex items-center gap-1">
-                  <NumberField inputMode="numeric" min={1} value={e.repMin} onChange={(v) => update(i, { repMin: v })} className="input input-bordered input-xs w-12 text-right tabular-nums" />
-                  <span className="text-base-content/40">–</span>
-                  <NumberField inputMode="numeric" min={1} value={e.repMax} onChange={(v) => update(i, { repMax: v })} className="input input-bordered input-xs w-12 text-right tabular-nums" />
-                </span>
+              <Field label="Target reps">
+                <NumberField inputMode="numeric" min={1} value={e.repMax} onChange={(v) => update(i, { repMin: v, repMax: v })} className="input input-bordered input-xs w-14 text-right tabular-nums" />
               </Field>
               <Field label="Weight (kg)">
                 <NumberField inputMode="decimal" min={0} value={e.weight} onChange={(v) => update(i, { weight: v })} className="input input-bordered input-xs w-16 text-right tabular-nums" />
