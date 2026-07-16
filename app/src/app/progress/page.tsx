@@ -89,7 +89,7 @@ function VolRow({ muscle, sets }: { muscle: string; sets: number }) {
       ? { text: `＋${MEV - sets} set${MEV - sets === 1 ? "" : "s"} to reach the growth range`, cls: "text-amber-500" }
       : sets > TARGET_MAX
         ? { text: "above 20 — plenty; make sure you're recovering", cls: "text-base-content/40" }
-        : { text: "in the 10–20 range 👍", cls: "text-primary/70" };
+        : { text: "in the 10–20 growth range", cls: "text-primary/70" };
   return (
     <div className="flex flex-col gap-1">
       <div className="flex items-center gap-3">
