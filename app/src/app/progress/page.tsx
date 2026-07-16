@@ -304,12 +304,22 @@ function ProgRow({ p }: { p: ExerciseProgress }) {
   );
 }
 
+type Metric = "weight" | "e1rm" | "volume";
+
 function ExerciseDetail({ p }: { p: ExerciseProgress }) {
-  const [metric, setMetric] = useState<"e1rm" | "volume">("e1rm");
-  const series = metric === "e1rm" ? p.points : p.volumes;
+  const [metric, setMetric] = useState<Metric>("weight");
+  const series = metric === "e1rm" ? p.points : metric === "volume" ? p.volumes : p.weights;
+  const caption: Record<Metric, string> = {
+    weight: "Heaviest weight lifted each session — your working-weight PR over time.",
+    e1rm: "Estimated 1-rep max from your best set (Epley). A strength number — best for heavy lifts, less meaningful for light isolation.",
+    volume: "Total work per session (Σ weight × reps) — good for tracking isolation.",
+  };
   return (
     <div className="border-t border-base-300/60 px-3 py-3">
       <div className="mb-2 flex items-center gap-1.5">
+        <MetricChip active={metric === "weight"} onClick={() => setMetric("weight")}>
+          Top weight
+        </MetricChip>
         <MetricChip active={metric === "e1rm"} onClick={() => setMetric("e1rm")}>
           Est. 1RM
         </MetricChip>
@@ -319,11 +329,7 @@ function ExerciseDetail({ p }: { p: ExerciseProgress }) {
         <span className="ml-auto text-[10px] font-medium tracking-wide text-base-content/35">kg</span>
       </div>
       <ExerciseChart points={series} dates={p.dates} />
-      <p className="mt-1.5 text-[10px] leading-snug text-base-content/40">
-        {metric === "e1rm"
-          ? "Estimated 1-rep max from your best set (Epley). A strength number — best for heavy lifts, less meaningful for light isolation."
-          : "Total work per session (Σ weight × reps) — the better progress signal for isolation like this."}
-      </p>
+      <p className="mt-1.5 text-[10px] leading-snug text-base-content/40">{caption[metric]}</p>
     </div>
   );
 }
