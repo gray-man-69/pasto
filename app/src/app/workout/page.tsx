@@ -30,6 +30,14 @@ import type {
   WorkoutSession,
 } from "@/lib/types";
 
+function dayLabel(date: string): string {
+  return new Date(date + "T00:00:00").toLocaleDateString("en-GB", {
+    weekday: "short",
+    day: "numeric",
+    month: "short",
+  });
+}
+
 // Build a session exercise (sets pre-filled from history + double-progression
 // target) from a library exercise — used both when starting from a routine and
 // when adding a lift mid-workout.
@@ -64,6 +72,7 @@ export default function WorkoutPage() {
   const [ready, setReady] = useState(false);
   const [menuFor, setMenuFor] = useState<number | null>(null);
   const [noteFor, setNoteFor] = useState<number | null>(null);
+  const [editingDate, setEditingDate] = useState(false);
   // null = closed; {mode:"add"} appends; {mode:"replace", ei} swaps one out.
   const [picker, setPicker] = useState<{ mode: "add" | "replace"; ei?: number } | null>(null);
 
@@ -231,9 +240,19 @@ export default function WorkoutPage() {
     });
   }
 
+  function changeDate(date: string) {
+    if (!session || !date) return;
+    setEditingDate(false);
+    persist({ ...session, date });
+  }
+  // A backdated workout should be timestamped on its own day (noon local) so it
+  // sorts into history / progression chronologically — not as if it happened now.
+  function endedAtForDate(date: string): number {
+    return date === localDate() ? Date.now() : new Date(date + "T12:00:00").getTime();
+  }
   async function finish() {
     if (!session) return;
-    await saveSession({ ...session, endedAt: Date.now() });
+    await saveSession({ ...session, endedAt: endedAtForDate(session.date) });
     router.push("/training");
   }
   async function discard() {
@@ -258,12 +277,38 @@ export default function WorkoutPage() {
 
   return (
     <div className="mx-auto flex w-full max-w-xl flex-col gap-3 pb-28">
-      <div className="flex items-center justify-between">
-        <div>
+      <div className="flex items-start justify-between">
+        <div className="min-w-0">
           <h1 className="text-lg font-bold">{session.routineName ?? "Workout"}</h1>
-          <div className="text-xs text-base-content/50">
-            {doneCount}/{totalSets} sets done
+          <div className="mt-0.5 flex flex-wrap items-center gap-2 text-xs text-base-content/50">
+            <button
+              onClick={() => setEditingDate((v) => !v)}
+              className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 transition-colors ${
+                session.date === localDate()
+                  ? "bg-base-200/60 hover:bg-base-300/60"
+                  : "bg-amber-400/15 text-amber-500 hover:bg-amber-400/25"
+              }`}
+            >
+              <svg viewBox="0 0 24 24" className="h-3.5 w-3.5" fill="none" stroke="currentColor" strokeWidth={2}>
+                <rect x="3" y="4.5" width="18" height="16" rx="2.5" />
+                <path d="M3 9h18M8 3v3M16 3v3" strokeLinecap="round" />
+              </svg>
+              {dayLabel(session.date)}
+              {session.date === localDate() ? " · Today" : ""}
+            </button>
+            <span>
+              {doneCount}/{totalSets} sets
+            </span>
           </div>
+          {editingDate && (
+            <input
+              type="date"
+              value={session.date}
+              max={localDate()}
+              onChange={(e) => changeDate(e.target.value)}
+              className="input input-bordered input-xs mt-2 w-44"
+            />
+          )}
         </div>
         <button className="btn btn-ghost btn-sm" onClick={() => router.push("/training")}>
           Close
