@@ -24,6 +24,7 @@ import {
   summarizeLast,
   volumeOf,
   volumeStatsForExercise,
+  workingSets,
 } from "@/lib/progression";
 import type {
   Exercise,
@@ -43,6 +44,34 @@ function dayLabel(date: string): string {
   });
 }
 
+// Pre-fill a set list from LAST session's actual per-set weight × reps (your
+// real starting point to beat) — so a corrected past workout flows into the next
+// one. When double progression says add weight (you hit the top of the range on
+// every set), start fresh at the new load and the bottom of the range instead.
+function prefillSets(
+  re: RoutineExercise,
+  last: PerformedSet[] | undefined,
+  setCount: number,
+  deloading: boolean,
+): PerformedSet[] {
+  const t = nextTarget(re, last);
+  const lastWorking = workingSets(last ?? []);
+  return Array.from({ length: Math.max(1, setCount) }, (_, i) => {
+    let weight: number;
+    let reps: number;
+    if (t.addWeight || lastWorking.length === 0) {
+      weight = t.weight;
+      reps = t.reps;
+    } else {
+      const prev = lastWorking[Math.min(i, lastWorking.length - 1)];
+      weight = prev.weight;
+      reps = prev.reps;
+    }
+    if (deloading) weight = Math.round(weight * DELOAD_LOAD_FACTOR * 2) / 2;
+    return { weight, reps, type: "normal" as SetType, done: false };
+  });
+}
+
 // Build a session exercise (sets pre-filled from history + double-progression
 // target) from a library exercise — used both when starting from a routine and
 // when adding a lift mid-workout.
@@ -50,12 +79,7 @@ function buildSessionExercise(ex: Exercise, completed: WorkoutSession[]): Sessio
   const re = defaultRoutineExercise(ex);
   const last = lastForExercise(completed, ex.id);
   const t = nextTarget(re, last);
-  const sets: PerformedSet[] = Array.from({ length: Math.max(1, re.targetSets) }, () => ({
-    weight: t.weight,
-    reps: t.reps,
-    type: "normal" as SetType,
-    done: false,
-  }));
+  const sets = prefillSets(re, last, re.targetSets, false);
   return {
     exerciseId: ex.id,
     name: ex.name,
@@ -128,14 +152,8 @@ export default function WorkoutPage() {
           const t = nextTarget(re, last);
           const setCount = setCounts[i];
           const deloading = phase === "deload";
-          const weight = deloading ? Math.round(t.weight * DELOAD_LOAD_FACTOR * 2) / 2 : t.weight;
           const note = deloading ? "Deload — lighter, keep ~4 reps in reserve" : t.note;
-          const sets: PerformedSet[] = Array.from({ length: setCount }, () => ({
-            weight,
-            reps: t.reps,
-            type: "normal" as const,
-            done: false,
-          }));
+          const sets = prefillSets(re, last, setCount, deloading);
           // A dropset-prescribed exercise marks its final set as a dropset (not on deload weeks).
           if (re.dropset && sets.length && !deloading) sets[sets.length - 1].type = "dropset";
           return {
