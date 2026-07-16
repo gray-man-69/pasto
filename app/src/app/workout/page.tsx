@@ -16,7 +16,7 @@ import {
   saveSession,
 } from "@/lib/db";
 import { defaultRoutineExercise } from "@/lib/exercises";
-import { DELOAD_LOAD_FACTOR, isBlockActive, mesoWeek, rampedSets } from "@/lib/mesocycle";
+import { DELOAD_LOAD_FACTOR, isBlockActive, mesoWeek, rampedSetCounts, rirTarget } from "@/lib/mesocycle";
 import {
   lastForExercise,
   nextTarget,
@@ -119,14 +119,17 @@ export default function WorkoutPage() {
         const today = localDate();
         const activeMeso = mesoRec && isBlockActive(mesoRec, today) ? mesoRec : null;
         const phase = activeMeso ? mesoWeek(activeMeso, today).phase : null;
-        const exercises: SessionExercise[] = routine.exercises.map((re) => {
+        // Mesocycle volume ramp is per-muscle, distributed across its exercises.
+        const setCounts = activeMeso
+          ? rampedSetCounts(routine.exercises, activeMeso, today)
+          : routine.exercises.map((re) => Math.max(1, re.targetSets));
+        const exercises: SessionExercise[] = routine.exercises.map((re, i) => {
           const last = lastForExercise(completed, re.exerciseId);
           const t = nextTarget(re, last);
-          // Mesocycle: ramp the set count each week; deload halves volume + eases load.
-          const setCount = activeMeso ? rampedSets(re.targetSets, activeMeso, today) : Math.max(1, re.targetSets);
+          const setCount = setCounts[i];
           const deloading = phase === "deload";
           const weight = deloading ? Math.round(t.weight * DELOAD_LOAD_FACTOR * 2) / 2 : t.weight;
-          const note = deloading ? "Deload — lighter, keep ~3 reps in reserve" : t.note;
+          const note = deloading ? "Deload — lighter, keep ~4 reps in reserve" : t.note;
           const sets: PerformedSet[] = Array.from({ length: setCount }, () => ({
             weight,
             reps: t.reps,
@@ -316,6 +319,7 @@ export default function WorkoutPage() {
   const doneCount = session.exercises.reduce((n, e) => n + e.sets.filter((s) => s.done).length, 0);
   const totalSets = session.exercises.reduce((n, e) => n + e.sets.length, 0);
   const mesoInfo = meso && isBlockActive(meso, session.date) ? mesoWeek(meso, session.date) : null;
+  const mesoRir = mesoInfo && meso ? rirTarget(meso, session.date) : null;
   const isFinished = session.endedAt != null;
 
   return (
@@ -351,6 +355,7 @@ export default function WorkoutPage() {
                 }`}
               >
                 {mesoInfo.label}
+                {mesoRir != null && ` · leave ~${mesoRir} in reserve`}
               </span>
             )}
           </div>
@@ -448,8 +453,17 @@ export default function WorkoutPage() {
                 </svg>
                 Ways to progress
               </summary>
+              {mesoInfo && (
+                <p className="mt-1.5 rounded-lg bg-base-200/40 px-2.5 py-1.5 text-[11px] leading-snug text-base-content/50">
+                  Your block handles weekly <span className="text-base-content/70">volume</span> (sets) &
+                  <span className="text-base-content/70"> effort</span> (RIR). Here, just make each set
+                  harder — beat reps, then add weight.
+                </p>
+              )}
               <ul className="mt-1.5 flex flex-col gap-1.5">
-                {options.map((o) => (
+                {options
+                  .filter((o) => !mesoInfo || o.lever !== "set")
+                  .map((o) => (
                   <li key={o.lever} className="rounded-xl bg-base-200/40 px-2.5 py-1.5">
                     <div className="flex items-center gap-2">
                       <span className="text-xs font-semibold">{o.title}</span>

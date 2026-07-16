@@ -5,6 +5,8 @@
 import { weekStart } from "./db";
 import type { Mesocycle } from "./types";
 
+// addSetsPerWeek is sets added per MUSCLE per week (distributed across that
+// muscle's exercises), not per exercise — matching the RP MEV→MRV ramp.
 export const MESO_DEFAULTS = { weeks: 5, addSetsPerWeek: 1, deload: true };
 // Deload week: keep the movement but drop the load ~10% and stay well shy of failure.
 export const DELOAD_LOAD_FACTOR = 0.9;
@@ -38,12 +40,47 @@ export function mesoWeek(meso: Mesocycle, date: string): MesoWeek {
   };
 }
 
-/** Sets prescribed for an exercise this week = base + weekly ramp (deload halves). */
-export function rampedSets(base: number, meso: Mesocycle, date: string): number {
+/** Per-exercise set counts for this week. The block's weekly volume ramp is
+ * added at the MUSCLE level (~+1 set/muscle/week) and spread across that muscle's
+ * exercises — so a lift grows gently, ~1 set every couple weeks, not every week.
+ * The deload week halves each exercise's base sets. */
+export function rampedSetCounts(
+  exs: { primaryMuscles: string[]; targetSets: number }[],
+  meso: Mesocycle,
+  date: string,
+): number[] {
+  const base = exs.map((e) => Math.max(1, e.targetSets));
   const w = mesoWeek(meso, date);
-  if (w.phase === "upcoming" || w.phase === "done") return Math.max(1, base);
-  if (w.phase === "deload") return Math.max(1, Math.round(base / 2));
-  return base + meso.addSetsPerWeek * w.index;
+  if (w.phase === "deload") return exs.map((e) => Math.max(1, Math.round(e.targetSets / 2)));
+  if (w.phase !== "accumulation" || w.index <= 0) return base;
+
+  const added = new Array(exs.length).fill(0);
+  const byMuscle = new Map<string, number[]>();
+  exs.forEach((e, i) => {
+    const m = (e.primaryMuscles[0] ?? "?").toLowerCase();
+    const arr = byMuscle.get(m) ?? [];
+    arr.push(i);
+    byMuscle.set(m, arr);
+  });
+  const perMuscle = meso.addSetsPerWeek * w.index; // extra sets this muscle carries vs week 1
+  for (const idxs of byMuscle.values()) {
+    for (let k = 0; k < perMuscle; k++) {
+      const j = idxs[k % idxs.length];
+      if (added[j] < 2) added[j] += 1; // never balloon a single lift (+2 cap)
+    }
+  }
+  return base.map((b, i) => b + added[i]);
+}
+
+/** Advisory reps-in-reserve target: easier early (~3), near failure late (~0),
+ * very easy on the deload (~4). The block's second axis alongside volume. */
+export function rirTarget(meso: Mesocycle, date: string): number {
+  const w = mesoWeek(meso, date);
+  if (w.phase === "deload") return 4;
+  if (w.phase !== "accumulation") return 3;
+  const accum = meso.weeks - (meso.deload ? 1 : 0);
+  const frac = accum <= 1 ? 1 : w.index / (accum - 1);
+  return Math.max(0, Math.round(3 - 3 * frac));
 }
 
 export function isDeloadWeek(meso: Mesocycle, date: string): boolean {

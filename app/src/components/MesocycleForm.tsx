@@ -50,9 +50,11 @@ export default function MesocycleForm({ onClose }: { onClose: () => void }) {
           </button>
         </div>
         <p className="mb-4 text-xs leading-snug text-base-content/50">
-          Your routine&apos;s set counts are week 1. Volume ramps{" "}
-          {addSetsPerWeek > 0 ? `+${addSetsPerWeek} set/exercise each week` : "stays flat"}
-          {deload ? ", and the last week deloads (half the sets, lighter)." : "."}
+          Your routine&apos;s set counts are week 1. Volume then ramps{" "}
+          {addSetsPerWeek > 0
+            ? `+${addSetsPerWeek} set per muscle each week (spread across its exercises)`
+            : "stays flat"}
+          , effort rises (RIR ~3 → 0){deload ? ", and the last week deloads." : "."}
         </p>
 
         <label className="mb-3 block">
@@ -110,13 +112,13 @@ export default function MesocycleForm({ onClose }: { onClose: () => void }) {
 
         <div className="mb-3">
           <span className="mb-1 block text-xs font-medium text-base-content/60">
-            Weekly volume ramp
+            Weekly volume ramp · per muscle
           </span>
           <div className="flex gap-1.5">
             {[
               { v: 0, label: "Flat" },
-              { v: 1, label: "+1 set/wk" },
-              { v: 2, label: "+2 sets/wk" },
+              { v: 1, label: "+1 set/muscle" },
+              { v: 2, label: "+2 sets/muscle" },
             ].map((o) => (
               <button
                 key={o.v}
