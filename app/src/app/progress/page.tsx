@@ -1,24 +1,97 @@
 "use client";
 
+import { useState } from "react";
 import Link from "next/link";
 import { useLiveQuery } from "dexie-react-hooks";
 import { MuscleThumb } from "@/components/MuscleMap";
-import { addDays, completedSessions, weekStart } from "@/lib/db";
+import { addDays, completedSessions, getMesocycle, localDate, weekStart } from "@/lib/db";
+import { isBlockActive, mesoWeek } from "@/lib/mesocycle";
 import { exerciseProgress, volumeByMuscle } from "@/lib/progress";
 import type { ExerciseProgress } from "@/lib/progress";
 
 // Science-based hypertrophy target: ~10–20 hard sets per muscle per week.
 const MEV = 10;
 const TARGET_MAX = 20;
+const MAX_WEEKS = 8; // columns shown when no block is active
+
+function shortWeek(start: string): string {
+  return new Date(start + "T00:00:00").toLocaleDateString("en-GB", { day: "numeric", month: "short" });
+}
+
+// Heatmap cell colour: dim when empty, amber below MEV, lime in/above the range.
+function heat(sets: number): { bg: string; text: string } {
+  if (sets <= 0) return { bg: "rgba(148,163,184,0.07)", text: "text-base-content/20" };
+  if (sets < MEV) {
+    const t = sets / MEV;
+    return { bg: `rgba(251,191,36,${(0.14 + t * 0.3).toFixed(3)})`, text: "text-base-content/90" };
+  }
+  const t = Math.min(1, (sets - MEV) / (TARGET_MAX - MEV));
+  return { bg: `rgba(182,242,89,${(0.2 + t * 0.4).toFixed(3)})`, text: "text-base-content" };
+}
 
 export default function ProgressPage() {
   const sessions = useLiveQuery(() => completedSessions(), []);
+  const meso = useLiveQuery(() => getMesocycle(), []);
+  const [selected, setSelected] = useState<string | null>(null);
 
-  const wk = weekStart();
-  const wkEnd = addDays(wk, 6);
-  const weekSessions = (sessions ?? []).filter((s) => s.date >= wk && s.date <= wkEnd);
-  const volume = volumeByMuscle(weekSessions);
-  const progress = exerciseProgress(sessions ?? []);
+  const today = localDate();
+  const all = sessions ?? [];
+  const active = meso && isBlockActive(meso, today) ? meso : null;
+
+  // Columns: the block's weeks (labelled W1…Wn, deload marked) or the last 8
+  // weeks that have any data (plus the current week).
+  type Wk = { start: string; label: string; deload: boolean; future: boolean };
+  let weeks: Wk[] = [];
+  if (active) {
+    for (let i = 0; i < active.weeks; i++) {
+      const start = addDays(active.startDate, i * 7);
+      weeks.push({
+        start,
+        label: `W${i + 1}`,
+        deload: !!active.deload && i === active.weeks - 1,
+        future: start > weekStart(today),
+      });
+    }
+  } else {
+    const wk = new Set(all.map((s) => weekStart(s.date)));
+    wk.add(weekStart(today));
+    weeks = [...wk]
+      .sort()
+      .slice(-MAX_WEEKS)
+      .map((start) => ({ start, label: shortWeek(start), deload: false, future: false }));
+  }
+
+  // Per-week per-muscle set counts (reuses volumeByMuscle on each week's slice).
+  const perWeek = new Map<string, Map<string, number>>();
+  const totals = new Map<string, number>();
+  for (const w of weeks) {
+    const m = new Map<string, number>();
+    for (const { muscle, sets } of volumeByMuscle(all.filter((s) => weekStart(s.date) === w.start))) {
+      m.set(muscle, sets);
+      totals.set(muscle, (totals.get(muscle) ?? 0) + sets);
+    }
+    perWeek.set(w.start, m);
+  }
+  const muscles = [...totals.entries()].sort((a, b) => b[1] - a[1]).map(([m]) => m);
+
+  const thisWeek = weekStart(today);
+  const selectedWeek =
+    selected ?? (weeks.some((w) => w.start === thisWeek) ? thisWeek : weeks.at(-1)?.start ?? null);
+  const detail = selectedWeek
+    ? volumeByMuscle(all.filter((s) => weekStart(s.date) === selectedWeek))
+    : [];
+  const selectedMeta = weeks.find((w) => w.start === selectedWeek);
+  const selectedLabel = (() => {
+    if (!selectedWeek) return "";
+    if (active) {
+      const w = mesoWeek(active, selectedWeek);
+      if (w.phase === "accumulation") return `${w.label} · ramping`;
+      if (w.phase === "deload") return `${w.label} · deload`;
+    }
+    return `Week of ${shortWeek(selectedWeek)}`;
+  })();
+
+  const progress = exerciseProgress(all);
 
   return (
     <div className="mx-auto flex w-full max-w-xl flex-col gap-5">
@@ -40,24 +113,96 @@ export default function ProgressPage() {
         </div>
       ) : (
         <>
-          {/* Weekly volume per muscle */}
+          {/* Volume heatmap: muscles × weeks */}
           <section className="rounded-3xl border border-base-300 bg-base-100 p-5">
-            <div className="mb-1 flex items-center justify-between">
-              <h2 className="text-xs font-semibold uppercase tracking-wide text-base-content/40">
-                Weekly volume · sets per muscle
-              </h2>
-            </div>
-            <p className="mb-3 text-[11px] leading-snug text-base-content/40">
-              ~10–20 hard sets per muscle per week drives growth (Schoenfeld 2017 dose-response;
-              RP volume landmarks). Below 10 → add sets next week; near 20 → you&apos;re at plenty.
+            <h2 className="text-xs font-semibold uppercase tracking-wide text-base-content/40">
+              Volume · sets per muscle{active ? " · this block" : ""}
+            </h2>
+            <p className="mb-3 mt-1 text-[11px] leading-snug text-base-content/40">
+              ~10–20 hard sets/muscle/week drives growth (Schoenfeld 2017; RP landmarks). Read a row
+              for a muscle&apos;s trend, a column for that week&apos;s balance. Tap a week for detail.
             </p>
-            {volume.length === 0 ? (
-              <div className="py-6 text-center text-sm text-base-content/40">
-                No sets logged this week.
+
+            {muscles.length === 0 ? (
+              <div className="py-6 text-center text-sm text-base-content/40">No sets logged yet.</div>
+            ) : (
+              <div className="overflow-x-auto">
+                <div
+                  className="grid gap-1"
+                  style={{ gridTemplateColumns: `5.5rem repeat(${weeks.length}, 2.25rem)` }}
+                >
+                  {/* header row */}
+                  <div />
+                  {weeks.map((w) => {
+                    const isSel = w.start === selectedWeek;
+                    return (
+                      <button
+                        key={w.start}
+                        onClick={() => setSelected(w.start)}
+                        className={`rounded-md py-1 text-center text-[10px] font-semibold tabular-nums ${
+                          isSel ? "bg-base-300/60" : ""
+                        } ${w.deload ? "text-amber-500" : w.future ? "text-base-content/25" : "text-base-content/50"}`}
+                        title={shortWeek(w.start)}
+                      >
+                        {w.deload ? "D" : w.label}
+                      </button>
+                    );
+                  })}
+
+                  {/* one row per muscle */}
+                  {muscles.map((muscle) => (
+                    <div key={muscle} className="contents">
+                      <span className="flex items-center truncate pr-1 text-xs capitalize text-base-content/70">
+                        {muscle}
+                      </span>
+                      {weeks.map((w) => {
+                        const sets = perWeek.get(w.start)?.get(muscle) ?? 0;
+                        const c = heat(sets);
+                        const isSel = w.start === selectedWeek;
+                        return (
+                          <button
+                            key={w.start}
+                            onClick={() => setSelected(w.start)}
+                            style={{ backgroundColor: c.bg }}
+                            className={`grid h-7 place-items-center rounded-md text-[11px] font-medium tabular-nums ${c.text} ${
+                              isSel ? "ring-1 ring-inset ring-base-content/25" : ""
+                            }`}
+                          >
+                            {sets > 0 ? sets : ""}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            <div className="mt-3 flex items-center gap-3 text-[10px] text-base-content/40">
+              <span className="flex items-center gap-1">
+                <span className="h-2.5 w-2.5 rounded-sm" style={{ backgroundColor: "rgba(251,191,36,0.4)" }} />
+                below 10
+              </span>
+              <span className="flex items-center gap-1">
+                <span className="h-2.5 w-2.5 rounded-sm" style={{ backgroundColor: "rgba(182,242,89,0.5)" }} />
+                10–20 range
+              </span>
+              {active && <span className="ml-auto text-amber-500">D = deload week</span>}
+            </div>
+          </section>
+
+          {/* Selected-week detail bars */}
+          <section className="flex flex-col gap-3">
+            <h2 className="px-1 text-xs font-semibold uppercase tracking-wide text-base-content/40">
+              {selectedLabel || "This week"}
+            </h2>
+            {detail.length === 0 ? (
+              <div className="rounded-2xl border border-dashed border-base-300 py-6 text-center text-sm text-base-content/40">
+                {selectedMeta?.future ? "Upcoming week — not trained yet." : "No sets logged this week."}
               </div>
             ) : (
-              <div className="flex flex-col gap-2.5">
-                {volume.map((v) => (
+              <div className="flex flex-col gap-2.5 rounded-2xl border border-base-300/60 bg-base-100 p-4">
+                {detail.map((v) => (
                   <VolRow key={v.muscle} muscle={v.muscle} sets={v.sets} />
                 ))}
               </div>
