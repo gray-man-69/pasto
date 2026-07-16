@@ -30,6 +30,7 @@ export type ExerciseProgress = {
   lastVolume: number; // volume in the most recent session that trained it
   lastDate: string;
   points: number[]; // best e1RM per session, oldest → newest (for a sparkline)
+  volumes: number[]; // session volume (Σ weight × reps) per session, aligned with points
   dates: string[]; // session date for each point (aligned with `points`)
 };
 
@@ -57,11 +58,13 @@ export function exerciseProgress(sessions: WorkoutSession[]): ExerciseProgress[]
           lastVolume: 0,
           lastDate: s.date,
           points: [],
+          volumes: [],
           dates: [],
         };
         byId.set(ex.exerciseId, p);
       }
       p.points.push(bestE);
+      p.volumes.push(Math.round(vol));
       p.dates.push(s.date);
       p.bestE1rm = Math.max(p.bestE1rm, bestE);
       p.bestWeight = Math.max(p.bestWeight, topW);

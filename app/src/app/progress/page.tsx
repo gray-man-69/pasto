@@ -299,12 +299,45 @@ function ProgRow({ p }: { p: ExerciseProgress }) {
           </svg>
         )}
       </button>
-      {open && canChart && (
-        <div className="border-t border-base-300/60 px-3 py-3">
-          <ExerciseChart points={p.points} dates={p.dates} />
-        </div>
-      )}
+      {open && canChart && <ExerciseDetail p={p} />}
     </li>
+  );
+}
+
+function ExerciseDetail({ p }: { p: ExerciseProgress }) {
+  const [metric, setMetric] = useState<"e1rm" | "volume">("e1rm");
+  const series = metric === "e1rm" ? p.points : p.volumes;
+  return (
+    <div className="border-t border-base-300/60 px-3 py-3">
+      <div className="mb-2 flex items-center gap-1.5">
+        <MetricChip active={metric === "e1rm"} onClick={() => setMetric("e1rm")}>
+          Est. 1RM
+        </MetricChip>
+        <MetricChip active={metric === "volume"} onClick={() => setMetric("volume")}>
+          Volume
+        </MetricChip>
+        <span className="ml-auto text-[10px] font-medium tracking-wide text-base-content/35">kg</span>
+      </div>
+      <ExerciseChart points={series} dates={p.dates} />
+      <p className="mt-1.5 text-[10px] leading-snug text-base-content/40">
+        {metric === "e1rm"
+          ? "Estimated 1-rep max from your best set (Epley). A strength number — best for heavy lifts, less meaningful for light isolation."
+          : "Total work per session (Σ weight × reps) — the better progress signal for isolation like this."}
+      </p>
+    </div>
+  );
+}
+
+function MetricChip({ active, onClick, children }: { active: boolean; onClick: () => void; children: React.ReactNode }) {
+  return (
+    <button
+      onClick={onClick}
+      className={`rounded-full px-2.5 py-0.5 text-[11px] font-medium transition-colors ${
+        active ? "bg-primary text-primary-content" : "bg-base-200 text-base-content/60 hover:bg-base-300"
+      }`}
+    >
+      {children}
+    </button>
   );
 }
 
