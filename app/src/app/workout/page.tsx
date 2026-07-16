@@ -490,7 +490,9 @@ export default function WorkoutPage() {
               <MuscleThumb primary={ex.primaryMuscles ?? []} secondary={ex.secondaryMuscles ?? []} />
               <div className="min-w-0 flex-1">
                 <div className="truncate font-medium">{ex.name}</div>
-                {ex.note && <div className="mt-0.5 text-xs font-medium text-primary">{ex.note}</div>}
+                {ex.note && target <= 0 && (
+                  <div className="mt-0.5 text-xs font-medium text-primary">{ex.note}</div>
+                )}
                 {ex.userNote && (
                   <div className="mt-0.5 text-xs italic text-base-content/70">“{ex.userNote}”</div>
                 )}
@@ -515,8 +517,8 @@ export default function WorkoutPage() {
                     </div>
                     <div className={`mt-0.5 text-[11px] ${hitTarget ? "text-primary/80" : "text-secondary"}`}>
                       {hitTarget
-                        ? `Top of range hit — add weight next time (+${prescription.increment} kg)`
-                        : `+${repsToTop} rep${repsToTop === 1 ? "" : "s"} to hit the top of your range (${prescription.repMax})`}
+                        ? `Target hit — add weight next time (+${prescription.increment} kg)`
+                        : `+${repsToTop} rep${repsToTop === 1 ? "" : "s"} to hit your target (${prescription.repMax})`}
                     </div>
                     {stats.best > 0 && (
                       <div className="mt-0.5 text-[10px] tabular-nums text-base-content/35">
