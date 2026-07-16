@@ -126,6 +126,53 @@ export function volumeOf(sets: PerformedSet[]): number {
   return workingSets(sets).reduce((v, s) => v + s.weight * s.reps, 0);
 }
 
+/** Per-exercise session volume target (a progressive-overload goal, in kg of
+ * work). Based on last session's per-set output × this week's prescribed set
+ * count (so the block ramp raises it), nudged +2% to force a small win. Deload
+ * weeks target ~half. No history → the routine's prescription. */
+export function sessionTarget(
+  re: RoutineExercise,
+  last: PerformedSet[] | undefined,
+  prescribedSets: number,
+  deloading: boolean,
+): number {
+  const sets = Math.max(1, prescribedSets);
+  const lw = workingSets(last ?? []);
+  if (lw.length === 0) {
+    const vol = sets * re.weight * re.repMax;
+    return Math.round(deloading ? vol * 0.5 : vol);
+  }
+  const vLast = lw.reduce((v, s) => v + s.weight * s.reps, 0);
+  if (deloading) return Math.round(vLast * 0.5);
+  return Math.round((vLast / lw.length) * sets * 1.02);
+}
+
+export interface Reach {
+  gap: number; // volume still needed to reach target
+  kg: number; // load to add across current sets to close it
+  reps: number; // total reps to add to close it
+  perSet: number; // volume one added set contributes
+}
+
+/** Concrete ways to close the gap between current and target volume. */
+export function reachTarget(
+  sets: PerformedSet[],
+  target: number,
+  increment: number,
+  fallbackWeight: number,
+  repMax: number,
+): Reach {
+  const ws = workingSets(sets);
+  const now = ws.reduce((v, s) => v + s.weight * s.reps, 0);
+  const gap = Math.max(0, target - now);
+  const totalReps = ws.reduce((n, s) => n + s.reps, 0);
+  const curWeight = ws.length ? Math.max(...ws.map((s) => s.weight)) : fallbackWeight;
+  const perSet = ws.length ? Math.round(now / ws.length) : Math.round(Math.max(1, curWeight) * repMax);
+  const kg = totalReps > 0 ? Math.ceil(gap / totalReps / increment) * increment : increment;
+  const reps = curWeight > 0 ? Math.ceil(gap / curWeight) : 0;
+  return { gap, kg, reps, perSet };
+}
+
 export function sessionVolume(session: WorkoutSession): number {
   return session.exercises.reduce((v, e) => v + volumeOf(e.sets), 0);
 }

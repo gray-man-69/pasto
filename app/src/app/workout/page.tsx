@@ -24,6 +24,8 @@ import {
   lastForExercise,
   nextTarget,
   overloadOptions,
+  reachTarget,
+  sessionTarget,
   summarizeLast,
   volumeOf,
   volumeStatsForExercise,
@@ -443,7 +445,18 @@ export default function WorkoutPage() {
           weightUnit: "kg",
           increment: ex.increment ?? 2.5,
         };
-        const options = overloadOptions(prescription, lastForExercise(history, ex.exerciseId));
+        const last = lastForExercise(history, ex.exerciseId);
+        const options = overloadOptions(prescription, last);
+        const deloading = mesoInfo?.phase === "deload";
+        const target = sessionTarget(prescription, last, ex.sets.length, deloading);
+        const reach = reachTarget(ex.sets, target, prescription.increment, prescription.weight, prescription.repMax);
+        const hitTarget = target > 0 && liveVol >= target;
+        const reachFor: Record<string, string> = {
+          weight: reach.gap <= 0 ? "target already met" : `+${reach.kg} kg across your sets → hits target`,
+          reps: reach.gap <= 0 ? "target already met" : `+${reach.reps} rep${reach.reps === 1 ? "" : "s"} total → hits target`,
+          set: `one more set ≈ +${reach.perSet.toLocaleString()} kg`,
+          dropset: `a dropset ≈ +${Math.round(reach.perSet * 0.6).toLocaleString()} kg`,
+        };
 
         return (
           <div
@@ -468,18 +481,29 @@ export default function WorkoutPage() {
                 {ex.lastSummary && (
                   <div className="text-[11px] text-base-content/40">Last: {ex.lastSummary}</div>
                 )}
-                <div className="mt-0.5 flex flex-wrap items-center gap-x-2 text-[11px] tabular-nums">
-                  <span className={liveVol >= stats.last && stats.last > 0 ? "text-primary" : "text-base-content/50"}>
-                    Vol {liveVol.toLocaleString()}
-                    {liveVol >= stats.last && stats.last > 0 ? " ▲" : ""}
-                  </span>
-                  {stats.last > 0 && (
-                    <span className="text-base-content/35">last {Math.round(stats.last).toLocaleString()}</span>
-                  )}
-                  {stats.best > 0 && (
-                    <span className="text-base-content/35">best {Math.round(stats.best).toLocaleString()} kg</span>
-                  )}
-                </div>
+                {target > 0 && (
+                  <div className="mt-1">
+                    <div className="flex items-center justify-between text-[11px] tabular-nums">
+                      <span className="text-base-content/50">
+                        Session target{hitTarget ? " · hit ✓" : ""}
+                      </span>
+                      <span className={hitTarget ? "text-primary" : "text-base-content/60"}>
+                        {liveVol.toLocaleString()} / {target.toLocaleString()} kg
+                      </span>
+                    </div>
+                    <div className="mt-0.5 h-1.5 overflow-hidden rounded-full bg-base-300/50">
+                      <div
+                        className={`h-full rounded-full ${hitTarget ? "bg-primary" : "bg-secondary"}`}
+                        style={{ width: `${Math.min(100, (liveVol / target) * 100)}%` }}
+                      />
+                    </div>
+                    {stats.best > 0 && (
+                      <div className="mt-0.5 text-[10px] tabular-nums text-base-content/35">
+                        best {Math.round(stats.best).toLocaleString()} kg
+                      </div>
+                    )}
+                  </div>
+                )}
                 {primaryMuscle && (
                   <div className="mt-0.5 text-[11px]">
                     <span className={muscleSets >= 10 ? "text-primary/70" : "text-amber-500"}>
@@ -541,6 +565,9 @@ export default function WorkoutPage() {
                       )}
                     </div>
                     <p className="mt-0.5 text-[11px] leading-snug text-base-content/50">{o.detail}</p>
+                    {target > 0 && reachFor[o.lever] && (
+                      <p className="mt-0.5 text-[11px] font-medium text-secondary">{reachFor[o.lever]}</p>
+                    )}
                   </li>
                 ))}
               </ul>
