@@ -11,15 +11,17 @@ export default function SideNav() {
   return (
     <aside className="hidden w-60 shrink-0 flex-col border-r border-base-300 bg-base-100 lg:flex">
       <Link href="/" className="flex items-center gap-2.5 px-6 py-6">
-        <svg viewBox="0 0 24 24" className="h-7 w-7 text-primary" aria-hidden="true">
-          <g fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round">
-            <path d="M3.6 9v6" />
-            <path d="M6.4 6v12" />
-            <path d="M17.6 6v12" />
-            <path d="M20.4 9v6" />
-          </g>
-          <path d="M13.4 7.5 L9.4 12 L12 12 L11 16.5 L15 11 L12.4 11 Z" fill="currentColor" />
-        </svg>
+        <span className="grid h-8 w-8 place-items-center rounded-[10px] bg-primary">
+          <svg viewBox="0 0 24 24" className="h-6 w-6 text-[#0c0d10]" aria-hidden="true">
+            <g fill="none" stroke="currentColor" strokeWidth={1.7} strokeLinecap="round" strokeLinejoin="round">
+              <path d="M4.5 10.5v3" />
+              <path d="M7 8.5v7" />
+              <path d="M17 8.5v7" />
+              <path d="M19.5 10.5v3" />
+            </g>
+            <path d="M13.5 4.5 L8.5 12.5 L11.5 12.5 L10.5 19.5 L16 11 L12.5 11 Z" fill="currentColor" />
+          </svg>
+        </span>
         <span className="text-xl font-bold tracking-tight">Pasto</span>
       </Link>
       <nav className="flex flex-col gap-1 px-3">
