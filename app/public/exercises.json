@@ -1,7 +1,7 @@
 {
   "source": "curated (Pasto)",
   "license": "n/a",
-  "count": 77,
+  "count": 80,
   "exercises": [
     {
       "id": "barbell-bench-press",
@@ -282,6 +282,20 @@
       ]
     },
     {
+      "id": "incline-one-arm-cable-row",
+      "name": "Incline 1-Arm Cable Row",
+      "category": "strength",
+      "equipment": "cable",
+      "mechanic": "compound",
+      "primaryMuscles": [
+        "lats"
+      ],
+      "secondaryMuscles": [
+        "middle back",
+        "biceps"
+      ]
+    },
+    {
       "id": "straight-arm-pulldown",
       "name": "Straight-Arm Pulldown",
       "category": "strength",
@@ -320,6 +334,20 @@
       ],
       "secondaryMuscles": [
         "biceps"
+      ]
+    },
+    {
+      "id": "wide-grip-machine-row",
+      "name": "Wide-Grip Machine Row",
+      "category": "strength",
+      "equipment": "machine",
+      "mechanic": "compound",
+      "primaryMuscles": [
+        "middle back"
+      ],
+      "secondaryMuscles": [
+        "lats",
+        "shoulders"
       ]
     },
     {
@@ -439,6 +467,19 @@
       "mechanic": "isolation",
       "primaryMuscles": [
         "shoulders"
+      ]
+    },
+    {
+      "id": "incline-cable-y-raise",
+      "name": "Incline Cable Y-Raise",
+      "category": "strength",
+      "equipment": "cable",
+      "mechanic": "isolation",
+      "primaryMuscles": [
+        "shoulders"
+      ],
+      "secondaryMuscles": [
+        "traps"
       ]
     },
     {

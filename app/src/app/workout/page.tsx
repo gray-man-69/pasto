@@ -465,7 +465,9 @@ export default function WorkoutPage() {
         const last = lastForExercise(history, ex.exerciseId);
         const options = overloadOptions(prescription, last);
         const deloading = mesoInfo?.phase === "deload";
-        const target = sessionTarget(prescription, ex.sets, ex.sets.length, deloading);
+        // Anchor the target to LAST session's weight (fixed), not the live sets —
+        // otherwise typing a heavier weight moves the goalpost and it reads "not hit".
+        const target = sessionTarget(prescription, last, ex.sets.length, deloading);
         const hitTarget = target > 0 && liveVol >= target;
         const totalReps = workingSets(ex.sets).reduce((n, s) => n + s.reps, 0);
         const repsToTop = Math.max(0, ex.sets.length * prescription.repMax - totalReps);

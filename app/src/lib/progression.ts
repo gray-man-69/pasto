@@ -130,19 +130,19 @@ export function volumeOf(sets: PerformedSet[]): number {
   return workingSets(sets).reduce((v, s) => v + s.weight * s.reps, 0);
 }
 
-/** Per-exercise session volume target = complete every prescribed set at the top
- * of your rep range at your working weight (sets × weight × repMax). Hitting it
- * IS the double-progression trigger to add weight — so it's fully derived from
- * the routine, no fudge factor. The block's set ramp raises `prescribedSets`
- * week to week. Deload weeks (and bodyweight moves) have no volume target. */
+/** Per-exercise session volume target = every prescribed set at your target reps,
+ * at LAST session's weight (sets × lastWeight × repMax). Anchoring to last
+ * session's weight (pass `lastSets`) keeps the target FIXED as you log, so adding
+ * weight raises your volume toward it (progress) instead of moving the goalpost.
+ * Match it → you're due a weight increase. Deload / bodyweight → no target. */
 export function sessionTarget(
   re: RoutineExercise,
-  sets: PerformedSet[],
+  lastSets: PerformedSet[] | undefined,
   prescribedSets: number,
   deloading: boolean,
 ): number {
   if (deloading) return 0;
-  const ws = workingSets(sets);
+  const ws = workingSets(lastSets ?? []);
   const w = ws.length ? Math.max(...ws.map((s) => s.weight)) : re.weight;
   if (w <= 0) return 0;
   return Math.round(Math.max(1, prescribedSets) * w * re.repMax);
