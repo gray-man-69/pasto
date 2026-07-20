@@ -1,28 +1,28 @@
 "use client";
 
 import { memo } from "react";
-import Model, { type IExerciseData, type Muscle } from "react-body-highlighter";
+import { ATLAS_VIEWBOX, MUSCLE_ATLAS } from "@/lib/muscleAtlas";
 
-// Maps our exercise muscle names → the body-highlighter's muscle keys.
-const MAP: Record<string, Muscle[]> = {
-  chest: ["chest"],
-  shoulders: ["front-deltoids", "back-deltoids"],
-  biceps: ["biceps"],
-  triceps: ["triceps"],
-  forearms: ["forearm"],
-  abdominals: ["abs"],
-  traps: ["trapezius"],
-  lats: ["upper-back"],
-  "middle back": ["upper-back"],
-  "lower back": ["lower-back"],
-  quadriceps: ["quadriceps"],
-  hamstrings: ["hamstring"],
-  glutes: ["gluteal"],
-  calves: ["calves"],
+// Our exercise muscle names → atlas muscle-id prefixes. The detailed atlas splits
+// the back so lats / mid-back / traps / lower-back highlight in distinct places.
+const HIGHLIGHT: Record<string, string[]> = {
+  chest: ["chest-"],
+  shoulders: ["shoulder-", "deltoid-"],
+  biceps: ["biceps-"],
+  triceps: ["triceps-"],
+  forearms: ["forearm-"],
+  abdominals: ["abs-", "obliques-"],
+  traps: ["traps-upper-"],
+  "middle back": ["traps-mid-", "traps-lower-"],
+  lats: ["lats-"],
+  "lower back": ["lower-back-"],
+  quadriceps: ["quads-"],
+  hamstrings: ["hamstrings-"],
+  glutes: ["gluteus-maximus-"],
+  calves: ["calves-"],
 };
 
-// Muscles that read best on the back view — so a thumbnail shows the side where
-// the worked muscle actually is (e.g. a row shows the back, a curl shows the front).
+// Muscles that read best on the back view (so a thumbnail shows the right side).
 const POSTERIOR = new Set([
   "traps",
   "lats",
@@ -34,27 +34,49 @@ const POSTERIOR = new Set([
   "triceps",
 ]);
 
-function toMuscles(names: string[]): Muscle[] {
-  const out = new Set<Muscle>();
-  for (const n of names) for (const m of MAP[n.toLowerCase()] ?? []) out.add(m);
-  return [...out];
-}
-
-function preferredView(primary: string[]): "anterior" | "posterior" {
-  return POSTERIOR.has((primary[0] ?? "").toLowerCase()) ? "posterior" : "anterior";
-}
-
-const COLORS = ["#4d7c0f", "#bef264"]; // [secondary faint, primary bright] by frequency
 const BODY = "#39413b"; // muted body on the dark surface
+const PRIMARY = "#bef264"; // bright lime — worked muscle
+const SECONDARY = "#4d7c0f"; // faint lime — assisting muscle
+const STROKE = "#20241f"; // separation lines between muscles
 
-function data(primary: string[], secondary: string[]): IExerciseData[] {
-  return [
-    { name: "secondary", muscles: toMuscles(secondary), frequency: 1 },
-    { name: "primary", muscles: toMuscles(primary), frequency: 2 },
-  ];
+const prefixes = (names: string[]) => names.flatMap((n) => HIGHLIGHT[n.toLowerCase()] ?? []);
+function preferredView(primary: string[]): "front" | "back" {
+  return POSTERIOR.has((primary[0] ?? "").toLowerCase()) ? "back" : "front";
 }
 
-// A small always-visible thumbnail for a list row: one body, the relevant side.
+function Figure({
+  view,
+  primary,
+  secondary,
+  height,
+}: {
+  view: "front" | "back" | "both";
+  primary: string[];
+  secondary: string[];
+  height: string;
+}) {
+  const prim = prefixes(primary);
+  const sec = prefixes(secondary);
+  const muscles =
+    view === "both"
+      ? MUSCLE_ATLAS
+      : MUSCLE_ATLAS.filter((m) => m.view === (view === "front" ? "FRONT" : "BACK"));
+  const vb = view === "front" ? ATLAS_VIEWBOX.front : view === "back" ? ATLAS_VIEWBOX.back : ATLAS_VIEWBOX.both;
+  return (
+    <svg viewBox={vb} style={{ height, width: "auto", display: "block" }} aria-hidden>
+      {muscles.map((m) => {
+        const fill = prim.some((p) => m.id.startsWith(p))
+          ? PRIMARY
+          : sec.some((p) => m.id.startsWith(p))
+            ? SECONDARY
+            : BODY;
+        return <path key={m.id} d={m.path} fill={fill} stroke={STROKE} strokeWidth={0.12} />;
+      })}
+    </svg>
+  );
+}
+
+// Small always-visible list thumbnail: one body, the side where the muscle is.
 export const MuscleThumb = memo(function MuscleThumb({
   primary,
   secondary = [],
@@ -63,30 +85,25 @@ export const MuscleThumb = memo(function MuscleThumb({
   secondary?: string[];
 }) {
   return (
-    <div className="shrink-0" style={{ lineHeight: 0 }} aria-hidden>
-      <Model
-        data={data(primary, secondary)}
-        type={preferredView(primary)}
-        bodyColor={BODY}
-        highlightedColors={COLORS}
-        svgStyle={{ height: "2.75rem", width: "auto" }}
-      />
+    <div className="shrink-0" style={{ lineHeight: 0 }}>
+      <Figure view={preferredView(primary)} primary={primary} secondary={secondary} height="2.75rem" />
     </div>
   );
 });
 
-// The full front + back diagram (kept for a larger detail view later).
+// The full front + back diagram for a detail view.
 export default function MuscleMap({
   primary,
   secondary = [],
+  height = "12rem",
 }: {
   primary: string[];
   secondary?: string[];
+  height?: string;
 }) {
   return (
-    <div className="flex items-start justify-center gap-4">
-      <Model data={data(primary, secondary)} type="anterior" bodyColor={BODY} highlightedColors={COLORS} style={{ width: "44%", maxWidth: 150 }} />
-      <Model data={data(primary, secondary)} type="posterior" bodyColor={BODY} highlightedColors={COLORS} style={{ width: "44%", maxWidth: 150 }} />
+    <div className="flex w-full justify-center">
+      <Figure view="both" primary={primary} secondary={secondary} height={height} />
     </div>
   );
 }

@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useLiveQuery } from "dexie-react-hooks";
 import CustomExerciseForm from "@/components/CustomExerciseForm";
-import { MuscleThumb } from "@/components/MuscleMap";
+import MuscleMap, { MuscleThumb } from "@/components/MuscleMap";
 import { allCustomExercises } from "@/lib/db";
 import { MUSCLE_GROUPS, groupOf, loadExercises } from "@/lib/exercises";
 import type { Exercise } from "@/lib/types";
@@ -23,6 +23,7 @@ export default function ExercisePicker({
   const [query, setQuery] = useState("");
   const [group, setGroup] = useState<string | null>(null);
   const [creating, setCreating] = useState(false);
+  const [detail, setDetail] = useState<Exercise | null>(null);
 
   useEffect(() => {
     loadExercises().then((l) => setAll([...(custom ?? []), ...l]));
@@ -49,7 +50,18 @@ export default function ExercisePicker({
     const isAdded = added.has(ex.id);
     return (
       <>
-        <MuscleThumb primary={ex.primaryMuscles} secondary={ex.secondaryMuscles ?? []} />
+        <span
+          role="button"
+          aria-label={`See muscles worked by ${ex.name}`}
+          onClick={(e) => {
+            e.stopPropagation();
+            e.preventDefault();
+            setDetail(ex);
+          }}
+          className="shrink-0 rounded-lg ring-primary/40 hover:ring-2"
+        >
+          <MuscleThumb primary={ex.primaryMuscles} secondary={ex.secondaryMuscles ?? []} />
+        </span>
         <span className="min-w-0 flex-1">
           <span className="flex items-center gap-1.5">
             <span className="truncate font-medium">{ex.name}</span>
@@ -129,6 +141,46 @@ export default function ExercisePicker({
             onSelect?.(ex);
           }}
         />
+      )}
+
+      {detail && (
+        <div
+          className="fixed inset-0 z-[80] flex items-end justify-center bg-black/60 p-0 backdrop-blur-sm sm:items-center sm:p-4"
+          onClick={() => setDetail(null)}
+        >
+          <div
+            className="w-full max-w-md rounded-t-3xl border border-base-300 bg-base-100 p-5 shadow-2xl sm:rounded-3xl"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="mb-1 flex items-start justify-between gap-3">
+              <div className="min-w-0">
+                <h2 className="truncate text-lg font-bold">{detail.name}</h2>
+                <p className="text-xs capitalize text-base-content/50">
+                  {detail.primaryMuscles.join(", ")}
+                  {detail.equipment ? ` · ${detail.equipment}` : ""}
+                </p>
+              </div>
+              <button className="btn btn-ghost btn-sm btn-circle" onClick={() => setDetail(null)} aria-label="Close">
+                ✕
+              </button>
+            </div>
+            <div className="my-3 rounded-2xl bg-base-200/40 py-3">
+              <MuscleMap primary={detail.primaryMuscles} secondary={detail.secondaryMuscles ?? []} height="15rem" />
+            </div>
+            <div className="flex flex-wrap items-center justify-center gap-x-4 gap-y-1 text-xs">
+              <span className="flex items-center gap-1.5">
+                <span className="h-2.5 w-2.5 rounded-sm" style={{ backgroundColor: "#bef264" }} />
+                <span className="capitalize">{detail.primaryMuscles.join(", ")}</span>
+              </span>
+              {detail.secondaryMuscles?.length ? (
+                <span className="flex items-center gap-1.5 text-base-content/50">
+                  <span className="h-2.5 w-2.5 rounded-sm" style={{ backgroundColor: "#4d7c0f" }} />
+                  <span className="capitalize">{detail.secondaryMuscles.join(", ")}</span>
+                </span>
+              ) : null}
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );
