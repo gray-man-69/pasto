@@ -923,6 +923,19 @@
       ]
     },
     {
+      "id": "glute-kickback-machine",
+      "name": "Glute Kickback (Machine)",
+      "category": "strength",
+      "equipment": "machine",
+      "mechanic": "isolation",
+      "primaryMuscles": [
+        "glutes"
+      ],
+      "secondaryMuscles": [
+        "hamstrings"
+      ]
+    },
+    {
       "id": "glute-bridge",
       "name": "Glute Bridge",
       "category": "strength",
@@ -945,6 +958,16 @@
     {
       "id": "seated-calf-raise",
       "name": "Seated Calf Raise",
+      "category": "strength",
+      "equipment": "machine",
+      "mechanic": "isolation",
+      "primaryMuscles": [
+        "calves"
+      ]
+    },
+    {
+      "id": "leg-press-calf-raise",
+      "name": "Leg Press Calf Raise",
       "category": "strength",
       "equipment": "machine",
       "mechanic": "isolation",
