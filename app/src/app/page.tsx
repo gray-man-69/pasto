@@ -129,7 +129,11 @@ export default function TodayPage() {
             colorClass={over ? "text-red-500" : "text-primary"}
           >
             <span className="flex flex-col items-center">
-              <span className="text-5xl font-bold leading-none tracking-tight tabular-nums">
+              <span
+                className={`text-5xl font-bold leading-none tracking-tight tabular-nums ${
+                  over ? "text-red-500" : ""
+                }`}
+              >
                 {consumed}
               </span>
               <span className="mt-1.5 text-xs text-base-content/40">
