@@ -1,7 +1,7 @@
 {
   "source": "curated (Pasto)",
   "license": "n/a",
-  "count": 81,
+  "count": 82,
   "exercises": [
     {
       "id": "barbell-bench-press",
@@ -278,6 +278,21 @@
         "lats"
       ],
       "secondaryMuscles": [
+        "biceps"
+      ]
+    },
+    {
+      "id": "wide-grip-cable-row",
+      "name": "Wide-Grip Cable Row",
+      "category": "strength",
+      "equipment": "cable",
+      "mechanic": "compound",
+      "primaryMuscles": [
+        "middle back"
+      ],
+      "secondaryMuscles": [
+        "lats",
+        "shoulders",
         "biceps"
       ]
     },
