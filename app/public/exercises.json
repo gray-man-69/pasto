@@ -900,6 +900,29 @@
       ]
     },
     {
+      "id": "hip-abduction",
+      "name": "Hip Abduction (Machine)",
+      "category": "strength",
+      "equipment": "machine",
+      "mechanic": "isolation",
+      "primaryMuscles": [
+        "glutes"
+      ]
+    },
+    {
+      "id": "cable-glute-kickback",
+      "name": "Cable Glute Kickback",
+      "category": "strength",
+      "equipment": "cable",
+      "mechanic": "isolation",
+      "primaryMuscles": [
+        "glutes"
+      ],
+      "secondaryMuscles": [
+        "hamstrings"
+      ]
+    },
+    {
       "id": "glute-bridge",
       "name": "Glute Bridge",
       "category": "strength",
