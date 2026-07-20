@@ -4,7 +4,19 @@ import { useState } from "react";
 import Link from "next/link";
 import { useLiveQuery } from "dexie-react-hooks";
 import { MuscleThumb } from "@/components/MuscleMap";
-import { activeMesocycle, addDays, allMesocycles, completedSessions, localDate, weekStart } from "@/lib/db";
+import {
+  activeMesocycle,
+  addDays,
+  allMesocycles,
+  completedSessions,
+  dailyTotalsBetween,
+  getGoals,
+  localDate,
+  weekStart,
+} from "@/lib/db";
+import { coachTips } from "@/lib/coach";
+import { mesoWeek } from "@/lib/mesocycle";
+import { workingSets } from "@/lib/progression";
 import { exerciseProgress, volumeByMuscle } from "@/lib/progress";
 import type { ExerciseProgress } from "@/lib/progress";
 import type { Mesocycle } from "@/lib/types";
@@ -35,6 +47,11 @@ export default function ProgressPage() {
   const sessions = useLiveQuery(() => completedSessions(), []);
   const active = useLiveQuery(() => activeMesocycle(), []);
   const blocks = useLiveQuery(() => allMesocycles(), []);
+  const goals = useLiveQuery(() => getGoals(), []);
+  const weekTotals = useLiveQuery(() => {
+    const ws = weekStart(localDate());
+    return dailyTotalsBetween(ws, addDays(ws, 6));
+  }, []);
   const [view, setView] = useState<number | "recent" | null>(null);
 
   const today = localDate();
@@ -93,6 +110,28 @@ export default function ProgressPage() {
     : "";
   const progress = exerciseProgress(all);
 
+  // ---- Coach: prioritised, science-based actions from this week's data ----
+  const wkStart = weekStart(today);
+  const thisWeekSessions = all.filter((s) => weekStart(s.date) === wkStart);
+  const rated = thisWeekSessions
+    .flatMap((s) => s.exercises)
+    .flatMap((e) => workingSets(e.sets))
+    .filter((st) => st.rir != null);
+  const proteins = weekTotals ? [...weekTotals.values()].map((n) => n.protein_g) : [];
+  const wkInfo = active ? mesoWeek(active, today) : null;
+  const accumWeeks = active ? active.weeks - (active.deload ? 1 : 0) : 0;
+  const tips = coachTips({
+    volume: volumeByMuscle(thisWeekSessions),
+    avgRir: rated.length ? Math.round(rated.reduce((n, st) => n + (st.rir ?? 0), 0) / rated.length) : null,
+    ratedSets: rated.length,
+    proteinAvg: proteins.length ? proteins.reduce((a, b) => a + b, 0) / proteins.length : null,
+    proteinGoal: goals?.protein_g ?? 0,
+    proteinDaysTracked: proteins.length,
+    deloadNext: !!active?.deload && wkInfo?.phase === "accumulation" && wkInfo.index === accumWeeks - 1,
+    deloadNow: wkInfo?.phase === "deload",
+    trainedThisWeek: thisWeekSessions.length > 0,
+  });
+
   return (
     <div className="mx-auto flex w-full max-w-xl flex-col gap-5">
       <div className="flex items-center justify-between">
@@ -113,6 +152,28 @@ export default function ProgressPage() {
         </div>
       ) : (
         <>
+          {/* Coach — what to do this week for the biggest gains */}
+          {tips.length > 0 && (
+            <section className="rounded-3xl border border-primary/25 bg-primary/[0.03] p-5">
+              <h2 className="text-xs font-semibold uppercase tracking-wide text-primary/70">Coach · this week</h2>
+              <p className="mb-3 mt-1 text-[11px] text-base-content/40">
+                Biggest gains first — from your logged training &amp; nutrition.
+              </p>
+              <ul className="flex flex-col gap-2.5">
+                {tips.map((t, idx) => (
+                  <li key={idx} className="flex items-start gap-2.5 text-sm leading-snug">
+                    <span
+                      className={`mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full ${
+                        t.level === "warn" ? "bg-amber-400" : t.level === "good" ? "bg-primary" : "bg-sky-400"
+                      }`}
+                    />
+                    <span className={t.level === "warn" ? "text-base-content/90" : "text-base-content/65"}>{t.text}</span>
+                  </li>
+                ))}
+              </ul>
+            </section>
+          )}
+
           {/* Block selector */}
           {blockList.length > 0 && (
             <div className="flex gap-1.5 overflow-x-auto pb-1">
