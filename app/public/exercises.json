@@ -500,6 +500,16 @@
       ]
     },
     {
+      "id": "reverse-cable-crossover",
+      "name": "Reverse Cable Crossover",
+      "category": "strength",
+      "equipment": "cable",
+      "mechanic": "isolation",
+      "primaryMuscles": [
+        "shoulders"
+      ]
+    },
+    {
       "id": "incline-cable-y-raise",
       "name": "Incline Cable Y-Raise",
       "category": "strength",
