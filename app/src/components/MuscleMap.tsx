@@ -86,7 +86,7 @@ export const MuscleThumb = memo(function MuscleThumb({
 }) {
   return (
     <div className="shrink-0" style={{ lineHeight: 0 }}>
-      <Figure view={preferredView(primary)} primary={primary} secondary={secondary} height="2.75rem" />
+      <Figure view={preferredView(primary)} primary={primary} secondary={secondary} height="3.4rem" />
     </div>
   );
 });
