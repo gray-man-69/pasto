@@ -69,7 +69,7 @@ export default function WeekStrip({
                 max={goalKcal}
                 size="2.5rem"
                 stroke={8}
-                colorClass="text-primary"
+                colorClass={kcal > goalKcal && goalKcal > 0 ? "text-red-500" : "text-primary"}
               >
                 <span
                   className={`text-xs tabular-nums ${
