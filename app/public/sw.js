@@ -2,7 +2,7 @@
 // this just caches the app shell + foods.json so the PWA opens without a network.
 // Base path this SW is served under ("" at root, "/pasto" on GitHub Pages).
 const BASE = self.location.pathname.replace(/\/sw\.js.*$/, "");
-const CACHE = "pasto-v8"; // bumped for the new logo — clears the old icon cache
+const CACHE = "pasto-v9"; // bumped — auto-update + WeekStrip over-goal red
 const PRECACHE = [`${BASE}/`, `${BASE}/foods.json`, `${BASE}/manifest.json`, `${BASE}/icon.svg`];
 
 self.addEventListener("install", (event) => {

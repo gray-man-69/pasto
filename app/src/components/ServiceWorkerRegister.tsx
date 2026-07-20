@@ -19,12 +19,31 @@ export default function ServiceWorkerRegister() {
     }
 
     if (!("serviceWorker" in navigator)) return;
+
+    // Auto-update: when a new deploy's service worker takes control, reload once
+    // so the newest code applies without a manual hard-restart. Guarded so it
+    // never loops and never fires on the very first install.
+    const hadController = !!navigator.serviceWorker.controller;
+    let refreshing = false;
+    const onControllerChange = () => {
+      if (refreshing || !hadController) return;
+      refreshing = true;
+      window.location.reload();
+    };
+    navigator.serviceWorker.addEventListener("controllerchange", onControllerChange);
+
     const onLoad = () =>
-      navigator.serviceWorker.register(`${BASE_PATH}/sw.js`).catch(() => {
-        /* offline support is best-effort */
-      });
+      navigator.serviceWorker
+        .register(`${BASE_PATH}/sw.js`)
+        .then((reg) => reg.update().catch(() => {}))
+        .catch(() => {
+          /* offline support is best-effort */
+        });
     window.addEventListener("load", onLoad);
-    return () => window.removeEventListener("load", onLoad);
+    return () => {
+      window.removeEventListener("load", onLoad);
+      navigator.serviceWorker.removeEventListener("controllerchange", onControllerChange);
+    };
   }, []);
   return null;
 }
