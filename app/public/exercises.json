@@ -1,7 +1,7 @@
 {
   "source": "curated (Pasto)",
   "license": "n/a",
-  "count": 82,
+  "count": 84,
   "exercises": [
     {
       "id": "barbell-bench-press",
@@ -596,6 +596,19 @@
       ]
     },
     {
+      "id": "incline-hammer-curl",
+      "name": "Incline Hammer Curl",
+      "category": "strength",
+      "equipment": "dumbbell",
+      "mechanic": "isolation",
+      "primaryMuscles": [
+        "biceps"
+      ],
+      "secondaryMuscles": [
+        "forearms"
+      ]
+    },
+    {
       "id": "preacher-curl",
       "name": "Preacher Curl",
       "category": "strength",
@@ -603,6 +616,19 @@
       "mechanic": "isolation",
       "primaryMuscles": [
         "biceps"
+      ]
+    },
+    {
+      "id": "single-arm-preacher-curl",
+      "name": "Single-Arm Preacher Curl",
+      "category": "strength",
+      "equipment": "dumbbell",
+      "mechanic": "isolation",
+      "primaryMuscles": [
+        "biceps"
+      ],
+      "secondaryMuscles": [
+        "forearms"
       ]
     },
     {
