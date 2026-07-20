@@ -1,7 +1,7 @@
 {
   "source": "curated (Pasto)",
   "license": "n/a",
-  "count": 80,
+  "count": 81,
   "exercises": [
     {
       "id": "barbell-bench-press",
@@ -347,6 +347,21 @@
       ],
       "secondaryMuscles": [
         "lats",
+        "shoulders"
+      ]
+    },
+    {
+      "id": "chest-supported-row",
+      "name": "Chest-Supported Row",
+      "category": "strength",
+      "equipment": "machine",
+      "mechanic": "compound",
+      "primaryMuscles": [
+        "middle back"
+      ],
+      "secondaryMuscles": [
+        "lats",
+        "biceps",
         "shoulders"
       ]
     },
