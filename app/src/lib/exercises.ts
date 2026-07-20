@@ -78,7 +78,11 @@ export async function loadExercises(): Promise<Exercise[]> {
   if (cache) return cache;
   if (!loading) {
     loading = (async () => {
-      const res = await fetch(`${BASE_PATH}/exercises.json`);
+      // Revalidate against the server (cheap 304 via ETag) so a freshly
+      // deployed library shows up on the next load instead of being served
+      // stale from the browser's 10-min HTTP cache. Offline, the service
+      // worker's cache still answers.
+      const res = await fetch(`${BASE_PATH}/exercises.json`, { cache: "no-cache" });
       if (!res.ok) throw new Error(`Failed to load exercises.json: ${res.status}`);
       const data = await res.json();
       cache = (data.exercises as Exercise[]) ?? [];
