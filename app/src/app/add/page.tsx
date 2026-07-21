@@ -196,6 +196,15 @@ export default function AddPage() {
 
       {scanMsg && <div className="px-1 text-xs text-base-content/60">{scanMsg}</div>}
 
+      {/* Always available: log something not in the database */}
+      <button
+        onClick={() => openEditor(null)}
+        className="flex items-center justify-center gap-2 rounded-2xl border border-dashed border-base-300 py-3 text-sm text-base-content/60 transition-colors hover:border-primary/50 hover:text-base-content"
+      >
+        <span className="text-base leading-none">＋</span>
+        {query.trim() ? `Add “${query.trim()}” as a custom food` : "Add a custom food"}
+      </button>
+
       <ul className="flex flex-col gap-1.5">
         {results.map((f) => {
           const selected = food?.id === f.id;
@@ -243,15 +252,6 @@ export default function AddPage() {
           );
         })}
       </ul>
-
-      {/* Always available: log something not in the database */}
-      <button
-        onClick={() => openEditor(null)}
-        className="flex items-center justify-center gap-2 rounded-2xl border border-dashed border-base-300 py-3 text-sm text-base-content/60 transition-colors hover:border-primary/50 hover:text-base-content"
-      >
-        <span className="text-base leading-none">＋</span>
-        {query.trim() ? `Add “${query.trim()}” as a custom food` : "Add a custom food"}
-      </button>
 
       {/* Sticky food portion editor — pins to the bottom of the shell's scroll. */}
       {food && preview && (
