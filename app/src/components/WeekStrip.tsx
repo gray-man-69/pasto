@@ -1,28 +1,25 @@
 "use client";
 
 import Link from "next/link";
-import DayRings from "@/components/DayRings";
+import Ring from "@/components/Ring";
 import { addDays, localDate, weekStart } from "@/lib/db";
-import { MACROS } from "@/lib/macroMeta";
-import type { Goals, Nutrients } from "@/lib/types";
 
 const DOW = ["Mo", "Tu", "We", "Th", "Fr", "Sa", "Su"];
 
 export default function WeekStrip({
   selected,
   onSelect,
-  goals,
-  dayTotals,
+  goalKcal,
+  dayKcal,
 }: {
   selected: string;
   onSelect: (date: string) => void;
-  goals: Goals | null;
-  dayTotals: Map<string, Nutrients>;
+  goalKcal: number;
+  dayKcal: Map<string, number>;
 }) {
   const ws = weekStart(selected);
   const days = Array.from({ length: 7 }, (_, i) => addDays(ws, i));
   const today = localDate();
-  const goalKcal = goals?.kcal || 2000;
   const monthLabel = new Date(selected + "T00:00:00").toLocaleDateString("en-GB", {
     month: "long",
     year: "numeric",
@@ -54,20 +51,8 @@ export default function WeekStrip({
         {days.map((d, i) => {
           const isSel = d === selected;
           const isToday = d === today;
-          const t = dayTotals.get(d);
-          const kcal = t?.kcal ?? 0;
-          const rings = [
-            {
-              value: kcal,
-              max: goalKcal,
-              colorClass: kcal > goalKcal ? "text-red-500" : "text-primary",
-            },
-            ...MACROS.map((m) => ({
-              value: t?.[m.key] ?? 0,
-              max: goals?.[m.key] ?? 0,
-              colorClass: m.color,
-            })),
-          ];
+          const kcal = dayKcal.get(d) ?? 0;
+          const dayNum = d.slice(8);
           return (
             <button
               key={d}
@@ -79,14 +64,21 @@ export default function WeekStrip({
               <span className="text-[10px] uppercase tracking-wide text-base-content/40">
                 {DOW[i]}
               </span>
-              <DayRings rings={rings} size="3rem" />
-              <span
-                className={`text-xs tabular-nums ${
-                  isSel ? "font-bold text-base-content" : "text-base-content/70"
-                }`}
+              <Ring
+                value={kcal}
+                max={goalKcal}
+                size="2.5rem"
+                stroke={8}
+                colorClass={kcal > goalKcal && goalKcal > 0 ? "text-red-500" : "text-primary"}
               >
-                {d.slice(8)}
-              </span>
+                <span
+                  className={`text-xs tabular-nums ${
+                    isSel ? "font-bold text-base-content" : "text-base-content/70"
+                  }`}
+                >
+                  {dayNum}
+                </span>
+              </Ring>
               <span
                 className={`h-1 w-1 rounded-full ${isToday ? "bg-primary" : "bg-transparent"}`}
               />

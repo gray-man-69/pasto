@@ -10,7 +10,7 @@ import MealIcon from "@/components/MealIcon";
 import {
   addDays,
   addGlasses,
-  dailyTotalsBetween,
+  dailyKcalBetween,
   deleteEntry,
   entriesForDate,
   getGoals,
@@ -19,13 +19,19 @@ import {
   weekStart,
 } from "@/lib/db";
 import { fmtNum, scale, sum } from "@/lib/macros";
-import { MACROS } from "@/lib/macroMeta";
 import { MEAL_SLOTS, isMealSlot } from "@/lib/mealSlots";
 import type { LogEntry, MealSlot } from "@/lib/types";
 
 function scaleSnapshot(e: LogEntry) {
   return scale(e.per100g, e.grams);
 }
+
+const MACROS = [
+  { key: "protein_g", label: "Protein", color: "text-sky-400" },
+  { key: "carbs_g", label: "Carbs", color: "text-rose-400" },
+  { key: "fat_g", label: "Fat", color: "text-orange-400" },
+  { key: "fiber_g", label: "Fiber", color: "text-emerald-400" },
+] as const;
 
 export default function TodayPage() {
   const [selected, setSelected] = useState(() => localDate());
@@ -64,7 +70,7 @@ export default function TodayPage() {
   const ws = weekStart(selected);
   const entries = useLiveQuery(() => entriesForDate(selected), [selected]);
   const goals = useLiveQuery(() => getGoals(), []);
-  const dayTotals = useLiveQuery(() => dailyTotalsBetween(ws, addDays(ws, 6)), [ws]);
+  const dayKcal = useLiveQuery(() => dailyKcalBetween(ws, addDays(ws, 6)), [ws]);
   const water = useLiveQuery(() => waterForDate(selected), [selected]);
   const glasses = water?.glasses ?? 0;
   const waterGoal = goals?.water_glasses ?? 8;
@@ -103,8 +109,8 @@ export default function TodayPage() {
       <WeekStrip
         selected={selected}
         onSelect={setSelected}
-        goals={goals ?? null}
-        dayTotals={dayTotals ?? new Map()}
+        goalKcal={goalKcal || 2000}
+        dayKcal={dayKcal ?? new Map()}
       />
 
       {/* Desktop: summary panel beside the log. Mobile: stacked single column. */}
