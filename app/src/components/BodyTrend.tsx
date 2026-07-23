@@ -16,15 +16,31 @@ const SH = 36; // sparkline height
 const PADX = 4;
 const PADY = 7;
 
-/** EMA over the weigh-ins in date order (α=0.3 ≈ a ~1-week half-life). */
+/** Smoothed trend over the weigh-ins: an EMA whose weight scales with the days
+ * elapsed since the previous reading (daily α=0.25), so sparse weigh-ins don't
+ * make the trend lag far behind reality. */
 export function weightTrend(points: { date: string; kg: number }[]): number[] {
   const out: number[] = [];
   let t: number | null = null;
+  let prev: string | null = null;
   for (const p of points) {
-    t = t == null ? p.kg : t + 0.3 * (p.kg - t);
+    if (t == null) t = p.kg;
+    else {
+      const gap = Math.max(1, Math.round((Date.parse(p.date) - Date.parse(prev!)) / 864e5));
+      t += (1 - Math.pow(0.75, gap)) * (p.kg - t);
+    }
+    prev = p.date;
     out.push(Math.round(t * 100) / 100);
   }
   return out;
+}
+
+/** Trend change first→last: Δkg and Δ% of the starting weight. */
+export function trendChange(points: { date: string; kg: number }[]): { kg: number; pct: number } | null {
+  if (points.length < 2) return null;
+  const t = weightTrend(points);
+  const kg = t[t.length - 1] - t[0];
+  return { kg, pct: t[0] > 0 ? (kg / t[0]) * 100 : 0 };
 }
 
 const x = (i: number, n: number) => PADX + (n <= 1 ? (W - PADX * 2) / 2 : (i / (n - 1)) * (W - PADX * 2));
@@ -32,10 +48,14 @@ const x = (i: number, n: number) => PADX + (n <= 1 ? (W - PADX * 2) / 2 : (i / (
 export default function BodyTrend({
   days,
   weights,
+  allWeights,
+  rangeLabel,
   dayTotals,
 }: {
   days: string[]; // every day in range, oldest first
   weights: BodyWeight[]; // weigh-ins inside the range, oldest first
+  allWeights: BodyWeight[]; // every weigh-in ever, oldest first
+  rangeLabel: string;
   dayTotals: Map<string, Nutrients>;
 }) {
   const wrapRef = useRef<HTMLDivElement>(null);
@@ -61,7 +81,8 @@ export default function BodyTrend({
     .map((w, i) => `${i ? "L" : "M"}${x(dayIndex.get(w.date) ?? 0, n).toFixed(1)},${y(trend[i]).toFixed(1)}`)
     .join(" ");
 
-  const delta = trend.length >= 2 ? trend[trend.length - 1] - trend[0] : 0;
+  const rangeDelta = trendChange(weights);
+  const allDelta = trendChange(allWeights);
   const hoverDay = hover != null ? days[hover] : null;
   const hoverWeight = hoverDay ? weights.find((w) => w.date === hoverDay) : null;
   const hoverTotals = hoverDay ? dayTotals.get(hoverDay) : null;
@@ -89,11 +110,6 @@ export default function BodyTrend({
           <span className="text-sm tabular-nums">
             <span className="font-semibold">{headline}</span>
             <span className="ml-1.5 text-[11px] text-base-content/40">{headlineLabel}</span>
-            {!hoverDay && trend.length >= 2 && (
-              <span className={`ml-2 text-[11px] font-medium ${delta > 0 ? "text-amber-500" : "text-primary"}`}>
-                {delta > 0 ? "▲" : "▼"} {Math.abs(delta).toFixed(1)} kg
-              </span>
-            )}
           </span>
         </div>
         {weights.length ? (
@@ -117,11 +133,33 @@ export default function BodyTrend({
             No weigh-ins in this range yet.
           </div>
         )}
+        {(rangeDelta || allDelta) && (
+          <div className="mt-2 grid grid-cols-2 gap-2">
+            <DeltaTile label={`Last ${rangeLabel}`} d={rangeDelta} />
+            <DeltaTile label="Since start" d={allDelta} />
+          </div>
+        )}
       </div>
 
       {/* Intake over the same days */}
       <Spark label="Calories" cls="text-primary" days={days} hover={hover} value={(d) => dayTotals.get(d)?.kcal ?? 0} unit="" />
       <Spark label="Protein" cls="text-sky-400" days={days} hover={hover} value={(d) => dayTotals.get(d)?.protein_g ?? 0} unit=" g" />
+    </div>
+  );
+}
+
+function DeltaTile({ label, d }: { label: string; d: { kg: number; pct: number } | null }) {
+  return (
+    <div className="rounded-xl bg-base-200/40 px-3 py-2">
+      <div className="text-[10px] uppercase tracking-wide text-base-content/40">{label}</div>
+      {d ? (
+        <div className={`text-sm font-semibold tabular-nums ${d.kg > 0 ? "text-amber-500" : "text-primary"}`}>
+          {d.kg > 0 ? "▲" : "▼"} {Math.abs(d.kg).toFixed(1)} kg
+          <span className="ml-1.5 text-[11px] font-medium opacity-70">{Math.abs(d.pct).toFixed(1)}%</span>
+        </div>
+      ) : (
+        <div className="text-sm text-base-content/30">—</div>
+      )}
     </div>
   );
 }
