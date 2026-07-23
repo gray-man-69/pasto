@@ -215,9 +215,6 @@ export default function TodayPage() {
             <h2 className="text-xs font-semibold uppercase tracking-wide text-base-content/40">
               Logged
             </h2>
-            <Link href={`/plan?date=${selected}`} className="btn btn-ghost btn-sm rounded-full">
-              ⚖ Plan
-            </Link>
           </div>
 
           {entries === undefined ? (

@@ -7,7 +7,7 @@ import type { ReactNode } from "react";
 // settings, saved meals, history and the day planner. Keeps the bottom bar to
 // five tabs while leaving room to grow.
 
-type Entry = { href: string; label: string; desc: string; icon: ReactNode };
+type Entry = { href: string; label: string; desc: string; icon: ReactNode; disabled?: boolean };
 
 const svg = {
   viewBox: "0 0 24 24",
@@ -46,7 +46,8 @@ const ENTRIES: Entry[] = [
   {
     href: "/plan",
     label: "Day planner",
-    desc: "Auto-calculate amounts to hit your goals",
+    desc: "Coming soon",
+    disabled: true,
     icon: (
       <svg {...svg}>
         <path d="M9 11l3 3L22 4" />
@@ -83,27 +84,44 @@ export default function MorePage() {
     <div className="mx-auto flex w-full max-w-xl flex-col gap-4">
       <h1 className="text-xl font-bold">More</h1>
       <ul className="flex flex-col gap-2">
-        {ENTRIES.map((e) => (
-          <li key={e.href}>
-            <Link
-              href={e.href}
-              className="flex items-center gap-4 rounded-2xl border border-base-300 bg-base-100 px-4 py-3.5 transition-colors hover:border-primary/50"
-            >
-              <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-primary/10 text-primary">
-                {e.icon}
-              </span>
-              <span className="min-w-0 flex-1">
-                <span className="block font-medium">{e.label}</span>
-                <span className="block truncate text-xs text-base-content/50">{e.desc}</span>
-              </span>
-              <span className="text-base-content/30">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="h-4 w-4">
-                  <path d="m9 6 6 6-6 6" strokeLinecap="round" strokeLinejoin="round" />
-                </svg>
-              </span>
-            </Link>
-          </li>
-        ))}
+        {ENTRIES.map((e) =>
+          e.disabled ? (
+            <li key={e.href}>
+              <div
+                aria-disabled="true"
+                className="flex cursor-not-allowed items-center gap-4 rounded-2xl border border-base-300/50 bg-base-100/50 px-4 py-3.5 opacity-50"
+              >
+                <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-base-content/10 text-base-content/40">
+                  {e.icon}
+                </span>
+                <span className="min-w-0 flex-1">
+                  <span className="block font-medium text-base-content/50">{e.label}</span>
+                  <span className="block truncate text-xs text-base-content/40">{e.desc}</span>
+                </span>
+              </div>
+            </li>
+          ) : (
+            <li key={e.href}>
+              <Link
+                href={e.href}
+                className="flex items-center gap-4 rounded-2xl border border-base-300 bg-base-100 px-4 py-3.5 transition-colors hover:border-primary/50"
+              >
+                <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-primary/10 text-primary">
+                  {e.icon}
+                </span>
+                <span className="min-w-0 flex-1">
+                  <span className="block font-medium">{e.label}</span>
+                  <span className="block truncate text-xs text-base-content/50">{e.desc}</span>
+                </span>
+                <span className="text-base-content/30">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="h-4 w-4">
+                    <path d="m9 6 6 6-6 6" strokeLinecap="round" strokeLinejoin="round" />
+                  </svg>
+                </span>
+              </Link>
+            </li>
+          )
+        )}
       </ul>
     </div>
   );
