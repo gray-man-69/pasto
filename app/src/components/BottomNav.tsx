@@ -8,7 +8,7 @@ import { NAV_ITEMS, isActive } from "./navItems";
 export default function BottomNav() {
   const pathname = usePathname();
   return (
-    <nav className="flex h-[4.25rem] shrink-0 items-stretch border-t border-base-300 bg-base-100/90 backdrop-blur-lg lg:hidden">
+    <nav className="flex h-[4.25rem] shrink-0 items-stretch border-t border-base-300 bg-base-100/90 px-4 backdrop-blur-lg lg:hidden">
       {NAV_ITEMS.map((tab) => {
         const active = isActive(tab.href, pathname);
         return (
@@ -19,7 +19,7 @@ export default function BottomNav() {
               active ? "font-semibold text-primary" : "text-base-content/50 hover:text-base-content/80"
             }`}
           >
-            <span className="grid h-6 w-6 place-items-center">{tab.icon}</span>
+            <span className="grid h-6 w-6 place-items-center [&>svg]:h-5 [&>svg]:w-5">{tab.icon}</span>
             {tab.label}
           </Link>
         );
