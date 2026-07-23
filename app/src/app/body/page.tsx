@@ -8,11 +8,13 @@ import {
   addDays,
   addMedia,
   allMedia,
+  allWeights,
   dailyTotalsBetween,
   deleteMedia,
   deleteWeight,
   localDate,
   setWeight,
+  updateMediaDate,
   weightsBetween,
 } from "@/lib/db";
 import type { ProgressMedia } from "@/lib/types";
@@ -42,6 +44,7 @@ export default function BodyPage() {
   );
 
   const weights = useLiveQuery(() => weightsBetween(start, today), [start, today]);
+  const everyWeight = useLiveQuery(() => allWeights(), []);
   const dayTotals = useLiveQuery(() => dailyTotalsBetween(start, today), [start, today]);
   const media = useLiveQuery(() => allMedia(), []);
 
@@ -64,7 +67,14 @@ export default function BodyPage() {
         alert(`"${f.name}" is over ${MAX_MEDIA_MB} MB — trim it and retry.`);
         continue;
       }
-      await addMedia(f, today);
+      // Default the date to when the file was made (photo-library uploads keep
+      // their capture-ish date), clamped to today. Editable in the viewer.
+      const taken = f.lastModified ? new Date(f.lastModified) : null;
+      const takenDate =
+        taken && !isNaN(taken.getTime())
+          ? `${taken.getFullYear()}-${String(taken.getMonth() + 1).padStart(2, "0")}-${String(taken.getDate()).padStart(2, "0")}`
+          : today;
+      await addMedia(f, takenDate <= today ? takenDate : today);
     }
     if (fileRef.current) fileRef.current.value = "";
   }
@@ -125,7 +135,12 @@ export default function BodyPage() {
         )}
       </div>
 
-      <BodyTrend days={days} weights={weights ?? []} dayTotals={dayTotals ?? new Map()} />
+      <BodyTrend
+        days={days}
+        weights={weights ?? []}
+        allWeights={everyWeight ?? []}
+        dayTotals={dayTotals ?? new Map()}
+      />
 
       {/* Progress photos & videos */}
       <div className="flex flex-col gap-2.5">
@@ -186,12 +201,21 @@ export default function BodyPage() {
 
       {/* Fullscreen viewer */}
       {viewing && (
-        <Viewer m={viewing} onClose={() => setViewing(null)} onDelete={async () => {
-          if (confirm("Delete this forever? It exists only on this device.")) {
-            await deleteMedia(viewing.id!);
-            setViewing(null);
-          }
-        }} />
+        <Viewer
+          m={viewing}
+          maxDate={today}
+          onClose={() => setViewing(null)}
+          onDate={async (date) => {
+            await updateMediaDate(viewing.id!, date);
+            setViewing({ ...viewing, date });
+          }}
+          onDelete={async () => {
+            if (confirm("Delete this forever? It exists only on this device.")) {
+              await deleteMedia(viewing.id!);
+              setViewing(null);
+            }
+          }}
+        />
       )}
 
       {/* Side-by-side compare */}
@@ -250,13 +274,32 @@ function Thumb({ m, picked, onTap }: { m: ProgressMedia; picked: boolean; onTap:
   );
 }
 
-function Viewer({ m, onClose, onDelete }: { m: ProgressMedia; onClose: () => void; onDelete: () => void }) {
+function Viewer({
+  m,
+  maxDate,
+  onClose,
+  onDate,
+  onDelete,
+}: {
+  m: ProgressMedia;
+  maxDate: string;
+  onClose: () => void;
+  onDate: (date: string) => void;
+  onDelete: () => void;
+}) {
   return (
     <div className="fixed inset-0 z-50 flex flex-col bg-black/95 p-3">
       <div className="flex items-center justify-between text-white/70">
-        <span className="text-sm">
-          {new Date(m.date + "T00:00:00").toLocaleDateString("en-GB", { weekday: "short", day: "numeric", month: "long", year: "numeric" })}
-        </span>
+        <label className="flex items-center gap-1.5 text-sm">
+          Taken
+          <input
+            type="date"
+            value={m.date}
+            max={maxDate}
+            onChange={(e) => e.target.value && onDate(e.target.value)}
+            className="input input-sm border-white/20 bg-transparent text-white/90"
+          />
+        </label>
         <button onClick={onClose} className="btn btn-ghost btn-sm text-white/70">Close</button>
       </div>
       <div className="flex min-h-0 flex-1 items-center justify-center">

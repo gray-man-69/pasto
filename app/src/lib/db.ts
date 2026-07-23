@@ -312,6 +312,11 @@ export function deleteMedia(id: number) {
   return db.media.delete(id);
 }
 
+/** Re-date a photo/video (e.g. one uploaded weeks after it was taken). */
+export function updateMediaDate(id: number, date: string) {
+  return db.media.update(id, { date });
+}
+
 // ---- Training: routines, sessions, custom exercises ------------------------
 
 export function allRoutines() {

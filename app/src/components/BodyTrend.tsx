@@ -16,30 +16,47 @@ const SH = 36; // sparkline height
 const PADX = 4;
 const PADY = 7;
 
-/** EMA over the weigh-ins in date order (α=0.3 ≈ a ~1-week half-life). */
+/** Smoothed trend over the weigh-ins: an EMA whose weight scales with the days
+ * elapsed since the previous reading (daily α=0.25), so sparse weigh-ins don't
+ * make the trend lag far behind reality. */
 export function weightTrend(points: { date: string; kg: number }[]): number[] {
   const out: number[] = [];
   let t: number | null = null;
+  let prev: string | null = null;
   for (const p of points) {
-    t = t == null ? p.kg : t + 0.3 * (p.kg - t);
+    if (t == null) t = p.kg;
+    else {
+      const gap = Math.max(1, Math.round((Date.parse(p.date) - Date.parse(prev!)) / 864e5));
+      t += (1 - Math.pow(0.75, gap)) * (p.kg - t);
+    }
+    prev = p.date;
     out.push(Math.round(t * 100) / 100);
   }
   return out;
 }
+
+const SINCE_KEY = "pasto-body-since";
 
 const x = (i: number, n: number) => PADX + (n <= 1 ? (W - PADX * 2) / 2 : (i / (n - 1)) * (W - PADX * 2));
 
 export default function BodyTrend({
   days,
   weights,
+  allWeights,
   dayTotals,
 }: {
   days: string[]; // every day in range, oldest first
   weights: BodyWeight[]; // weigh-ins inside the range, oldest first
+  allWeights: BodyWeight[]; // every weigh-in ever, oldest first
   dayTotals: Map<string, Nutrients>;
 }) {
   const wrapRef = useRef<HTMLDivElement>(null);
   const [hover, setHover] = useState<number | null>(null);
+  // The user-picked comparison date ("since when am I measuring?"), remembered
+  // across visits. Defaults to the very first weigh-in.
+  const [since, setSince] = useState<string | null>(() =>
+    typeof window === "undefined" ? null : localStorage.getItem(SINCE_KEY),
+  );
   const n = days.length;
 
   function locate(e: React.PointerEvent) {
@@ -61,7 +78,18 @@ export default function BodyTrend({
     .map((w, i) => `${i ? "L" : "M"}${x(dayIndex.get(w.date) ?? 0, n).toFixed(1)},${y(trend[i]).toFixed(1)}`)
     .join(" ");
 
-  const delta = trend.length >= 2 ? trend[trend.length - 1] - trend[0] : 0;
+  // Baseline = the last weigh-in on/before the picked date (or the first one
+  // after, if the date predates all data). Compared against the latest weigh-in.
+  const first = allWeights[0];
+  const latest = allWeights[allWeights.length - 1];
+  const sinceDate = since && first && since >= first.date ? since : first?.date;
+  const baseline = sinceDate
+    ? [...allWeights].reverse().find((w) => w.date <= sinceDate) ?? first
+    : undefined;
+  const delta =
+    baseline && latest && baseline.date < latest.date
+      ? { kg: latest.kg - baseline.kg, pct: baseline.kg > 0 ? ((latest.kg - baseline.kg) / baseline.kg) * 100 : 0 }
+      : null;
   const hoverDay = hover != null ? days[hover] : null;
   const hoverWeight = hoverDay ? weights.find((w) => w.date === hoverDay) : null;
   const hoverTotals = hoverDay ? dayTotals.get(hoverDay) : null;
@@ -89,11 +117,6 @@ export default function BodyTrend({
           <span className="text-sm tabular-nums">
             <span className="font-semibold">{headline}</span>
             <span className="ml-1.5 text-[11px] text-base-content/40">{headlineLabel}</span>
-            {!hoverDay && trend.length >= 2 && (
-              <span className={`ml-2 text-[11px] font-medium ${delta > 0 ? "text-amber-500" : "text-primary"}`}>
-                {delta > 0 ? "▲" : "▼"} {Math.abs(delta).toFixed(1)} kg
-              </span>
-            )}
           </span>
         </div>
         {weights.length ? (
@@ -115,6 +138,36 @@ export default function BodyTrend({
         ) : (
           <div className="rounded-xl bg-base-200/40 py-8 text-center text-sm text-base-content/40">
             No weigh-ins in this range yet.
+          </div>
+        )}
+        {baseline && latest && (
+          <div className="mt-2 flex items-center justify-between gap-2 rounded-xl bg-base-200/40 px-3 py-2">
+            <label className="flex items-center gap-1.5 text-xs text-base-content/50">
+              Since
+              <input
+                type="date"
+                value={sinceDate}
+                min={first.date}
+                max={latest.date}
+                onChange={(e) => {
+                  if (!e.target.value) return;
+                  setSince(e.target.value);
+                  localStorage.setItem(SINCE_KEY, e.target.value);
+                }}
+                className="input input-xs input-bordered"
+              />
+            </label>
+            {delta ? (
+              <span className={`text-sm font-semibold tabular-nums ${delta.kg > 0 ? "text-amber-500" : "text-primary"}`}>
+                {delta.kg > 0 ? "▲" : "▼"} {Math.abs(delta.kg).toFixed(1)} kg
+                <span className="ml-1.5 text-[11px] font-medium opacity-70">{Math.abs(delta.pct).toFixed(1)}%</span>
+                <span className="ml-2 text-[11px] font-normal tabular-nums text-base-content/40">
+                  {baseline.kg.toFixed(1)} → {latest.kg.toFixed(1)}
+                </span>
+              </span>
+            ) : (
+              <span className="text-xs text-base-content/40">Need a later weigh-in</span>
+            )}
           </div>
         )}
       </div>
