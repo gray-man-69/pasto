@@ -92,15 +92,18 @@ export default function BodyTrend({
       : null;
   const hoverDay = hover != null ? days[hover] : null;
   const hoverWeight = hoverDay ? weights.find((w) => w.date === hoverDay) : null;
-  const hoverTotals = hoverDay ? dayTotals.get(hoverDay) : null;
-  const headline = hoverWeight
-    ? `${hoverWeight.kg.toFixed(1)} kg`
-    : trend.length
-      ? `${trend[trend.length - 1].toFixed(1)} kg`
-      : "—";
-  const headlineLabel = hoverDay
+  const shownKg = hoverWeight?.kg ?? latest?.kg;
+  const heroLabel = hoverDay
     ? new Date(hoverDay + "T00:00:00").toLocaleDateString("en-GB", { weekday: "short", day: "numeric", month: "short" })
-    : "trend";
+    : "Current weight";
+
+  // Area fill under the trend line, closed down to the chart floor.
+  const firstInRange = weights[0];
+  const lastInRange = weights[weights.length - 1];
+  const areaPath =
+    weights.length > 1
+      ? `${trendPath} L${x(dayIndex.get(lastInRange.date) ?? 0, n).toFixed(1)},${WH} L${x(dayIndex.get(firstInRange.date) ?? 0, n).toFixed(1)},${WH} Z`
+      : "";
 
   return (
     <div
@@ -108,22 +111,69 @@ export default function BodyTrend({
       onPointerMove={locate}
       onPointerDown={locate}
       onPointerLeave={() => setHover(null)}
-      className="flex flex-col gap-4"
+      className="flex flex-col gap-5"
     >
-      {/* Weight */}
-      <div>
-        <div className="mb-1 flex items-baseline justify-between">
-          <span className="text-xs font-semibold uppercase tracking-wide text-base-content/40">Weight</span>
-          <span className="text-sm tabular-nums">
-            <span className="font-semibold">{headline}</span>
-            <span className="ml-1.5 text-[11px] text-base-content/40">{headlineLabel}</span>
+      {/* Hero — mirrors the Today tab's big-number summary */}
+      <div className="flex flex-col items-center gap-2">
+        <span className="text-xs font-medium uppercase tracking-[0.2em] text-base-content/40">
+          {heroLabel}
+        </span>
+        <span className="flex items-baseline gap-1.5">
+          <span className="text-5xl font-bold leading-none tracking-tight tabular-nums">
+            {shownKg != null ? shownKg.toFixed(1) : "—"}
           </span>
-        </div>
+          <span className="text-sm text-base-content/40">kg</span>
+        </span>
+        {trend.length > 0 && !hoverDay && (
+          <span className="text-[11px] tabular-nums text-base-content/40">
+            trend {trend[trend.length - 1].toFixed(1)} kg
+          </span>
+        )}
+        {baseline && latest && (
+          <span
+            className={`flex items-center gap-1.5 rounded-full px-3 py-1 text-sm font-medium tabular-nums ${
+              delta && delta.kg > 0 ? "bg-amber-400/15 text-amber-500" : "bg-primary/10 text-primary"
+            }`}
+          >
+            {delta ? (
+              <>
+                {delta.kg > 0 ? "▲" : "▼"} {Math.abs(delta.kg).toFixed(1)} kg
+                <span className="text-[11px] opacity-70">{Math.abs(delta.pct).toFixed(1)}%</span>
+              </>
+            ) : (
+              <span className="text-xs">from</span>
+            )}
+            <span className="text-[11px] opacity-60">since</span>
+            <input
+              type="date"
+              value={sinceDate}
+              min={first.date}
+              max={latest.date}
+              onChange={(e) => {
+                if (!e.target.value) return;
+                setSince(e.target.value);
+                localStorage.setItem(SINCE_KEY, e.target.value);
+              }}
+              className="bg-transparent text-[11px] tabular-nums outline-none"
+            />
+          </span>
+        )}
+      </div>
+
+      {/* Weight chart */}
+      <div>
         {weights.length ? (
           <svg viewBox={`0 0 ${W} ${WH}`} className="w-full rounded-xl bg-base-200/40">
+            <defs>
+              <linearGradient id="weight-fill" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0" stopColor="currentColor" stopOpacity="0.16" />
+                <stop offset="1" stopColor="currentColor" stopOpacity="0" />
+              </linearGradient>
+            </defs>
             {hover != null && (
               <line x1={x(hover, n)} x2={x(hover, n)} y1={2} y2={WH - 2} stroke="var(--color-base-300)" strokeWidth={1} />
             )}
+            {areaPath && <path d={areaPath} fill="url(#weight-fill)" className="text-primary" />}
             <path d={trendPath} fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" className="text-primary" />
             {weights.map((w) => (
               <circle
@@ -134,40 +184,17 @@ export default function BodyTrend({
                 className={hoverDay === w.date ? "fill-primary" : "fill-base-content/30"}
               />
             ))}
+            {/* min/max of the scale, tucked in the corners */}
+            <text x={W - 4} y={PADY + 3} textAnchor="end" className="fill-base-content/30 text-[7px] tabular-nums">
+              {hi.toFixed(1)}
+            </text>
+            <text x={W - 4} y={WH - 2} textAnchor="end" className="fill-base-content/30 text-[7px] tabular-nums">
+              {lo.toFixed(1)}
+            </text>
           </svg>
         ) : (
           <div className="rounded-xl bg-base-200/40 py-8 text-center text-sm text-base-content/40">
             No weigh-ins in this range yet.
-          </div>
-        )}
-        {baseline && latest && (
-          <div className="mt-2 flex items-center justify-between gap-2 rounded-xl bg-base-200/40 px-3 py-2">
-            <label className="flex items-center gap-1.5 text-xs text-base-content/50">
-              Since
-              <input
-                type="date"
-                value={sinceDate}
-                min={first.date}
-                max={latest.date}
-                onChange={(e) => {
-                  if (!e.target.value) return;
-                  setSince(e.target.value);
-                  localStorage.setItem(SINCE_KEY, e.target.value);
-                }}
-                className="input input-xs input-bordered"
-              />
-            </label>
-            {delta ? (
-              <span className={`text-sm font-semibold tabular-nums ${delta.kg > 0 ? "text-amber-500" : "text-primary"}`}>
-                {delta.kg > 0 ? "▲" : "▼"} {Math.abs(delta.kg).toFixed(1)} kg
-                <span className="ml-1.5 text-[11px] font-medium opacity-70">{Math.abs(delta.pct).toFixed(1)}%</span>
-                <span className="ml-2 text-[11px] font-normal tabular-nums text-base-content/40">
-                  {baseline.kg.toFixed(1)} → {latest.kg.toFixed(1)}
-                </span>
-              </span>
-            ) : (
-              <span className="text-xs text-base-content/40">Need a later weigh-in</span>
-            )}
           </div>
         )}
       </div>
