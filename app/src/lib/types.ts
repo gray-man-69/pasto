@@ -104,6 +104,23 @@ export interface Water extends Synced {
   glasses: number;
 }
 
+// One body-weight reading per day, in kg. Keyed by date; syncs like water.
+export interface BodyWeight extends Synced {
+  date: string; // YYYY-MM-DD (primary key)
+  kg: number;
+}
+
+// A progress photo or video, stored as a Blob in IndexedDB. Device-local only:
+// media is far too heavy for the Firestore state doc and for JSON backups, so
+// it is never synced or exported.
+export interface ProgressMedia {
+  id?: number;
+  date: string; // YYYY-MM-DD
+  kind: "photo" | "video";
+  type: string; // MIME type of the blob
+  blob: Blob;
+}
+
 // ---- Training --------------------------------------------------------------
 
 export type WeightUnit = "kg" | "lb";

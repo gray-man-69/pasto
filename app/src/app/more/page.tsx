@@ -21,6 +21,17 @@ const svg = {
 
 const ENTRIES: Entry[] = [
   {
+    href: "/body",
+    label: "Body",
+    desc: "Weight trend, progress photos & intake",
+    icon: (
+      <svg {...svg}>
+        <path d="M3 17l4.5-6 3.5 4 4-7 6 9" />
+        <circle cx="6.5" cy="6.5" r="2" />
+      </svg>
+    ),
+  },
+  {
     href: "/goals",
     label: "Goals",
     desc: "Daily calories, macros & water — and the TDEE calculator",
