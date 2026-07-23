@@ -2,6 +2,7 @@
 // device (via Dexie). No server, no login.
 import Dexie, { type Table } from "dexie";
 import type {
+  BodyWeight,
   Exercise,
   Food,
   Goals,
@@ -11,6 +12,7 @@ import type {
   MealSlot,
   Mesocycle,
   Nutrients,
+  ProgressMedia,
   Routine,
   Unit,
   Tombstone,
@@ -41,6 +43,8 @@ class PastoDB extends Dexie {
   customExercises!: Table<Exercise, string>;
   mesocycle!: Table<Mesocycle, number>; // v7 singleton (kept only for migration)
   mesocycles!: Table<Mesocycle, number>; // v8: a history of training blocks
+  weights!: Table<BodyWeight, string>; // v9: one body-weight reading per day
+  media!: Table<ProgressMedia, number>; // v9: progress photos/videos (device-local)
 
   constructor() {
     super("pasto");
@@ -152,6 +156,23 @@ class PastoDB extends Dexie {
           await tx.table("mesocycle").clear();
         }
       });
+    // v9 adds body-weight readings (synced) and progress photos/videos
+    // (device-local blobs — never synced or exported, they'd blow the state doc).
+    this.version(9).stores({
+      entries: "++id, date, foodId, mealId, syncId",
+      goals: "id",
+      meals: "++id, name, syncId",
+      customFoods: "id, name, basedOn",
+      tombstones: "syncId",
+      water: "date, syncId",
+      routines: "++id, order, syncId",
+      sessions: "++id, date, routineId, syncId",
+      customExercises: "id, name, syncId",
+      mesocycle: "id",
+      mesocycles: "++id, startDate, syncId",
+      weights: "date, syncId",
+      media: "++id, date",
+    });
   }
 }
 
@@ -243,6 +264,52 @@ export async function addGlasses(date: string, delta: number): Promise<number> {
   await db.water.put({ date, glasses, syncId: cur?.syncId ?? `water-${date}`, updatedAt: now() });
   touched();
   return glasses;
+}
+
+// ---- Body weight & progress media ------------------------------------------
+
+export function allWeights() {
+  return db.weights.orderBy("date").toArray();
+}
+
+export function weightsBetween(start: string, end: string) {
+  return db.weights.where("date").between(start, end, true, true).toArray();
+}
+
+/** Log (or overwrite) the body weight for a day, in kg. */
+export async function setWeight(date: string, kg: number) {
+  const cur = await db.weights.get(date);
+  await db.weights.put({ date, kg, syncId: cur?.syncId ?? `weight-${date}`, updatedAt: now() });
+  touched();
+}
+
+export async function deleteWeight(date: string) {
+  const cur = await db.weights.get(date);
+  if (!cur) return;
+  await db.weights.delete(date);
+  if (cur.syncId) await tombstone(cur.syncId);
+  touched();
+}
+
+// Progress media is device-local: no touched()/tombstones — sync never sees it.
+
+export function allMedia() {
+  return db.media.orderBy("date").reverse().toArray();
+}
+
+export async function addMedia(file: File, date: string) {
+  // Best-effort: ask the browser not to evict our storage once media exists.
+  try {
+    await navigator.storage?.persist?.();
+  } catch {
+    /* ignore */
+  }
+  const kind = file.type.startsWith("video/") ? "video" : "photo";
+  return db.media.add({ date, kind, type: file.type, blob: file });
+}
+
+export function deleteMedia(id: number) {
+  return db.media.delete(id);
 }
 
 // ---- Training: routines, sessions, custom exercises ------------------------
@@ -390,10 +457,13 @@ export interface Backup {
   sessions?: WorkoutSession[];
   customExercises?: Exercise[];
   mesocycles?: Mesocycle[];
+  weights?: BodyWeight[];
 }
 
+// Progress media (photo/video blobs) is deliberately NOT in backups: blobs
+// don't survive JSON.stringify and would make the file enormous anyway.
 export async function exportData(): Promise<Backup> {
-  const [entries, goals, meals, customFoods, water, routines, sessions, customExercises, mesocycles] =
+  const [entries, goals, meals, customFoods, water, routines, sessions, customExercises, mesocycles, weights] =
     await Promise.all([
       db.entries.toArray(),
       db.goals.toArray(),
@@ -404,10 +474,11 @@ export async function exportData(): Promise<Backup> {
       db.sessions.toArray(),
       db.customExercises.toArray(),
       db.mesocycles.toArray(),
+      db.weights.toArray(),
     ]);
   return {
     app: "pasto",
-    version: 6,
+    version: 7,
     exportedAt: new Date().toISOString(),
     entries,
     goals,
@@ -418,6 +489,7 @@ export async function exportData(): Promise<Backup> {
     sessions,
     customExercises,
     mesocycles,
+    weights,
   };
 }
 
@@ -427,7 +499,7 @@ export async function importData(
   if (data.app && data.app !== "pasto") throw new Error("Not a Pasto backup file.");
   await db.transaction(
     "rw",
-    [db.entries, db.goals, db.meals, db.customFoods, db.water, db.routines, db.sessions, db.customExercises, db.mesocycles, db.tombstones],
+    [db.entries, db.goals, db.meals, db.customFoods, db.water, db.routines, db.sessions, db.customExercises, db.mesocycles, db.weights, db.tombstones],
     async () => {
       if (data.goals?.length) await db.goals.bulkPut(data.goals);
       if (data.meals?.length) await db.meals.bulkPut(data.meals);
@@ -438,6 +510,7 @@ export async function importData(
       if (data.sessions?.length) await db.sessions.bulkPut(data.sessions);
       if (data.customExercises?.length) await db.customExercises.bulkPut(data.customExercises);
       if (data.mesocycles?.length) await db.mesocycles.bulkPut(data.mesocycles);
+      if (data.weights?.length) await db.weights.bulkPut(data.weights);
       // Restoring from a backup should resurrect data — so drop any tombstone
       // for a record the backup brings back (otherwise sync would re-delete it).
       const restored = [
@@ -449,6 +522,7 @@ export async function importData(
         ...(data.sessions ?? []).map((s) => s.syncId),
         ...(data.customExercises ?? []).map((x) => x.id),
         ...(data.mesocycles ?? []).map((m) => m.syncId),
+        ...(data.weights ?? []).map((w) => w.syncId),
       ].filter((k): k is string => !!k);
       if (restored.length) await db.tombstones.bulkDelete(restored);
     },
@@ -621,11 +695,12 @@ export interface SyncState {
   sessions: WorkoutSession[];
   customExercises: Exercise[];
   mesocycles: Mesocycle[];
+  weights: BodyWeight[];
   tombstones: Tombstone[];
 }
 
 export async function getSyncState(): Promise<SyncState> {
-  const [goals, entries, meals, customFoods, water, routines, sessions, customExercises, mesocycles, tombstones] =
+  const [goals, entries, meals, customFoods, water, routines, sessions, customExercises, mesocycles, weights, tombstones] =
     await Promise.all([
       db.goals.get(1),
       db.entries.toArray(),
@@ -636,9 +711,10 @@ export async function getSyncState(): Promise<SyncState> {
       db.sessions.toArray(),
       db.customExercises.toArray(),
       db.mesocycles.toArray(),
+      db.weights.toArray(),
       db.tombstones.toArray(),
     ]);
-  return { goals: goals ?? null, entries, meals, customFoods, water, routines, sessions, customExercises, mesocycles, tombstones };
+  return { goals: goals ?? null, entries, meals, customFoods, water, routines, sessions, customExercises, mesocycles, weights, tombstones };
 }
 
 /** Write a merged state into the local DB. Loss-averse: upserts every alive
@@ -649,7 +725,7 @@ export async function applySyncState(s: SyncState): Promise<void> {
   const dead = new Set(s.tombstones.map((t) => t.syncId));
   await db.transaction(
     "rw",
-    [db.entries, db.goals, db.meals, db.customFoods, db.water, db.routines, db.sessions, db.customExercises, db.mesocycles, db.tombstones],
+    [db.entries, db.goals, db.meals, db.customFoods, db.water, db.routines, db.sessions, db.customExercises, db.mesocycles, db.weights, db.tombstones],
     async () => {
       if (s.tombstones.length) await db.tombstones.bulkPut(s.tombstones);
       if (s.goals) await db.goals.put({ ...s.goals, id: 1 });
@@ -658,6 +734,13 @@ export async function applySyncState(s: SyncState): Promise<void> {
         if (!w.syncId || dead.has(w.syncId)) continue;
         await db.water.put(w);
       }
+
+      for (const w of s.weights) {
+        if (!w.syncId || dead.has(w.syncId)) continue;
+        await db.weights.put(w);
+      }
+      const localWeights = await db.weights.toArray();
+      for (const w of localWeights) if (w.syncId && dead.has(w.syncId)) await db.weights.delete(w.date);
 
       const localEntries = await db.entries.toArray();
       const eBySync = new Map(localEntries.filter((e) => e.syncId).map((e) => [e.syncId!, e]));

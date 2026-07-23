@@ -7,6 +7,7 @@ import { doc, getDoc, onSnapshot, setDoc } from "firebase/firestore";
 import { firestore } from "./firebase";
 import { applySyncState, getSyncState, onLocalChange, type SyncState } from "./db";
 import type {
+  BodyWeight,
   Exercise,
   Food,
   Goals,
@@ -30,6 +31,7 @@ function emptyState(): SyncState {
     sessions: [],
     customExercises: [],
     mesocycles: [],
+    weights: [],
     tombstones: [],
   };
 }
@@ -45,6 +47,7 @@ function normalize(d: Partial<SyncState> | undefined): SyncState {
     sessions: d?.sessions ?? [],
     customExercises: d?.customExercises ?? [],
     mesocycles: d?.mesocycles ?? [],
+    weights: d?.weights ?? [],
     tombstones: d?.tombstones ?? [],
   };
 }
@@ -79,6 +82,7 @@ export function mergeState(local: SyncState, remote: SyncState): SyncState {
   const meals = pick<Meal>([...local.meals, ...remote.meals], (m) => m.syncId);
   const customFoods = pick<Food>([...local.customFoods, ...remote.customFoods], (f) => f.id);
   const water = pick<Water>([...local.water, ...remote.water], (w) => w.syncId);
+  const weights = pick<BodyWeight>([...local.weights, ...remote.weights], (w) => w.syncId);
   const routines = pick<Routine>([...local.routines, ...remote.routines], (r) => r.syncId);
   const sessions = pick<WorkoutSession>([...local.sessions, ...remote.sessions], (x) => x.syncId);
   const customExercises = pick<Exercise>(
@@ -100,6 +104,7 @@ export function mergeState(local: SyncState, remote: SyncState): SyncState {
     sessions,
     customExercises,
     mesocycles,
+    weights,
     tombstones,
   };
 }
