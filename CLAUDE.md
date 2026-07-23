@@ -37,8 +37,8 @@ Base path `/pasto` is applied in CI via `NEXT_PUBLIC_BASE_PATH`. There is no sta
   `app/src/lib/muscleAtlas.ts` via `MuscleMap.tsx` — new muscle names must map in its
   `HIGHLIGHT` table.
 - **Training model**: routines → sessions with per-set weight/reps/RIR; fixed target reps
-  (repMin === repMax); progression helpers in `app/src/lib/progression.ts` (a set counts if
-  it has reps — the ✓ is only a live aid); mesocycle blocks in `app/src/lib/mesocycle.ts`
+  (repMin === repMax); progression helpers in `app/src/lib/progression.ts` (a set only counts
+  once it's ticked ✓ done — reps alone don't count); mesocycle blocks in `app/src/lib/mesocycle.ts`
   (per-MUSCLE ramp ~+1 set/week distributed across that muscle's exercises, cap +2/lift,
   deload halves sets ×0.9 load); coach tips in `app/src/lib/coach.ts`.
 - **Static export**: only top-level routes exist; feature UIs are modals/query params.
