@@ -85,7 +85,7 @@ export default function BodyPage() {
       : null;
 
   return (
-    <div className="mx-auto flex w-full max-w-xl flex-col gap-5">
+    <div className="mx-auto flex w-full max-w-xl flex-col gap-5 lg:max-w-4xl">
       <div className="flex items-center justify-between">
         <h1 className="text-xl font-bold">Body</h1>
         <div className="flex gap-1">
@@ -105,8 +105,11 @@ export default function BodyPage() {
         </div>
       </div>
 
+      {/* Desktop: measurements beside the photo gallery. Mobile: stacked. */}
+      <div className="grid gap-6 lg:grid-cols-2 lg:items-start">
+      <div className="flex flex-col gap-5">
       {/* Log weight */}
-      <div className="flex items-end gap-2 rounded-2xl border border-base-300 bg-base-100 p-3">
+      <div className="flex items-end gap-2 rounded-2xl border border-base-300/70 bg-base-200/40 p-3">
         <label className="flex flex-1 flex-col gap-1">
           <span className="text-[11px] uppercase tracking-wide text-base-content/40">Date</span>
           <input
@@ -141,6 +144,7 @@ export default function BodyPage() {
         allWeights={everyWeight ?? []}
         dayTotals={dayTotals ?? new Map()}
       />
+      </div>
 
       {/* Progress photos & videos */}
       <div className="flex flex-col gap-2.5">
@@ -197,6 +201,7 @@ export default function BodyPage() {
         <p className="text-[11px] text-base-content/35">
           Photos & videos stay on this device only — they are not synced or included in backups.
         </p>
+      </div>
       </div>
 
       {/* Fullscreen viewer */}
