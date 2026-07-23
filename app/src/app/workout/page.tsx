@@ -22,6 +22,7 @@ import { defaultRoutineExercise } from "@/lib/exercises";
 import { DELOAD_LOAD_FACTOR, isBlockActive, mesoWeek, rampedSetCounts, rirTarget } from "@/lib/mesocycle";
 import {
   lastForExercise,
+  lastUserNote,
   nextTarget,
   overloadOptions,
   sessionTarget,
@@ -91,6 +92,7 @@ function buildSessionExercise(ex: Exercise, completed: WorkoutSession[]): Sessio
     primaryMuscles: ex.primaryMuscles,
     secondaryMuscles: ex.secondaryMuscles,
     note: t.note,
+    userNote: lastUserNote(completed, ex.id),
     repMin: re.repMin,
     repMax: re.repMax,
     targetSets: re.targetSets,
@@ -169,6 +171,7 @@ export default function WorkoutPage() {
             primaryMuscles: re.primaryMuscles,
             secondaryMuscles: re.secondaryMuscles,
             note,
+            userNote: lastUserNote(completed, re.exerciseId),
             superset: re.superset,
             repMin: re.repMin,
             repMax: re.repMax,

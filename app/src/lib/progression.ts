@@ -108,6 +108,19 @@ export function lastForExercise(
   return undefined;
 }
 
+/** Most recent free-text note the user left for this exercise (sessions newest-first),
+ * so it carries forward into the next session's prefill instead of resetting blank. */
+export function lastUserNote(
+  sessions: WorkoutSession[],
+  exerciseId: string,
+): string | undefined {
+  for (const s of sessions) {
+    const ex = s.exercises.find((e) => e.exerciseId === exerciseId && e.userNote);
+    if (ex) return ex.userNote;
+  }
+  return undefined;
+}
+
 export function summarizeLast(sets?: PerformedSet[]): string | undefined {
   const w = workingSets(sets ?? []);
   if (!w.length) return undefined;
