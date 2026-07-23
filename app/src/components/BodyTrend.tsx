@@ -35,13 +35,7 @@ export function weightTrend(points: { date: string; kg: number }[]): number[] {
   return out;
 }
 
-/** Trend change first→last: Δkg and Δ% of the starting weight. */
-export function trendChange(points: { date: string; kg: number }[]): { kg: number; pct: number } | null {
-  if (points.length < 2) return null;
-  const t = weightTrend(points);
-  const kg = t[t.length - 1] - t[0];
-  return { kg, pct: t[0] > 0 ? (kg / t[0]) * 100 : 0 };
-}
+const SINCE_KEY = "pasto-body-since";
 
 const x = (i: number, n: number) => PADX + (n <= 1 ? (W - PADX * 2) / 2 : (i / (n - 1)) * (W - PADX * 2));
 
@@ -49,17 +43,20 @@ export default function BodyTrend({
   days,
   weights,
   allWeights,
-  rangeLabel,
   dayTotals,
 }: {
   days: string[]; // every day in range, oldest first
   weights: BodyWeight[]; // weigh-ins inside the range, oldest first
   allWeights: BodyWeight[]; // every weigh-in ever, oldest first
-  rangeLabel: string;
   dayTotals: Map<string, Nutrients>;
 }) {
   const wrapRef = useRef<HTMLDivElement>(null);
   const [hover, setHover] = useState<number | null>(null);
+  // The user-picked comparison date ("since when am I measuring?"), remembered
+  // across visits. Defaults to the very first weigh-in.
+  const [since, setSince] = useState<string | null>(() =>
+    typeof window === "undefined" ? null : localStorage.getItem(SINCE_KEY),
+  );
   const n = days.length;
 
   function locate(e: React.PointerEvent) {
@@ -81,8 +78,18 @@ export default function BodyTrend({
     .map((w, i) => `${i ? "L" : "M"}${x(dayIndex.get(w.date) ?? 0, n).toFixed(1)},${y(trend[i]).toFixed(1)}`)
     .join(" ");
 
-  const rangeDelta = trendChange(weights);
-  const allDelta = trendChange(allWeights);
+  // Baseline = the last weigh-in on/before the picked date (or the first one
+  // after, if the date predates all data). Compared against the latest weigh-in.
+  const first = allWeights[0];
+  const latest = allWeights[allWeights.length - 1];
+  const sinceDate = since && first && since >= first.date ? since : first?.date;
+  const baseline = sinceDate
+    ? [...allWeights].reverse().find((w) => w.date <= sinceDate) ?? first
+    : undefined;
+  const delta =
+    baseline && latest && baseline.date < latest.date
+      ? { kg: latest.kg - baseline.kg, pct: baseline.kg > 0 ? ((latest.kg - baseline.kg) / baseline.kg) * 100 : 0 }
+      : null;
   const hoverDay = hover != null ? days[hover] : null;
   const hoverWeight = hoverDay ? weights.find((w) => w.date === hoverDay) : null;
   const hoverTotals = hoverDay ? dayTotals.get(hoverDay) : null;
@@ -133,10 +140,34 @@ export default function BodyTrend({
             No weigh-ins in this range yet.
           </div>
         )}
-        {(rangeDelta || allDelta) && (
-          <div className="mt-2 grid grid-cols-2 gap-2">
-            <DeltaTile label={`Last ${rangeLabel}`} d={rangeDelta} />
-            <DeltaTile label="Since start" d={allDelta} />
+        {baseline && latest && (
+          <div className="mt-2 flex items-center justify-between gap-2 rounded-xl bg-base-200/40 px-3 py-2">
+            <label className="flex items-center gap-1.5 text-xs text-base-content/50">
+              Since
+              <input
+                type="date"
+                value={sinceDate}
+                min={first.date}
+                max={latest.date}
+                onChange={(e) => {
+                  if (!e.target.value) return;
+                  setSince(e.target.value);
+                  localStorage.setItem(SINCE_KEY, e.target.value);
+                }}
+                className="input input-xs input-bordered"
+              />
+            </label>
+            {delta ? (
+              <span className={`text-sm font-semibold tabular-nums ${delta.kg > 0 ? "text-amber-500" : "text-primary"}`}>
+                {delta.kg > 0 ? "▲" : "▼"} {Math.abs(delta.kg).toFixed(1)} kg
+                <span className="ml-1.5 text-[11px] font-medium opacity-70">{Math.abs(delta.pct).toFixed(1)}%</span>
+                <span className="ml-2 text-[11px] font-normal tabular-nums text-base-content/40">
+                  {baseline.kg.toFixed(1)} → {latest.kg.toFixed(1)}
+                </span>
+              </span>
+            ) : (
+              <span className="text-xs text-base-content/40">Need a later weigh-in</span>
+            )}
           </div>
         )}
       </div>
@@ -144,22 +175,6 @@ export default function BodyTrend({
       {/* Intake over the same days */}
       <Spark label="Calories" cls="text-primary" days={days} hover={hover} value={(d) => dayTotals.get(d)?.kcal ?? 0} unit="" />
       <Spark label="Protein" cls="text-sky-400" days={days} hover={hover} value={(d) => dayTotals.get(d)?.protein_g ?? 0} unit=" g" />
-    </div>
-  );
-}
-
-function DeltaTile({ label, d }: { label: string; d: { kg: number; pct: number } | null }) {
-  return (
-    <div className="rounded-xl bg-base-200/40 px-3 py-2">
-      <div className="text-[10px] uppercase tracking-wide text-base-content/40">{label}</div>
-      {d ? (
-        <div className={`text-sm font-semibold tabular-nums ${d.kg > 0 ? "text-amber-500" : "text-primary"}`}>
-          {d.kg > 0 ? "▲" : "▼"} {Math.abs(d.kg).toFixed(1)} kg
-          <span className="ml-1.5 text-[11px] font-medium opacity-70">{Math.abs(d.pct).toFixed(1)}%</span>
-        </div>
-      ) : (
-        <div className="text-sm text-base-content/30">—</div>
-      )}
     </div>
   );
 }

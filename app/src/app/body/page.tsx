@@ -139,7 +139,6 @@ export default function BodyPage() {
         days={days}
         weights={weights ?? []}
         allWeights={everyWeight ?? []}
-        rangeLabel={range.label}
         dayTotals={dayTotals ?? new Map()}
       />
 

@@ -32,16 +32,34 @@ export default function ServiceWorkerRegister() {
     };
     navigator.serviceWorker.addEventListener("controllerchange", onControllerChange);
 
-    const onLoad = () =>
+    // updateViaCache: "none" makes update checks bypass the HTTP cache (GitHub
+    // Pages serves sw.js with max-age=600, which otherwise delays updates).
+    const register = () =>
       navigator.serviceWorker
-        .register(`${BASE_PATH}/sw.js`)
+        .register(`${BASE_PATH}/sw.js`, { updateViaCache: "none" })
         .then((reg) => reg.update().catch(() => {}))
         .catch(() => {
           /* offline support is best-effort */
         });
-    window.addEventListener("load", onLoad);
+    // `load` may already have fired (PWA resume, fast hydration) — register now
+    // in that case, or we'd never register/update at all this session.
+    if (document.readyState === "complete") register();
+    else window.addEventListener("load", register);
+
+    // A PWA brought back from the background resumes without any navigation, so
+    // also check for a new version whenever the app becomes visible again.
+    let lastCheck = 0;
+    const onVisible = () => {
+      if (document.visibilityState !== "visible") return;
+      if (Date.now() - lastCheck < 60_000) return;
+      lastCheck = Date.now();
+      navigator.serviceWorker.getRegistration().then((reg) => reg?.update().catch(() => {}));
+    };
+    document.addEventListener("visibilitychange", onVisible);
+
     return () => {
-      window.removeEventListener("load", onLoad);
+      window.removeEventListener("load", register);
+      document.removeEventListener("visibilitychange", onVisible);
       navigator.serviceWorker.removeEventListener("controllerchange", onControllerChange);
     };
   }, []);
