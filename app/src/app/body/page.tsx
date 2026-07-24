@@ -38,15 +38,23 @@ export default function BodyPage() {
   const fileRef = useRef<HTMLInputElement>(null);
 
   const start = addDays(today, -(range.days - 1));
-  const days = useMemo(
-    () => Array.from({ length: range.days }, (_, i) => addDays(start, i)),
-    [start, range.days],
-  );
-
   const weights = useLiveQuery(() => weightsBetween(start, today), [start, today]);
   const everyWeight = useLiveQuery(() => allWeights(), []);
   const dayTotals = useLiveQuery(() => dailyTotalsBetween(start, today), [start, today]);
   const media = useLiveQuery(() => allMedia(), []);
+
+  // The range is "up to N back": when data starts later than the window, clamp
+  // the charts to the data so a young log doesn't huddle at the right edge.
+  const days = useMemo(() => {
+    const firsts = [
+      weights?.[0]?.date,
+      dayTotals?.size ? [...dayTotals.keys()].sort()[0] : undefined,
+    ].filter((d): d is string => !!d);
+    const winStart = firsts.length && firsts.sort()[0] > start ? firsts[0] : start;
+    const out: string[] = [];
+    for (let d = winStart; d <= today; d = addDays(d, 1)) out.push(d);
+    return out;
+  }, [start, today, weights, dayTotals]);
 
   // Prefill the weight box with the selected day's reading (or the latest one).
   const forDate = weights?.find((w) => w.date === logDate);
