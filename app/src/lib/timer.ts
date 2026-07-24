@@ -88,12 +88,47 @@ let voiceOn = true;
 export function setVoice(on: boolean) {
   voiceOn = on;
 }
+
+// Prefer a pleasant female English voice from whatever the device offers.
+// Ordered best-first; iOS ships Samantha by default (Ava/Allison if the user
+// has installed the enhanced voices), other platforms fall further down.
+const FEMALE_PREF = [
+  "Ava", "Allison", "Samantha", "Susan", "Nicky", "Serena", "Karen", "Moira",
+  "Tessa", "Google UK English Female", "Microsoft Aria", "Microsoft Zira",
+  "Jenny", "Sonia", "Libby",
+];
+let chosenVoice: SpeechSynthesisVoice | null = null;
+function pickVoice() {
+  if (typeof window === "undefined" || !window.speechSynthesis) return;
+  const voices = window.speechSynthesis.getVoices();
+  if (!voices.length) return;
+  const en = voices.filter((v) => /^en[-_]?/i.test(v.lang));
+  const pool = en.length ? en : voices;
+  for (const name of FEMALE_PREF) {
+    const m = pool.find((v) => v.name.toLowerCase().includes(name.toLowerCase()));
+    if (m) return void (chosenVoice = m);
+  }
+  const f = pool.find((v) => /female|woman|girl/i.test(v.name));
+  chosenVoice = f ?? pool.find((v) => v.default) ?? pool[0] ?? null;
+}
+if (typeof window !== "undefined" && window.speechSynthesis) {
+  pickVoice();
+  try {
+    window.speechSynthesis.addEventListener("voiceschanged", pickVoice);
+  } catch {
+    window.speechSynthesis.onvoiceschanged = pickVoice;
+  }
+}
+
 function speak(text: string) {
   if (!voiceOn || typeof window === "undefined" || !window.speechSynthesis) return;
   try {
     const synth = window.speechSynthesis;
+    if (!chosenVoice) pickVoice(); // voices may have loaded since import
     const u = new SpeechSynthesisUtterance(text);
-    u.rate = 1.05;
+    if (chosenVoice) u.voice = chosenVoice;
+    u.rate = 1;
+    u.pitch = 1.05; // a touch brighter, friendlier
     u.volume = 1;
     // NOTE: iOS Safari silently drops an utterance if cancel() is called
     // immediately before speak() — so we don't cancel. Utterances are short
