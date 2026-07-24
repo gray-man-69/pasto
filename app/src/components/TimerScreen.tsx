@@ -82,10 +82,10 @@ export default function TimerScreen({
         <button
           onClick={prev}
           disabled={index === 0 && !done}
-          className="btn btn-circle btn-ghost text-lg disabled:opacity-30"
+          className="btn btn-circle btn-ghost disabled:opacity-30"
           aria-label="Previous phase"
         >
-          ⏮
+          <SkipIcon dir="prev" />
         </button>
         {done ? (
           <button onClick={start} className="btn btn-primary btn-lg rounded-full px-10">
@@ -103,12 +103,28 @@ export default function TimerScreen({
         <button
           onClick={next}
           disabled={index >= count - 1}
-          className="btn btn-circle btn-ghost text-lg disabled:opacity-30"
+          className="btn btn-circle btn-ghost disabled:opacity-30"
           aria-label="Skip phase"
         >
-          ⏭
+          <SkipIcon dir="next" />
         </button>
       </div>
     </div>
+  );
+}
+
+function SkipIcon({ dir }: { dir: "prev" | "next" }) {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      className={`h-5 w-5 ${dir === "prev" ? "" : "rotate-180"}`}
+      fill="currentColor"
+      stroke="currentColor"
+      strokeWidth={1.5}
+      strokeLinejoin="round"
+    >
+      <path d="M18 6.5v11L11 12l7-5.5Z" />
+      <path d="M11 6.5v11L4 12l7-5.5Z" />
+    </svg>
   );
 }
