@@ -3,6 +3,7 @@
 import Dexie, { type Table } from "dexie";
 import type {
   BodyWeight,
+  ConditioningSession,
   Exercise,
   Food,
   Goals,
@@ -45,6 +46,7 @@ class PastoDB extends Dexie {
   mesocycles!: Table<Mesocycle, number>; // v8: a history of training blocks
   weights!: Table<BodyWeight, string>; // v9: one body-weight reading per day
   media!: Table<ProgressMedia, number>; // v9: progress photos/videos (device-local)
+  conditioning!: Table<ConditioningSession, number>; // v10: HIIT / core sessions
 
   constructor() {
     super("pasto");
@@ -172,6 +174,23 @@ class PastoDB extends Dexie {
       mesocycles: "++id, startDate, syncId",
       weights: "date, syncId",
       media: "++id, date",
+    });
+    // v10 adds conditioning sessions (HIIT / core timers), synced like workouts.
+    this.version(10).stores({
+      entries: "++id, date, foodId, mealId, syncId",
+      goals: "id",
+      meals: "++id, name, syncId",
+      customFoods: "id, name, basedOn",
+      tombstones: "syncId",
+      water: "date, syncId",
+      routines: "++id, order, syncId",
+      sessions: "++id, date, routineId, syncId",
+      customExercises: "id, name, syncId",
+      mesocycle: "id",
+      mesocycles: "++id, startDate, syncId",
+      weights: "date, syncId",
+      media: "++id, date",
+      conditioning: "++id, date, syncId",
     });
   }
 }
@@ -338,6 +357,27 @@ export function updateMediaDate(id: number, date: string) {
   return db.media.update(id, { date });
 }
 
+// ---- Conditioning sessions (HIIT / core timers) ----------------------------
+
+export async function recentConditioning(limit = 30) {
+  // completedAt isn't indexed — sort in memory (the table is small).
+  const all = await db.conditioning.toArray();
+  return all.sort((a, b) => b.completedAt - a.completedAt).slice(0, limit);
+}
+
+export async function addConditioning(s: Omit<ConditioningSession, "id" | "syncId" | "updatedAt">) {
+  const id = await db.conditioning.add({ ...s, syncId: newSyncId(), updatedAt: now() });
+  touched();
+  return id;
+}
+
+export async function deleteConditioning(id: number) {
+  const s = await db.conditioning.get(id);
+  await db.conditioning.delete(id);
+  if (s?.syncId) await tombstone(s.syncId);
+  touched();
+}
+
 // ---- Training: routines, sessions, custom exercises ------------------------
 
 export function allRoutines() {
@@ -484,12 +524,13 @@ export interface Backup {
   customExercises?: Exercise[];
   mesocycles?: Mesocycle[];
   weights?: BodyWeight[];
+  conditioning?: ConditioningSession[];
 }
 
 // Progress media (photo/video blobs) is deliberately NOT in backups: blobs
 // don't survive JSON.stringify and would make the file enormous anyway.
 export async function exportData(): Promise<Backup> {
-  const [entries, goals, meals, customFoods, water, routines, sessions, customExercises, mesocycles, weights] =
+  const [entries, goals, meals, customFoods, water, routines, sessions, customExercises, mesocycles, weights, conditioning] =
     await Promise.all([
       db.entries.toArray(),
       db.goals.toArray(),
@@ -501,10 +542,11 @@ export async function exportData(): Promise<Backup> {
       db.customExercises.toArray(),
       db.mesocycles.toArray(),
       db.weights.toArray(),
+      db.conditioning.toArray(),
     ]);
   return {
     app: "pasto",
-    version: 7,
+    version: 8,
     exportedAt: new Date().toISOString(),
     entries,
     goals,
@@ -516,6 +558,7 @@ export async function exportData(): Promise<Backup> {
     customExercises,
     mesocycles,
     weights,
+    conditioning,
   };
 }
 
@@ -525,7 +568,7 @@ export async function importData(
   if (data.app && data.app !== "pasto") throw new Error("Not a Pasto backup file.");
   await db.transaction(
     "rw",
-    [db.entries, db.goals, db.meals, db.customFoods, db.water, db.routines, db.sessions, db.customExercises, db.mesocycles, db.weights, db.tombstones],
+    [db.entries, db.goals, db.meals, db.customFoods, db.water, db.routines, db.sessions, db.customExercises, db.mesocycles, db.weights, db.conditioning, db.tombstones],
     async () => {
       if (data.goals?.length) await db.goals.bulkPut(data.goals);
       if (data.meals?.length) await db.meals.bulkPut(data.meals);
@@ -537,6 +580,7 @@ export async function importData(
       if (data.customExercises?.length) await db.customExercises.bulkPut(data.customExercises);
       if (data.mesocycles?.length) await db.mesocycles.bulkPut(data.mesocycles);
       if (data.weights?.length) await db.weights.bulkPut(data.weights);
+      if (data.conditioning?.length) await db.conditioning.bulkPut(data.conditioning);
       // Restoring from a backup should resurrect data — so drop any tombstone
       // for a record the backup brings back (otherwise sync would re-delete it).
       const restored = [
@@ -549,6 +593,7 @@ export async function importData(
         ...(data.customExercises ?? []).map((x) => x.id),
         ...(data.mesocycles ?? []).map((m) => m.syncId),
         ...(data.weights ?? []).map((w) => w.syncId),
+        ...(data.conditioning ?? []).map((c) => c.syncId),
       ].filter((k): k is string => !!k);
       if (restored.length) await db.tombstones.bulkDelete(restored);
     },
@@ -722,11 +767,12 @@ export interface SyncState {
   customExercises: Exercise[];
   mesocycles: Mesocycle[];
   weights: BodyWeight[];
+  conditioning: ConditioningSession[];
   tombstones: Tombstone[];
 }
 
 export async function getSyncState(): Promise<SyncState> {
-  const [goals, entries, meals, customFoods, water, routines, sessions, customExercises, mesocycles, weights, tombstones] =
+  const [goals, entries, meals, customFoods, water, routines, sessions, customExercises, mesocycles, weights, conditioning, tombstones] =
     await Promise.all([
       db.goals.get(1),
       db.entries.toArray(),
@@ -738,9 +784,10 @@ export async function getSyncState(): Promise<SyncState> {
       db.customExercises.toArray(),
       db.mesocycles.toArray(),
       db.weights.toArray(),
+      db.conditioning.toArray(),
       db.tombstones.toArray(),
     ]);
-  return { goals: goals ?? null, entries, meals, customFoods, water, routines, sessions, customExercises, mesocycles, weights, tombstones };
+  return { goals: goals ?? null, entries, meals, customFoods, water, routines, sessions, customExercises, mesocycles, weights, conditioning, tombstones };
 }
 
 /** Write a merged state into the local DB. Loss-averse: upserts every alive
@@ -751,7 +798,7 @@ export async function applySyncState(s: SyncState): Promise<void> {
   const dead = new Set(s.tombstones.map((t) => t.syncId));
   await db.transaction(
     "rw",
-    [db.entries, db.goals, db.meals, db.customFoods, db.water, db.routines, db.sessions, db.customExercises, db.mesocycles, db.weights, db.tombstones],
+    [db.entries, db.goals, db.meals, db.customFoods, db.water, db.routines, db.sessions, db.customExercises, db.mesocycles, db.weights, db.conditioning, db.tombstones],
     async () => {
       if (s.tombstones.length) await db.tombstones.bulkPut(s.tombstones);
       if (s.goals) await db.goals.put({ ...s.goals, id: 1 });
@@ -767,6 +814,18 @@ export async function applySyncState(s: SyncState): Promise<void> {
       }
       const localWeights = await db.weights.toArray();
       for (const w of localWeights) if (w.syncId && dead.has(w.syncId)) await db.weights.delete(w.date);
+
+      // Conditioning sessions: numeric id is device-local, matched by syncId.
+      const localCond = await db.conditioning.toArray();
+      const cBySync = new Map(localCond.filter((c) => c.syncId).map((c) => [c.syncId!, c]));
+      for (const c of s.conditioning) {
+        if (!c.syncId || dead.has(c.syncId)) continue;
+        const { id: _drop, ...rest } = c;
+        const local = cBySync.get(c.syncId);
+        if (local) await db.conditioning.update(local.id!, rest);
+        else await db.conditioning.add(rest as ConditioningSession);
+      }
+      for (const c of localCond) if (c.syncId && dead.has(c.syncId)) await db.conditioning.delete(c.id!);
 
       const localEntries = await db.entries.toArray();
       const eBySync = new Map(localEntries.filter((e) => e.syncId).map((e) => [e.syncId!, e]));

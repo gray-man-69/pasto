@@ -10,18 +10,20 @@ import {
   allMesocycles,
   allRoutines,
   completedSessions,
+  deleteConditioning,
   deleteMesocycle,
   deleteSession,
   endMesocycle,
   localDate,
   purgeSession,
+  recentConditioning,
   restoreSession,
   trashedSessions,
 } from "@/lib/db";
 import { groupOfMuscle } from "@/lib/exercises";
 import { isBlockActive, mesoWeek } from "@/lib/mesocycle";
 import { sessionVolume, workingSets } from "@/lib/progression";
-import type { Mesocycle, Routine, WorkoutSession } from "@/lib/types";
+import type { ConditioningSession, Mesocycle, Routine, WorkoutSession } from "@/lib/types";
 
 function dayLabel(date: string): string {
   return new Date(date + "T00:00:00").toLocaleDateString("en-GB", {
@@ -38,6 +40,8 @@ export default function TrainingPage() {
   const trashed = useLiveQuery(() => trashedSessions(), []);
   const meso = useLiveQuery(() => activeMesocycle(), []);
   const blocks = useLiveQuery(() => allMesocycles(), []);
+  const conditioning = useLiveQuery(() => recentConditioning(), []);
+  const [showAllCond, setShowAllCond] = useState(false);
   const [startingBlock, setStartingBlock] = useState(false);
   const [showAllRecent, setShowAllRecent] = useState(false);
   const pastBlocks = (blocks ?? []).filter((b) => b.id !== meso?.id);
@@ -118,6 +122,27 @@ export default function TrainingPage() {
         />
       </div>
 
+      {conditioning && conditioning.length > 0 && (
+        <div className="flex flex-col gap-1.5">
+          <h2 className="px-1 text-xs font-semibold uppercase tracking-wide text-base-content/40">
+            Recent conditioning
+          </h2>
+          <ul className="flex flex-col gap-1.5">
+            {(showAllCond ? conditioning : conditioning.slice(0, 4)).map((c) => (
+              <ConditioningRow key={c.id} c={c} />
+            ))}
+          </ul>
+          {conditioning.length > 4 && (
+            <button
+              onClick={() => setShowAllCond((v) => !v)}
+              className="self-center py-1 text-xs font-medium text-primary hover:underline"
+            >
+              {showAllCond ? "Show less" : `Show all ${conditioning.length}`}
+            </button>
+          )}
+        </div>
+      )}
+
       <div className="flex items-center justify-between px-1">
         <h2 className="text-xs font-semibold uppercase tracking-wide text-base-content/40">
           Your routines
@@ -180,6 +205,35 @@ export default function TrainingPage() {
 
       {startingBlock && <MesocycleForm onClose={() => setStartingBlock(false)} />}
     </div>
+  );
+}
+
+function ConditioningRow({ c }: { c: ConditioningSession }) {
+  const mins = Math.round(c.durationSec / 60);
+  const accent = c.kind === "hiit" ? "text-primary" : "text-sky-400";
+  return (
+    <li className="flex items-center gap-2 rounded-2xl border border-base-300/60 bg-base-100 px-4 py-2.5">
+      <span className={`text-lg ${accent}`}>{c.kind === "hiit" ? "⚡" : "🧘"}</span>
+      <span className="min-w-0 flex-1">
+        <span className="block truncate text-sm font-medium">
+          {c.name}
+          {c.partial && <span className="ml-1.5 text-[10px] font-normal text-amber-500">partial</span>}
+        </span>
+        <span className="block truncate text-xs text-base-content/50">
+          {dayLabel(c.date)} · {c.summary}
+        </span>
+      </span>
+      <span className="shrink-0 text-xs tabular-nums text-base-content/40">{mins} min</span>
+      <button
+        onClick={() => {
+          if (c.id != null && confirm("Delete this session?")) deleteConditioning(c.id);
+        }}
+        className="grid h-7 w-7 shrink-0 place-items-center rounded-full text-base-content/30 hover:bg-base-300/60 hover:text-error"
+        aria-label={`Delete ${c.name}`}
+      >
+        ✕
+      </button>
+    </li>
   );
 }
 
