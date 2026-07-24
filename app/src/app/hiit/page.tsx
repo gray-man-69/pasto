@@ -3,6 +3,7 @@
 import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import TimerScreen from "@/components/TimerScreen";
+import VoiceToggle from "@/components/VoiceToggle";
 import { useTimer, fmtClock } from "@/lib/timer";
 import { useConditioningLogger } from "@/lib/conditioningLog";
 import { buildHiit, NORWEGIAN_4x4, type HiitConfig } from "@/lib/intervals";
@@ -81,6 +82,8 @@ export default function HiitPage() {
         <Stepper label="Warm-up" value={cfg.warmupSec} time onChange={(d) => set("warmupSec", cfg.warmupSec + d * 60)} step={60} />
         <Stepper label="Cool-down" value={cfg.cooldownSec} time onChange={(d) => set("cooldownSec", cfg.cooldownSec + d * 60)} step={60} />
       </div>
+
+      <VoiceToggle />
 
       <div className="flex items-center justify-between rounded-2xl bg-base-200/50 px-4 py-3 text-sm">
         <span className="text-base-content/50">Total time</span>

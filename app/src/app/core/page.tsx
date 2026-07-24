@@ -3,6 +3,7 @@
 import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import TimerScreen from "@/components/TimerScreen";
+import VoiceToggle from "@/components/VoiceToggle";
 import { useTimer, fmtClock } from "@/lib/timer";
 import { useConditioningLogger } from "@/lib/conditioningLog";
 import { buildMcGill, MCGILL_DEFAULT, type McGillConfig } from "@/lib/intervals";
@@ -105,6 +106,8 @@ export default function CorePage() {
           </div>
         </div>
       </div>
+
+      <VoiceToggle />
 
       <div className="flex items-center justify-between rounded-2xl bg-base-200/50 px-4 py-3 text-sm">
         <span className="text-base-content/50">{holds} holds · total</span>

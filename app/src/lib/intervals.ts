@@ -23,19 +23,20 @@ export const NORWEGIAN_4x4: HiitConfig = {
 export function buildHiit(c: HiitConfig): Phase[] {
   const phases: Phase[] = [];
   if (c.warmupSec > 0)
-    phases.push({ label: "Warm-up", seconds: c.warmupSec, kind: "warmup", note: "Easy pace, ~60% effort" });
+    phases.push({ label: "Warm-up", seconds: c.warmupSec, kind: "warmup", note: "Easy pace, ~60% effort", say: "Warm up" });
   for (let i = 0; i < c.intervals; i++) {
     phases.push({
       label: `Work ${i + 1}/${c.intervals}`,
       seconds: c.workSec,
       kind: "work",
       note: "Hard — 85–95% max heart rate",
+      say: `Work, ${i + 1} of ${c.intervals}. Go`,
     });
     if (i < c.intervals - 1)
-      phases.push({ label: "Recovery", seconds: c.recoverSec, kind: "recover", note: "Active — keep moving, ~70%" });
+      phases.push({ label: "Recovery", seconds: c.recoverSec, kind: "recover", note: "Active — keep moving, ~70%", say: "Recover" });
   }
   if (c.cooldownSec > 0)
-    phases.push({ label: "Cool-down", seconds: c.cooldownSec, kind: "cooldown", note: "Easy — bring it down" });
+    phases.push({ label: "Cool-down", seconds: c.cooldownSec, kind: "cooldown", note: "Easy — bring it down", say: "Cool down" });
   return phases;
 }
 
@@ -70,15 +71,19 @@ export function buildMcGill(c: McGillConfig): Phase[] {
       const reps = c.pyramid[s];
       for (const side of ex.sides) {
         const who = side ? `${ex.name} · ${side}` : ex.name;
+        const spoken = side ? `${ex.name}, ${side}` : ex.name;
         for (let r = 0; r < reps; r++) {
+          // Only name the exercise on the first hold of a run; later holds just
+          // say "Hold" so the voice isn't chatty every 10 seconds.
           push({
             label: `${who}`,
             seconds: c.holdSec,
             kind: "hold",
             note: `Set ${s + 1} · hold ${r + 1}/${reps} — ${ex.cue}`,
+            say: r === 0 ? `${spoken}. Hold` : "Hold",
           });
           const lastHold = e === BIG_THREE.length - 1 && s === c.pyramid.length - 1 && side === ex.sides[ex.sides.length - 1] && r === reps - 1;
-          if (!lastHold) push({ label: "Rest", seconds: c.restSec, kind: "rest", note: "Breathe, reset your brace" });
+          if (!lastHold) push({ label: "Rest", seconds: c.restSec, kind: "rest", note: "Breathe, reset your brace", say: "Rest" });
         }
       }
     }
