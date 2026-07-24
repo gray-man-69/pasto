@@ -104,6 +104,12 @@ export default function BodyTrend({
           pct: baseline.kg > 0 ? ((endpoint.kg - baseline.kg) / baseline.kg) * 100 : 0,
         }
       : null;
+  // Weekly rate of change — the number to hold against the usual guidance
+  // (cut ≈ 0.5–1%/week, lean gain ≈ 0.25–0.5%/week). Needs ≥1 week of data.
+  const rangeWeeks =
+    baseline && endpoint ? (Date.parse(endpoint.date) - Date.parse(baseline.date)) / (7 * 864e5) : 0;
+  const weeklyPct = delta && rangeWeeks >= 1 ? delta.pct / rangeWeeks : null;
+  const paceFast = weeklyPct != null && (weeklyPct < -1 || weeklyPct > 0.5);
   const hoverDay = hover != null ? days[hover] : null;
   const hoverWeight = hoverDay ? weights.find((w) => w.date === hoverDay) : null;
   const shownKg = hoverWeight?.kg ?? latest?.kg;
@@ -159,6 +165,16 @@ export default function BodyTrend({
               {fmtDay(baseline.date)} → {until ? fmtDay(endpoint.date) : "now"} · {baseline.kg.toFixed(1)} →{" "}
               {endpoint.kg.toFixed(1)} kg
             </span>
+            {weeklyPct != null && (
+              <span
+                className={`text-[11px] font-medium tabular-nums ${
+                  paceFast ? "text-amber-500" : "text-base-content/50"
+                }`}
+              >
+                {weeklyPct > 0 ? "▲" : "▼"} {Math.abs(weeklyPct).toFixed(2)}% / week
+                {paceFast && (weeklyPct < 0 ? " · faster than 1%/wk" : " · faster than 0.5%/wk")}
+              </span>
+            )}
             {calOpen && first && latest && (
               <RangeCalendar
                 start={sinceDate!}
