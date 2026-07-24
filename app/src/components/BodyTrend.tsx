@@ -1,6 +1,7 @@
 "use client";
 
 import { useRef, useState } from "react";
+import RangeCalendar from "@/components/RangeCalendar";
 import type { BodyWeight, Nutrients } from "@/lib/types";
 
 // Weight trend + intake, side by side in time:
@@ -36,6 +37,10 @@ export function weightTrend(points: { date: string; kg: number }[]): number[] {
 }
 
 const SINCE_KEY = "pasto-body-since";
+const UNTIL_KEY = "pasto-body-until"; // absent = "now" (rolling latest weigh-in)
+
+const fmtDay = (d: string) =>
+  new Date(d + "T00:00:00").toLocaleDateString("en-GB", { day: "numeric", month: "short" });
 
 const x = (i: number, n: number) => PADX + (n <= 1 ? (W - PADX * 2) / 2 : (i / (n - 1)) * (W - PADX * 2));
 
@@ -52,11 +57,16 @@ export default function BodyTrend({
 }) {
   const wrapRef = useRef<HTMLDivElement>(null);
   const [hover, setHover] = useState<number | null>(null);
-  // The user-picked comparison date ("since when am I measuring?"), remembered
-  // across visits. Defaults to the very first weigh-in.
+  // The user-picked comparison range, remembered across visits. Start defaults
+  // to the very first weigh-in; a missing end means "now" and follows the
+  // latest weigh-in as new ones arrive.
   const [since, setSince] = useState<string | null>(() =>
     typeof window === "undefined" ? null : localStorage.getItem(SINCE_KEY),
   );
+  const [until, setUntil] = useState<string | null>(() =>
+    typeof window === "undefined" ? null : localStorage.getItem(UNTIL_KEY),
+  );
+  const [calOpen, setCalOpen] = useState(false);
   const n = days.length;
 
   function locate(e: React.PointerEvent) {
@@ -78,17 +88,21 @@ export default function BodyTrend({
     .map((w, i) => `${i ? "L" : "M"}${x(dayIndex.get(w.date) ?? 0, n).toFixed(1)},${y(trend[i]).toFixed(1)}`)
     .join(" ");
 
-  // Baseline = the last weigh-in on/before the picked date (or the first one
-  // after, if the date predates all data). Compared against the latest weigh-in.
+  // Range endpoints resolve to weigh-ins: the last reading on/before each
+  // picked date (falling back to the first reading if the date predates data).
   const first = allWeights[0];
   const latest = allWeights[allWeights.length - 1];
   const sinceDate = since && first && since >= first.date ? since : first?.date;
-  const baseline = sinceDate
-    ? [...allWeights].reverse().find((w) => w.date <= sinceDate) ?? first
-    : undefined;
+  const untilDate = until && latest && until <= latest.date ? until : latest?.date;
+  const atOrBefore = (d: string) => [...allWeights].reverse().find((w) => w.date <= d);
+  const baseline = sinceDate ? atOrBefore(sinceDate) ?? first : undefined;
+  const endpoint = untilDate ? atOrBefore(untilDate) ?? latest : undefined;
   const delta =
-    baseline && latest && baseline.date < latest.date
-      ? { kg: latest.kg - baseline.kg, pct: baseline.kg > 0 ? ((latest.kg - baseline.kg) / baseline.kg) * 100 : 0 }
+    baseline && endpoint && baseline.date < endpoint.date
+      ? {
+          kg: endpoint.kg - baseline.kg,
+          pct: baseline.kg > 0 ? ((endpoint.kg - baseline.kg) / baseline.kg) * 100 : 0,
+        }
       : null;
   const hoverDay = hover != null ? days[hover] : null;
   const hoverWeight = hoverDay ? weights.find((w) => w.date === hoverDay) : null;
@@ -106,13 +120,7 @@ export default function BodyTrend({
       : "";
 
   return (
-    <div
-      ref={wrapRef}
-      onPointerMove={locate}
-      onPointerDown={locate}
-      onPointerLeave={() => setHover(null)}
-      className="flex flex-col gap-5"
-    >
+    <div className="flex flex-col gap-5">
       {/* Hero — mirrors the Today tab's big-number summary */}
       <div className="flex flex-col items-center gap-2">
         <span className="text-xs font-medium uppercase tracking-[0.2em] text-base-content/40">
@@ -129,38 +137,60 @@ export default function BodyTrend({
             trend {trend[trend.length - 1].toFixed(1)} kg
           </span>
         )}
-        {baseline && latest && (
-          <span
-            className={`flex items-center gap-1.5 rounded-full px-3 py-1 text-sm font-medium tabular-nums ${
-              delta && delta.kg > 0 ? "bg-amber-400/15 text-amber-500" : "bg-primary/10 text-primary"
-            }`}
-          >
-            {delta ? (
-              <>
-                {delta.kg > 0 ? "▲" : "▼"} {Math.abs(delta.kg).toFixed(1)} kg
-                <span className="text-[11px] opacity-70">{Math.abs(delta.pct).toFixed(1)}%</span>
-              </>
-            ) : (
-              <span className="text-xs">from</span>
+        {baseline && endpoint && (
+          <>
+            <button
+              onClick={() => setCalOpen((o) => !o)}
+              className={`flex items-center gap-1.5 rounded-full px-3 py-1 text-sm font-medium tabular-nums transition-colors ${
+                delta && delta.kg > 0 ? "bg-amber-400/15 text-amber-500" : "bg-primary/10 text-primary"
+              }`}
+            >
+              {delta ? (
+                <>
+                  {delta.kg > 0 ? "▲" : "▼"} {Math.abs(delta.kg).toFixed(1)} kg
+                  <span className="text-[11px] opacity-70">{Math.abs(delta.pct).toFixed(1)}%</span>
+                </>
+              ) : (
+                <span className="text-xs">pick a range</span>
+              )}
+              <span className={`text-[10px] opacity-60 transition-transform ${calOpen ? "rotate-180" : ""}`}>▾</span>
+            </button>
+            <span className="text-[11px] tabular-nums text-base-content/40">
+              {fmtDay(baseline.date)} → {until ? fmtDay(endpoint.date) : "now"} · {baseline.kg.toFixed(1)} →{" "}
+              {endpoint.kg.toFixed(1)} kg
+            </span>
+            {calOpen && first && latest && (
+              <RangeCalendar
+                start={sinceDate!}
+                end={untilDate!}
+                min={first.date}
+                max={latest.date}
+                marked={new Set(allWeights.map((w) => w.date))}
+                onChange={(s, e) => {
+                  setSince(s);
+                  localStorage.setItem(SINCE_KEY, s);
+                  if (e >= latest.date) {
+                    setUntil(null);
+                    localStorage.removeItem(UNTIL_KEY);
+                  } else {
+                    setUntil(e);
+                    localStorage.setItem(UNTIL_KEY, e);
+                  }
+                }}
+              />
             )}
-            <span className="text-[11px] opacity-60">since</span>
-            <input
-              type="date"
-              value={sinceDate}
-              min={first.date}
-              max={latest.date}
-              onChange={(e) => {
-                if (!e.target.value) return;
-                setSince(e.target.value);
-                localStorage.setItem(SINCE_KEY, e.target.value);
-              }}
-              className="bg-transparent text-[11px] tabular-nums outline-none"
-            />
-          </span>
+          </>
         )}
       </div>
 
-      {/* Weight chart */}
+      {/* Charts share the scrub pointer; the hero above only displays it. */}
+      <div
+        ref={wrapRef}
+        onPointerMove={locate}
+        onPointerDown={locate}
+        onPointerLeave={() => setHover(null)}
+        className="flex flex-col gap-5"
+      >
       <div>
         {weights.length ? (
           <svg viewBox={`0 0 ${W} ${WH}`} className="w-full rounded-xl bg-base-200/40">
@@ -202,6 +232,7 @@ export default function BodyTrend({
       {/* Intake over the same days */}
       <Spark label="Calories" cls="text-primary" days={days} hover={hover} value={(d) => dayTotals.get(d)?.kcal ?? 0} unit="" />
       <Spark label="Protein" cls="text-sky-400" days={days} hover={hover} value={(d) => dayTotals.get(d)?.protein_g ?? 0} unit=" g" />
+      </div>
     </div>
   );
 }
