@@ -91,11 +91,16 @@ export function setVoice(on: boolean) {
 function speak(text: string) {
   if (!voiceOn || typeof window === "undefined" || !window.speechSynthesis) return;
   try {
-    window.speechSynthesis.cancel(); // don't queue up a backlog
+    const synth = window.speechSynthesis;
     const u = new SpeechSynthesisUtterance(text);
     u.rate = 1.05;
     u.volume = 1;
-    window.speechSynthesis.speak(u);
+    // NOTE: iOS Safari silently drops an utterance if cancel() is called
+    // immediately before speak() — so we don't cancel. Utterances are short
+    // (~1s) and phases are ≥3s, so a backlog can't build. resume() clears the
+    // paused state iOS sometimes gets stuck in.
+    synth.resume();
+    synth.speak(u);
   } catch {
     /* not supported */
   }
@@ -124,6 +129,8 @@ export function useTimer(phases: Phase[]) {
 
   // Keep refs in step for the ticking closure.
   idx.current = state.index;
+  const stateRef = useRef(state);
+  stateRef.current = state;
 
   const total = phases.reduce((n, p) => n + p.seconds, 0);
   const elapsedBefore = phases.slice(0, state.index).reduce((n, p) => n + p.seconds, 0);
@@ -186,16 +193,15 @@ export function useTimer(phases: Phase[]) {
 
   const start = useCallback(() => {
     primeAudio();
-    setState((s) => {
-      const from = s.done ? { index: 0, remaining: phases[0]?.seconds ?? 0 } : { index: s.index, remaining: s.remaining };
-      endAt.current = Date.now() + from.remaining * 1000;
-      lastBeep.current = -1;
-      // Announce the phase we're (re)starting into, from this user gesture so
-      // iOS unlocks audio + speech.
-      cuePhase(phases[from.index]?.kind ?? "prep");
-      announce(phases[from.index]);
-      return { ...from, running: true, done: false };
-    });
+    const s = stateRef.current;
+    const from = s.done ? { index: 0, remaining: phases[0]?.seconds ?? 0 } : { index: s.index, remaining: s.remaining };
+    endAt.current = Date.now() + from.remaining * 1000;
+    lastBeep.current = -1;
+    // Fire the tone + announcement synchronously in this user gesture, so iOS
+    // unlocks audio + speech (doing it inside the setState updater is unreliable).
+    cuePhase(phases[from.index]?.kind ?? "prep");
+    announce(phases[from.index]);
+    setState({ ...from, running: true, done: false });
     requestWake();
   }, [phases, requestWake]);
 
