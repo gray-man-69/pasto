@@ -33,7 +33,7 @@ export function buildHiit(c: HiitConfig): Phase[] {
       seconds: c.workSec,
       kind: "work",
       note: "Hard — 85–95% max heart rate",
-      say: `Work, ${i + 1} of ${c.intervals}. Go`,
+      say: i === c.intervals - 1 && c.intervals > 1 ? "Last one. Go" : `Work, ${i + 1} of ${c.intervals}. Go`,
     });
     if (i < c.intervals - 1)
       phases.push({ label: "Recovery", seconds: c.recoverSec, kind: "recover", note: "Active — keep moving, ~70%", say: "Recover" });
@@ -101,12 +101,13 @@ export function buildMcGill(c: McGillConfig): Phase[] {
 
   for (let i = 0; i < units.length; i++) {
     const u = units[i];
+    const lastRep = u.rep === u.reps - 1;
     phases.push({
       label: u.who,
       seconds: c.holdSec,
       kind: "hold",
       note: `Set ${u.setIdx + 1} · hold ${u.rep + 1}/${u.reps} — ${u.cue}`,
-      say: "Go",
+      say: lastRep ? "Last one" : "Go",
     });
     const n = units[i + 1];
     if (!n) break;
