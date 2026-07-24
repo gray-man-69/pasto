@@ -212,8 +212,18 @@ function ConditioningRow({ c }: { c: ConditioningSession }) {
   const mins = Math.round(c.durationSec / 60);
   const accent = c.kind === "hiit" ? "text-primary" : "text-sky-400";
   return (
-    <li className="flex items-center gap-2 rounded-2xl border border-base-300/60 bg-base-100 px-4 py-2.5">
-      <span className={`text-lg ${accent}`}>{c.kind === "hiit" ? "⚡" : "🧘"}</span>
+    <li className="flex items-center gap-2.5 rounded-2xl border border-base-300/60 bg-base-100 px-4 py-2.5">
+      <span className={`grid h-8 w-8 shrink-0 place-items-center rounded-full bg-base-200 ${accent}`}>
+        {c.kind === "hiit" ? (
+          <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth={2} strokeLinejoin="round">
+            <path d="M13 2 4.5 13.5H12l-1 8L19.5 10H12l1-8Z" />
+          </svg>
+        ) : (
+          <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round">
+            <path d="M6.5 3v6M6.5 15v6M17.5 3v6M17.5 15v6M4.5 9h4M15.5 9h4M4.5 15h4M15.5 15h4M8.5 12h7" />
+          </svg>
+        )}
+      </span>
       <span className="min-w-0 flex-1">
         <span className="block truncate text-sm font-medium">
           {c.name}
