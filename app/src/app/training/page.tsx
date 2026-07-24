@@ -88,6 +88,36 @@ export default function TrainingPage() {
         </details>
       )}
 
+      <div className="px-1">
+        <h2 className="text-xs font-semibold uppercase tracking-wide text-base-content/40">
+          Conditioning &amp; core
+        </h2>
+      </div>
+      <div className="grid grid-cols-2 gap-2">
+        <ConditioningCard
+          href="/hiit"
+          title="Norwegian 4×4"
+          desc="HIIT interval timer"
+          accent="text-primary"
+          icon={
+            <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth={2}>
+              <path d="M13 2 4.5 13.5H12l-1 8L19.5 10H12l1-8Z" strokeLinejoin="round" />
+            </svg>
+          }
+        />
+        <ConditioningCard
+          href="/core"
+          title="McGill Big Three"
+          desc="Spine-safe core timer"
+          accent="text-sky-400"
+          icon={
+            <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth={2}>
+              <path d="M6.5 3v6M6.5 15v6M17.5 3v6M17.5 15v6M4.5 9h4M15.5 9h4M4.5 15h4M15.5 15h4M8.5 12h7" strokeLinecap="round" />
+            </svg>
+          }
+        />
+      </div>
+
       <div className="flex items-center justify-between px-1">
         <h2 className="text-xs font-semibold uppercase tracking-wide text-base-content/40">
           Your routines
@@ -150,6 +180,33 @@ export default function TrainingPage() {
 
       {startingBlock && <MesocycleForm onClose={() => setStartingBlock(false)} />}
     </div>
+  );
+}
+
+function ConditioningCard({
+  href,
+  title,
+  desc,
+  icon,
+  accent,
+}: {
+  href: string;
+  title: string;
+  desc: string;
+  icon: React.ReactNode;
+  accent: string;
+}) {
+  return (
+    <Link
+      href={href}
+      className="flex flex-col gap-2 rounded-2xl border border-base-300/60 bg-base-100 p-3.5 transition-colors hover:border-primary/40"
+    >
+      <span className={`grid h-9 w-9 place-items-center rounded-full bg-base-200 ${accent}`}>{icon}</span>
+      <span>
+        <span className="block text-sm font-semibold leading-tight">{title}</span>
+        <span className="block text-xs text-base-content/50">{desc}</span>
+      </span>
+    </Link>
   );
 }
 
