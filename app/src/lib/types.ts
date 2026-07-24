@@ -110,6 +110,21 @@ export interface BodyWeight extends Synced {
   kg: number;
 }
 
+// A completed conditioning session (HIIT / core timer). Logged when a timed
+// protocol finishes (or is exited after real work), and synced like workouts.
+export interface ConditioningSession extends Synced {
+  id?: number;
+  date: string; // YYYY-MM-DD (local)
+  kind: "hiit" | "mcgill";
+  name: string; // "Norwegian 4×4", "McGill Big Three"
+  durationSec: number; // seconds actually elapsed
+  workDone: number; // intervals / holds completed
+  workTotal: number; // intervals / holds planned
+  summary: string; // human line, e.g. "4/4 intervals · 4:00 work"
+  partial: boolean; // exited before the protocol finished
+  completedAt: number; // epoch ms
+}
+
 // A progress photo or video, stored as a Blob in IndexedDB. Device-local only:
 // media is far too heavy for the Firestore state doc and for JSON backups, so
 // it is never synced or exported.

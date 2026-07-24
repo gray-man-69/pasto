@@ -4,6 +4,7 @@ import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import TimerScreen from "@/components/TimerScreen";
 import { useTimer, fmtClock } from "@/lib/timer";
+import { useConditioningLogger } from "@/lib/conditioningLog";
 import { buildMcGill, MCGILL_DEFAULT, type McGillConfig } from "@/lib/intervals";
 
 const KEY = "pasto-mcgill-config";
@@ -30,6 +31,14 @@ export default function CorePage() {
   const [started, setStarted] = useState(false);
   const phases = useMemo(() => buildMcGill(cfg), [cfg]);
   const timer = useTimer(phases);
+  const logExit = useConditioningLogger({
+    timer,
+    phases,
+    kind: "mcgill",
+    name: "McGill Big Three",
+    workKind: "hold",
+    makeSummary: (done, total) => `${done}/${total} holds · ${fmtClock(cfg.holdSec)} each`,
+  });
 
   const total = phases.reduce((n, p) => n + p.seconds, 0);
   const holds = phases.filter((p) => p.kind === "hold").length;
@@ -50,6 +59,7 @@ export default function CorePage() {
         phases={phases}
         timer={timer}
         onExit={() => {
+          logExit();
           timer.pause();
           setStarted(false);
         }}

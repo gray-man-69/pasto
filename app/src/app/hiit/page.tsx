@@ -4,6 +4,7 @@ import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import TimerScreen from "@/components/TimerScreen";
 import { useTimer, fmtClock } from "@/lib/timer";
+import { useConditioningLogger } from "@/lib/conditioningLog";
 import { buildHiit, NORWEGIAN_4x4, type HiitConfig } from "@/lib/intervals";
 
 const KEY = "pasto-hiit-config";
@@ -23,6 +24,14 @@ export default function HiitPage() {
   const [started, setStarted] = useState(false);
   const phases = useMemo(() => buildHiit(cfg), [cfg]);
   const timer = useTimer(phases);
+  const logExit = useConditioningLogger({
+    timer,
+    phases,
+    kind: "hiit",
+    name: "Norwegian 4×4",
+    workKind: "work",
+    makeSummary: (done, total) => `${done}/${total} intervals · ${fmtClock(cfg.workSec)} work`,
+  });
 
   const total = phases.reduce((n, p) => n + p.seconds, 0);
   function set<K extends keyof HiitConfig>(k: K, v: number) {
@@ -42,6 +51,7 @@ export default function HiitPage() {
         phases={phases}
         timer={timer}
         onExit={() => {
+          logExit();
           timer.pause();
           setStarted(false);
         }}
