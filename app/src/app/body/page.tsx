@@ -19,42 +19,33 @@ import {
 } from "@/lib/db";
 import type { ProgressMedia } from "@/lib/types";
 
-const RANGES = [
-  { label: "4w", days: 28 },
-  { label: "12w", days: 84 },
-  { label: "6m", days: 182 },
-  { label: "1y", days: 365 },
-] as const;
-
 const MAX_MEDIA_MB = 100;
 
 export default function BodyPage() {
   const today = localDate();
-  const [range, setRange] = useState<(typeof RANGES)[number]>(RANGES[1]);
+  const [logOpen, setLogOpen] = useState(false);
   const [logDate, setLogDate] = useState(today);
   const [kg, setKg] = useState(0);
   const [viewing, setViewing] = useState<ProgressMedia | null>(null);
   const [compare, setCompare] = useState<number[] | null>(null); // media ids picked for compare
   const fileRef = useRef<HTMLInputElement>(null);
 
-  const start = addDays(today, -(range.days - 1));
-  const weights = useLiveQuery(() => weightsBetween(start, today), [start, today]);
   const everyWeight = useLiveQuery(() => allWeights(), []);
+  // Charts span the full weigh-in history (capped at a year); before the first
+  // weigh-in exists, show the last four weeks so the intake sparklines have room.
+  const firstWeighIn = everyWeight?.[0]?.date;
+  const cap = addDays(today, -364);
+  const preferred = firstWeighIn ?? addDays(today, -27);
+  const start = preferred > cap ? preferred : cap;
+  const weights = useLiveQuery(() => weightsBetween(start, today), [start, today]);
   const dayTotals = useLiveQuery(() => dailyTotalsBetween(start, today), [start, today]);
   const media = useLiveQuery(() => allMedia(), []);
 
-  // The range is "up to N back": when data starts later than the window, clamp
-  // the charts to the data so a young log doesn't huddle at the right edge.
   const days = useMemo(() => {
-    const firsts = [
-      weights?.[0]?.date,
-      dayTotals?.size ? [...dayTotals.keys()].sort()[0] : undefined,
-    ].filter((d): d is string => !!d);
-    const winStart = firsts.length && firsts.sort()[0] > start ? firsts[0] : start;
     const out: string[] = [];
-    for (let d = winStart; d <= today; d = addDays(d, 1)) out.push(d);
+    for (let d = start; d <= today; d = addDays(d, 1)) out.push(d);
     return out;
-  }, [start, today, weights, dayTotals]);
+  }, [start, today]);
 
   // Prefill the weight box with the selected day's reading (or the latest one).
   const forDate = weights?.find((w) => w.date === logDate);
@@ -65,7 +56,9 @@ export default function BodyPage() {
   }, [logDate, forDate?.kg]);
 
   async function saveWeight() {
-    if (kg > 0) await setWeight(logDate, Math.round(kg * 10) / 10);
+    if (kg <= 0) return;
+    await setWeight(logDate, Math.round(kg * 10) / 10);
+    setLogOpen(false);
   }
 
   async function onFiles(files: FileList | null) {
@@ -96,27 +89,16 @@ export default function BodyPage() {
     <div className="mx-auto flex w-full max-w-xl flex-col gap-5 lg:max-w-4xl">
       <div className="flex items-center justify-between">
         <h1 className="text-xl font-bold">Body</h1>
-        <div className="flex gap-1">
-          {RANGES.map((r) => (
-            <button
-              key={r.label}
-              onClick={() => setRange(r)}
-              className={`rounded-full px-2.5 py-1 text-xs font-medium transition-colors ${
-                r.label === range.label
-                  ? "bg-primary/15 text-primary"
-                  : "text-base-content/50 hover:bg-base-200"
-              }`}
-            >
-              {r.label}
-            </button>
-          ))}
-        </div>
+        <button onClick={() => setLogOpen((o) => !o)} className="btn btn-primary btn-sm">
+          + Log weight
+        </button>
       </div>
 
       {/* Desktop: measurements beside the photo gallery. Mobile: stacked. */}
       <div className="grid gap-6 lg:grid-cols-2 lg:items-start">
       <div className="flex flex-col gap-5">
-      {/* Log weight */}
+      {/* Log weight — tucked behind the + Log weight button */}
+      {logOpen && (
       <div className="flex items-end gap-2 rounded-2xl border border-base-300/70 bg-base-200/40 p-3">
         <label className="flex flex-1 flex-col gap-1">
           <span className="text-[11px] uppercase tracking-wide text-base-content/40">Date</span>
@@ -145,6 +127,7 @@ export default function BodyPage() {
           </button>
         )}
       </div>
+      )}
 
       <BodyTrend
         days={days}
@@ -206,9 +189,6 @@ export default function BodyPage() {
             Add a first photo or video to track how you change.
           </div>
         )}
-        <p className="text-[11px] text-base-content/35">
-          Photos & videos stay on this device only — they are not synced or included in backups.
-        </p>
       </div>
       </div>
 
@@ -251,14 +231,26 @@ export default function BodyPage() {
   );
 }
 
-/** Renders a media blob via an object URL that is revoked on unmount. */
-function BlobMedia({ m, className, controls = false }: { m: ProgressMedia; className: string; controls?: boolean }) {
+/** Renders a media blob via an object URL that is revoked on unmount.
+ * `preferThumb` uses the small stored thumbnail (grid); viewers get the original. */
+function BlobMedia({
+  m,
+  className,
+  controls = false,
+  preferThumb = false,
+}: {
+  m: ProgressMedia;
+  className: string;
+  controls?: boolean;
+  preferThumb?: boolean;
+}) {
+  const blob = preferThumb && m.thumb ? m.thumb : m.blob;
   const [url, setUrl] = useState<string | null>(null);
   useEffect(() => {
-    const u = URL.createObjectURL(m.blob);
+    const u = URL.createObjectURL(blob);
     setUrl(u);
     return () => URL.revokeObjectURL(u);
-  }, [m.blob]);
+  }, [blob]);
   if (!url) return null;
   return m.kind === "video" ? (
     <video src={url} className={className} controls={controls} muted={!controls} playsInline preload="metadata" />
@@ -276,7 +268,7 @@ function Thumb({ m, picked, onTap }: { m: ProgressMedia; picked: boolean; onTap:
         picked ? "ring-2 ring-primary" : ""
       }`}
     >
-      <BlobMedia m={m} className="h-full w-full object-cover" />
+      <BlobMedia m={m} className="h-full w-full object-cover" preferThumb />
       {m.kind === "video" && (
         <span className="absolute left-1.5 top-1.5 rounded-full bg-black/60 px-1.5 py-0.5 text-[10px] text-white">▶</span>
       )}

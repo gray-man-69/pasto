@@ -118,7 +118,8 @@ export interface ProgressMedia {
   date: string; // YYYY-MM-DD
   kind: "photo" | "video";
   type: string; // MIME type of the blob
-  blob: Blob;
+  blob: Blob; // the original, untouched — used by the fullscreen viewer
+  thumb?: Blob; // small JPEG generated at save time — used by the grid
 }
 
 // ---- Training --------------------------------------------------------------
