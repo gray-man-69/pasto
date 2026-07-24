@@ -8,6 +8,7 @@ export type Phase = {
   seconds: number;
   kind: "warmup" | "work" | "recover" | "hold" | "rest" | "cooldown" | "prep";
   note?: string; // short cue shown under the label
+  say?: string; // spoken announcement (defaults to a cleaned label)
 };
 
 const KIND_COLOR: Record<Phase["kind"], string> = {
@@ -53,15 +54,55 @@ function beep(freq: number, ms: number, gain = 0.15) {
   g.gain.exponentialRampToValueAtTime(0.0001, now + ms / 1000);
   osc.stop(now + ms / 1000);
 }
-function cue(kind: "tick" | "go" | "done") {
-  if (kind === "tick") beep(660, 120);
-  else if (kind === "go") beep(880, 260, 0.2);
-  else beep(520, 500, 0.2);
+function cueTick() {
+  beep(660, 120);
   try {
-    navigator.vibrate?.(kind === "tick" ? 40 : kind === "go" ? 120 : [80, 60, 80]);
+    navigator.vibrate?.(40);
   } catch {
     /* not supported */
   }
+}
+// A tone chosen by what the phase IS, so you can tell by ear whether a hard
+// effort/hold is starting or you're moving into rest — without looking.
+function cuePhase(kind: Phase["kind"]) {
+  if (kind === "work" || kind === "hold") {
+    beep(880, 180, 0.22); // bright "go"
+    setTimeout(() => beep(1046, 220, 0.22), 150);
+    try { navigator.vibrate?.([120, 40, 120]); } catch { /* */ }
+  } else if (kind === "rest" || kind === "recover") {
+    beep(440, 380, 0.18); // soft "ease off"
+    try { navigator.vibrate?.(80); } catch { /* */ }
+  } else {
+    beep(660, 260, 0.18);
+    try { navigator.vibrate?.(80); } catch { /* */ }
+  }
+}
+function cueDone() {
+  beep(660, 200, 0.2);
+  setTimeout(() => beep(880, 400, 0.2), 180);
+  try { navigator.vibrate?.([80, 60, 80]); } catch { /* */ }
+}
+
+// --- Spoken announcements (eyes-free) --------------------------------------
+let voiceOn = true;
+export function setVoice(on: boolean) {
+  voiceOn = on;
+}
+function speak(text: string) {
+  if (!voiceOn || typeof window === "undefined" || !window.speechSynthesis) return;
+  try {
+    window.speechSynthesis.cancel(); // don't queue up a backlog
+    const u = new SpeechSynthesisUtterance(text);
+    u.rate = 1.05;
+    u.volume = 1;
+    window.speechSynthesis.speak(u);
+  } catch {
+    /* not supported */
+  }
+}
+function announce(p: Phase | undefined) {
+  if (!p) return;
+  speak(p.say ?? p.label.replace(/[·/]/g, " "));
 }
 
 type State = {
@@ -114,18 +155,20 @@ export function useTimer(phases: Phase[]) {
       // 3-2-1 beeps at the tail of each phase.
       if (rem <= 3 && rem >= 1 && rem !== lastBeep.current) {
         lastBeep.current = rem;
-        cue("tick");
+        cueTick();
       }
       if (rem <= 0) {
         const next = idx.current + 1;
         if (next >= phases.length) {
-          cue("done");
+          cueDone();
+          speak("Done");
           endAt.current = null;
           releaseWake();
           setState({ index: phases.length - 1, remaining: 0, running: false, done: true });
           return;
         }
-        cue("go");
+        cuePhase(phases[next].kind);
+        announce(phases[next]);
         lastBeep.current = -1;
         endAt.current = Date.now() + phases[next].seconds * 1000;
         setState((s) => ({ ...s, index: next, remaining: phases[next].seconds }));
@@ -147,6 +190,10 @@ export function useTimer(phases: Phase[]) {
       const from = s.done ? { index: 0, remaining: phases[0]?.seconds ?? 0 } : { index: s.index, remaining: s.remaining };
       endAt.current = Date.now() + from.remaining * 1000;
       lastBeep.current = -1;
+      // Announce the phase we're (re)starting into, from this user gesture so
+      // iOS unlocks audio + speech.
+      cuePhase(phases[from.index]?.kind ?? "prep");
+      announce(phases[from.index]);
       return { ...from, running: true, done: false };
     });
     requestWake();
