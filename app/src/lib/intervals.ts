@@ -49,32 +49,44 @@ export function buildHiit(c: HiitConfig): Phase[] {
 // with short rests. Each "rep" is one hold; side exercises run left then right.
 export type McGillConfig = {
   holdSec: number; // seconds per hold
-  restSec: number; // rest between holds/sides/exercises
+  restSec: number; // short rest between reps within a set
+  setRestSec: number; // longer rest between sets / sides / exercises (reposition)
   pyramid: number[]; // reps per set, e.g. [6, 4, 2]
 };
 
 export const MCGILL_DEFAULT: McGillConfig = {
   holdSec: 10,
-  restSec: 20,
+  restSec: 8,
+  setRestSec: 30,
   pyramid: [6, 4, 2],
 };
 
 const BIG_THREE: { name: string; sides: string[]; cue: string }[] = [
-  { name: "Curl-up", sides: [""], cue: "Hands under low back, one knee bent, lift head/shoulders slightly" },
-  { name: "Side bridge", sides: ["Left", "Right"], cue: "On your side, hips up, straight line — brace" },
-  { name: "Bird dog", sides: ["Left", "Right"], cue: "Opposite arm & leg out, back flat, don't rotate" },
+  {
+    name: "Curl-up",
+    sides: [""],
+    // McGill curl-up: ONE knee bent, the other leg straight; hands under the
+    // lumbar spine to keep its natural arch. Switch the bent leg between sets.
+    cue: "One knee bent, other leg straight — hands under your low back, lift head & shoulders just off the floor",
+  },
+  { name: "Side bridge", sides: ["Left", "Right"], cue: "On your side, hips up in a straight line — brace hard" },
+  { name: "Bird dog", sides: ["Left", "Right"], cue: "Opposite arm & leg out, back flat, don't rotate the hips" },
 ];
 
 export function buildMcGill(c: McGillConfig): Phase[] {
   const phases: Phase[] = [];
-  const push = (p: Phase) => phases.push(p);
-  push({
+  phases.push({
     label: "Get ready",
     seconds: PREP_SEC,
     kind: "prep",
     note: `First up: ${BIG_THREE[0].name} — ${BIG_THREE[0].cue}`,
     say: `Get ready. ${BIG_THREE[0].name}`,
   });
+
+  // Flatten every hold, tagged with its group (exercise + side + set) so we can
+  // choose the rest length between consecutive holds.
+  type Unit = { ex: number; setIdx: number; side: string; who: string; spoken: string; cue: string; rep: number; reps: number };
+  const units: Unit[] = [];
   for (let e = 0; e < BIG_THREE.length; e++) {
     const ex = BIG_THREE[e];
     for (let s = 0; s < c.pyramid.length; s++) {
@@ -82,20 +94,37 @@ export function buildMcGill(c: McGillConfig): Phase[] {
       for (const side of ex.sides) {
         const who = side ? `${ex.name} · ${side}` : ex.name;
         const spoken = side ? `${ex.name}, ${side}` : ex.name;
-        for (let r = 0; r < reps; r++) {
-          // Only name the exercise on the first hold of a run; later holds just
-          // say "Hold" so the voice isn't chatty every 10 seconds.
-          push({
-            label: `${who}`,
-            seconds: c.holdSec,
-            kind: "hold",
-            note: `Set ${s + 1} · hold ${r + 1}/${reps} — ${ex.cue}`,
-            say: r === 0 ? `${spoken}. Hold` : "Hold",
-          });
-          const lastHold = e === BIG_THREE.length - 1 && s === c.pyramid.length - 1 && side === ex.sides[ex.sides.length - 1] && r === reps - 1;
-          if (!lastHold) push({ label: "Rest", seconds: c.restSec, kind: "rest", note: "Breathe, reset your brace", say: "Rest" });
-        }
+        for (let r = 0; r < reps; r++) units.push({ ex: e, setIdx: s, side, who, spoken, cue: ex.cue, rep: r, reps });
       }
+    }
+  }
+
+  for (let i = 0; i < units.length; i++) {
+    const u = units[i];
+    phases.push({
+      label: u.who,
+      seconds: c.holdSec,
+      kind: "hold",
+      note: `Set ${u.setIdx + 1} · hold ${u.rep + 1}/${u.reps} — ${u.cue}`,
+      say: "Go",
+    });
+    const n = units[i + 1];
+    if (!n) break;
+    const sameGroup = n.ex === u.ex && n.side === u.side && n.setIdx === u.setIdx;
+    if (sameGroup) {
+      // Between reps of the same set: short breather.
+      phases.push({ label: "Rest", seconds: c.restSec, kind: "rest", note: "Breathe, reset your brace", say: "Rest" });
+    } else {
+      // New set, side, or exercise: longer rest to reposition. Announce what's
+      // next so you can get set up during the rest.
+      const reposition = n.ex !== u.ex || n.side !== u.side;
+      phases.push({
+        label: reposition ? `Next: ${n.who}` : "Rest · next set",
+        seconds: c.setRestSec,
+        kind: "rest",
+        note: reposition ? `Get into position — ${n.cue}` : "Longer rest before the next set",
+        say: reposition ? `Next, ${n.spoken}` : "Rest, next set",
+      });
     }
   }
   return phases;

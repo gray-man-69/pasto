@@ -85,7 +85,8 @@ export default function CorePage() {
 
       <div className="flex flex-col gap-3 rounded-2xl border border-base-300 bg-base-100 p-4">
         <Stepper label="Hold" value={cfg.holdSec} time onChange={(d) => save({ ...cfg, holdSec: Math.max(3, cfg.holdSec + d * 2) })} />
-        <Stepper label="Rest" value={cfg.restSec} time onChange={(d) => save({ ...cfg, restSec: Math.max(0, cfg.restSec + d * 5) })} />
+        <Stepper label="Rest (between reps)" value={cfg.restSec} time onChange={(d) => save({ ...cfg, restSec: Math.max(0, cfg.restSec + d * 5) })} />
+        <Stepper label="Rest (between sets)" value={cfg.setRestSec} time onChange={(d) => save({ ...cfg, setRestSec: Math.max(5, cfg.setRestSec + d * 5) })} />
         <div className="flex items-center justify-between">
           <span className="text-sm">Reps per set</span>
           <div className="flex gap-1.5">
