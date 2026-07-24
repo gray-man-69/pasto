@@ -20,8 +20,11 @@ export const NORWEGIAN_4x4: HiitConfig = {
   cooldownSec: 300,
 };
 
+const PREP_SEC = 5; // "get ready" countdown before the first phase
+
 export function buildHiit(c: HiitConfig): Phase[] {
   const phases: Phase[] = [];
+  phases.push({ label: "Get ready", seconds: PREP_SEC, kind: "prep", note: "Get set to start", say: "Get ready" });
   if (c.warmupSec > 0)
     phases.push({ label: "Warm-up", seconds: c.warmupSec, kind: "warmup", note: "Easy pace, ~60% effort", say: "Warm up" });
   for (let i = 0; i < c.intervals; i++) {
@@ -65,6 +68,13 @@ const BIG_THREE: { name: string; sides: string[]; cue: string }[] = [
 export function buildMcGill(c: McGillConfig): Phase[] {
   const phases: Phase[] = [];
   const push = (p: Phase) => phases.push(p);
+  push({
+    label: "Get ready",
+    seconds: PREP_SEC,
+    kind: "prep",
+    note: `First up: ${BIG_THREE[0].name} — ${BIG_THREE[0].cue}`,
+    say: `Get ready. ${BIG_THREE[0].name}`,
+  });
   for (let e = 0; e < BIG_THREE.length; e++) {
     const ex = BIG_THREE[e];
     for (let s = 0; s < c.pyramid.length; s++) {
