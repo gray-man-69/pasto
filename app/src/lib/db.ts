@@ -297,6 +297,26 @@ export function allMedia() {
   return db.media.orderBy("date").reverse().toArray();
 }
 
+/** Downscaled JPEG for grid thumbnails; the original stays untouched. */
+async function makeThumb(file: Blob): Promise<Blob | undefined> {
+  try {
+    const bmp = await createImageBitmap(file);
+    const scale = Math.min(1, 640 / Math.max(bmp.width, bmp.height));
+    const w = Math.round(bmp.width * scale);
+    const h = Math.round(bmp.height * scale);
+    const canvas = document.createElement("canvas");
+    canvas.width = w;
+    canvas.height = h;
+    canvas.getContext("2d")!.drawImage(bmp, 0, 0, w, h);
+    bmp.close();
+    return await new Promise<Blob | undefined>((res) =>
+      canvas.toBlob((b) => res(b ?? undefined), "image/jpeg", 0.8),
+    );
+  } catch {
+    return undefined; // e.g. unsupported format — the grid falls back to the original
+  }
+}
+
 export async function addMedia(file: File, date: string) {
   // Best-effort: ask the browser not to evict our storage once media exists.
   try {
@@ -305,7 +325,8 @@ export async function addMedia(file: File, date: string) {
     /* ignore */
   }
   const kind = file.type.startsWith("video/") ? "video" : "photo";
-  return db.media.add({ date, kind, type: file.type, blob: file });
+  const thumb = kind === "photo" ? await makeThumb(file) : undefined;
+  return db.media.add({ date, kind, type: file.type, blob: file, thumb });
 }
 
 export function deleteMedia(id: number) {
