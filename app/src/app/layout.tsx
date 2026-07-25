@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import "./globals.css";
 import BottomNav from "@/components/BottomNav";
+import InstallBanner from "@/components/InstallBanner";
 import SideNav from "@/components/SideNav";
 import ServiceWorkerRegister from "@/components/ServiceWorkerRegister";
 import SyncProvider from "@/components/SyncProvider";
@@ -36,6 +37,7 @@ export default function RootLayout({
             <div className="flex min-w-0 flex-1 flex-col">
               <main className="app-glow flex-1 overflow-y-auto">
                 <div className="mx-auto w-full max-w-6xl px-4 py-6 lg:px-10 lg:py-8">
+                  <InstallBanner />
                   {children}
                 </div>
               </main>
