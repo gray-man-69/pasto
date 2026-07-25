@@ -143,6 +143,22 @@ export default function TrainingPage() {
         </div>
       )}
 
+      <Link
+        href="/generate"
+        className="flex items-center gap-3 rounded-2xl border border-primary/40 bg-primary/10 px-4 py-3.5 transition-colors hover:bg-primary/15"
+      >
+        <span className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-primary/20 text-primary">
+          <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+            <path d="M12 3v4M12 17v4M3 12h4M17 12h4M6 6l2.5 2.5M15.5 15.5 18 18M18 6l-2.5 2.5M8.5 15.5 6 18" />
+          </svg>
+        </span>
+        <span className="min-w-0 flex-1">
+          <span className="block text-sm font-semibold">Generate a plan</span>
+          <span className="block text-xs text-base-content/50">Tailored to your goals & schedule — science-based</span>
+        </span>
+        <span className="shrink-0 text-primary">→</span>
+      </Link>
+
       <div className="flex items-center justify-between px-1">
         <h2 className="text-xs font-semibold uppercase tracking-wide text-base-content/40">
           Your routines
