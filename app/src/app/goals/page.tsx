@@ -204,16 +204,22 @@ function Field({
   return (
     <label className={`flex items-center justify-between gap-3 ${disabled ? "opacity-55" : ""}`}>
       <span className="text-sm text-base-content/70">{label}</span>
-      <span className="flex items-center gap-2">
+      {/* number + unit share one pill; fixed width so every row lines up and any
+          unit ("kcal", "g", "glasses") fits without clipping. */}
+      <span
+        className={`flex w-36 items-center rounded-xl border border-base-300 bg-base-100 pr-3 transition-colors ${
+          disabled ? "" : "focus-within:border-primary"
+        }`}
+      >
         <NumberField
           inputMode="numeric"
           min={0}
           value={value}
           onChange={onChange}
           disabled={disabled}
-          className="input input-bordered input-sm w-24 text-right tabular-nums disabled:bg-base-200/50"
+          className="w-full min-w-0 border-0 bg-transparent px-3 py-1.5 text-right text-sm tabular-nums outline-none"
         />
-        <span className="w-8 text-sm text-base-content/50">{unit}</span>
+        <span className="shrink-0 text-xs text-base-content/40">{unit}</span>
       </span>
     </label>
   );
