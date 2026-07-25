@@ -160,11 +160,25 @@ export default function GoalsPage() {
             </select>
           </label>
 
-          <div className="flex items-center justify-between rounded-xl bg-base-200/50 px-3 py-2 text-sm">
-            <span className="text-base-content/50">Maintenance</span>
-            <span className="tabular-nums">
-              {maint} kcal → <span className="font-semibold text-primary">{Math.round((maint * (1 + meta.kcalAdj)) / 10) * 10} kcal</span> for {meta.label.toLowerCase()}
-            </span>
+          <div className="flex items-center gap-3 rounded-xl bg-base-200/50 p-3">
+            <div className="flex-1">
+              <div className="text-[10px] font-semibold uppercase tracking-wide text-base-content/40">
+                Maintenance
+              </div>
+              <div className="text-lg font-semibold tabular-nums">
+                {maint} <span className="text-xs font-normal text-base-content/50">kcal</span>
+              </div>
+            </div>
+            <span className="text-base-content/30">→</span>
+            <div className="flex-1 text-right">
+              <div className="text-[10px] font-semibold uppercase tracking-wide text-base-content/40">
+                {meta.label} target
+              </div>
+              <div className="text-lg font-semibold tabular-nums text-primary">
+                {Math.round((maint * (1 + meta.kcalAdj)) / 10) * 10}{" "}
+                <span className="text-xs font-normal text-primary/60">kcal</span>
+              </div>
+            </div>
           </div>
 
           <button
