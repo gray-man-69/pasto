@@ -1,7 +1,7 @@
 {
   "source": "curated (Pasto)",
   "license": "n/a",
-  "count": 84,
+  "count": 90,
   "exercises": [
     {
       "id": "barbell-bench-press",
@@ -790,6 +790,20 @@
       ],
       "secondaryMuscles": [
         "glutes"
+      ]
+    },
+    {
+      "id": "belt-squat",
+      "name": "Belt Squat",
+      "category": "strength",
+      "equipment": "machine",
+      "mechanic": "compound",
+      "primaryMuscles": [
+        "quadriceps"
+      ],
+      "secondaryMuscles": [
+        "glutes",
+        "hamstrings"
       ]
     },
     {
