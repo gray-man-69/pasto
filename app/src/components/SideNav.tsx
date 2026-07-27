@@ -2,12 +2,14 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useT } from "./LanguageProvider";
 import { NAV_ITEMS, isActive } from "./navItems";
 
 // Desktop-only left sidebar. Replaces the bottom tab bar at lg+ so the app reads
 // as a desktop dashboard, not a phone column.
 export default function SideNav() {
   const pathname = usePathname();
+  const t = useT();
   return (
     <aside className="hidden w-60 shrink-0 flex-col border-r border-base-300 bg-base-100 lg:flex">
       <Link href="/" className="flex items-center gap-2.5 px-6 py-6">
@@ -38,15 +40,15 @@ export default function SideNav() {
               }`}
             >
               <span className="grid h-6 w-6 place-items-center">{tab.icon}</span>
-              {tab.label}
+              {t(tab.label)}
             </Link>
           );
         })}
       </nav>
       <div className="mt-auto px-6 py-5 text-xs leading-relaxed text-base-content/30">
-        Local-first · offline
+        {t("Local-first · offline")}
         <br />
-        CREA nutrition data
+        {t("CREA nutrition data")}
       </div>
     </aside>
   );

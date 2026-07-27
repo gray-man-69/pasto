@@ -3,6 +3,8 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useLiveQuery } from "dexie-react-hooks";
+import { useLang, useT } from "@/components/LanguageProvider";
+import type { Lang } from "@/lib/i18n";
 import MesocycleForm from "@/components/MesocycleForm";
 import {
   activeMesocycle,
@@ -25,8 +27,8 @@ import { isBlockActive, mesoWeek } from "@/lib/mesocycle";
 import { sessionVolume, workingSets } from "@/lib/progression";
 import type { ConditioningSession, Mesocycle, Routine, WorkoutSession } from "@/lib/types";
 
-function dayLabel(date: string): string {
-  return new Date(date + "T00:00:00").toLocaleDateString("en-GB", {
+function dayLabel(date: string, lang: Lang = "en"): string {
+  return new Date(date + "T00:00:00").toLocaleDateString(lang === "it" ? "it-IT" : "en-GB", {
     weekday: "short",
     day: "numeric",
     month: "short",
@@ -34,6 +36,7 @@ function dayLabel(date: string): string {
 }
 
 export default function TrainingPage() {
+  const { lang, t } = useLang();
   const routines = useLiveQuery(() => allRoutines(), []);
   const active = useLiveQuery(() => activeSession(), []);
   const recent = useLiveQuery(() => completedSessions(), []);
@@ -49,13 +52,13 @@ export default function TrainingPage() {
   return (
     <div className="mx-auto flex w-full max-w-xl flex-col gap-4">
       <div className="flex items-center justify-between">
-        <h1 className="text-xl font-bold">Training</h1>
+        <h1 className="text-xl font-bold">{t("Training")}</h1>
         <div className="flex items-center gap-1">
           <Link href="/progress" className="btn btn-ghost btn-sm">
-            Progress
+            {t("Progress")}
           </Link>
           <Link href="/exercises" className="btn btn-ghost btn-sm">
-            Exercises
+            {t("Exercises")}
           </Link>
         </div>
       </div>
@@ -66,8 +69,8 @@ export default function TrainingPage() {
           className="flex items-center justify-between gap-3 rounded-2xl border border-primary/40 bg-primary/10 px-4 py-3"
         >
           <span>
-            <span className="block text-sm font-semibold text-primary">Workout in progress</span>
-            <span className="block text-xs text-base-content/60">{active.routineName} — tap to resume</span>
+            <span className="block text-sm font-semibold text-primary">{t("Workout in progress")}</span>
+            <span className="block text-xs text-base-content/60">{t("{name} — tap to resume", { name: active.routineName ?? "" })}</span>
           </span>
           <span className="text-primary">▶</span>
         </Link>
@@ -82,7 +85,7 @@ export default function TrainingPage() {
       {pastBlocks.length > 0 && (
         <details className="rounded-2xl border border-base-300/60 bg-base-100/50">
           <summary className="cursor-pointer list-none px-4 py-2.5 text-xs font-semibold uppercase tracking-wide text-base-content/40">
-            Past blocks · {pastBlocks.length}
+            {t("Past blocks")} · {pastBlocks.length}
           </summary>
           <ul className="flex flex-col gap-1.5 px-2 pb-2">
             {pastBlocks.map((b) => (
@@ -94,7 +97,7 @@ export default function TrainingPage() {
 
       <div className="px-1">
         <h2 className="text-xs font-semibold uppercase tracking-wide text-base-content/40">
-          Conditioning &amp; core
+          {t("Conditioning & core")}
         </h2>
       </div>
       <div className="grid grid-cols-2 gap-2">
@@ -125,7 +128,7 @@ export default function TrainingPage() {
       {conditioning && conditioning.length > 0 && (
         <div className="flex flex-col gap-1.5">
           <h2 className="px-1 text-xs font-semibold uppercase tracking-wide text-base-content/40">
-            Recent conditioning
+            {t("Recent conditioning")}
           </h2>
           <ul className="flex flex-col gap-1.5">
             {(showAllCond ? conditioning : conditioning.slice(0, 4)).map((c) => (
@@ -137,7 +140,7 @@ export default function TrainingPage() {
               onClick={() => setShowAllCond((v) => !v)}
               className="self-center py-1 text-xs font-medium text-primary hover:underline"
             >
-              {showAllCond ? "Show less" : `Show all ${conditioning.length}`}
+              {showAllCond ? t("Show less") : t("Show all {n}", { n: conditioning.length })}
             </button>
           )}
         </div>
@@ -153,28 +156,28 @@ export default function TrainingPage() {
           </svg>
         </span>
         <span className="min-w-0 flex-1">
-          <span className="block text-sm font-semibold">Generate a plan</span>
-          <span className="block text-xs text-base-content/50">Tailored to your goals & schedule — science-based</span>
+          <span className="block text-sm font-semibold">{t("Generate a plan")}</span>
+          <span className="block text-xs text-base-content/50">{t("Tailored to your goals & schedule — science-based")}</span>
         </span>
         <span className="shrink-0 text-primary">→</span>
       </Link>
 
       <div className="flex items-center justify-between px-1">
         <h2 className="text-xs font-semibold uppercase tracking-wide text-base-content/40">
-          Your routines
+          {t("Your routines")}
         </h2>
         <Link href="/routine" className="btn btn-primary btn-sm rounded-full px-4 shadow-lg shadow-primary/20">
-          ＋ New
+          {t("＋ New")}
         </Link>
       </div>
 
       {routines === undefined ? (
-        <div className="py-10 text-center text-base-content/30">Loading…</div>
+        <div className="py-10 text-center text-base-content/30">{t("Loading…")}</div>
       ) : routines.length === 0 ? (
         <div className="flex flex-col items-center gap-2 rounded-2xl border border-dashed border-base-300 py-12 text-center">
-          <div className="text-sm text-base-content/50">No routines yet.</div>
+          <div className="text-sm text-base-content/50">{t("No routines yet.")}</div>
           <Link href="/routine" className="text-sm font-medium text-primary hover:underline">
-            Create your first split day →
+            {t("Create your first split day →")}
           </Link>
         </div>
       ) : (
@@ -188,7 +191,7 @@ export default function TrainingPage() {
       {recent && recent.length > 0 && (
         <div className="mt-2 flex flex-col gap-2">
           <h2 className="px-1 text-xs font-semibold uppercase tracking-wide text-base-content/40">
-            Past workouts · tap to edit
+            {t("Past workouts · tap to edit")}
           </h2>
           <ul className="flex flex-col gap-1.5">
             {(showAllRecent ? recent : recent.slice(0, 5)).map((s) => (
@@ -200,7 +203,7 @@ export default function TrainingPage() {
               onClick={() => setShowAllRecent((v) => !v)}
               className="self-center py-1 text-xs font-medium text-primary hover:underline"
             >
-              {showAllRecent ? "Show less" : `Show all ${recent.length}`}
+              {showAllRecent ? t("Show less") : t("Show all {n}", { n: recent.length })}
             </button>
           )}
         </div>
@@ -209,7 +212,7 @@ export default function TrainingPage() {
       {trashed && trashed.length > 0 && (
         <details className="mt-2 rounded-2xl border border-base-300/60 bg-base-100/50">
           <summary className="cursor-pointer list-none px-4 py-2.5 text-xs font-semibold uppercase tracking-wide text-base-content/40">
-            🗑 Recently deleted · {trashed.length}
+            {t("🗑 Recently deleted")} · {trashed.length}
           </summary>
           <ul className="flex flex-col gap-1.5 px-2 pb-2">
             {trashed.map((s) => (
@@ -225,6 +228,7 @@ export default function TrainingPage() {
 }
 
 function ConditioningRow({ c }: { c: ConditioningSession }) {
+  const { lang, t } = useLang();
   const mins = Math.round(c.durationSec / 60);
   const accent = c.kind === "hiit" ? "text-primary" : "text-sky-400";
   return (
@@ -243,19 +247,19 @@ function ConditioningRow({ c }: { c: ConditioningSession }) {
       <span className="min-w-0 flex-1">
         <span className="block truncate text-sm font-medium">
           {c.name}
-          {c.partial && <span className="ml-1.5 text-[10px] font-normal text-amber-500">partial</span>}
+          {c.partial && <span className="ml-1.5 text-[10px] font-normal text-amber-500">{t("partial")}</span>}
         </span>
         <span className="block truncate text-xs text-base-content/50">
-          {dayLabel(c.date)} · {c.summary}
+          {dayLabel(c.date, lang)} · {c.summary}
         </span>
       </span>
-      <span className="shrink-0 text-xs tabular-nums text-base-content/40">{mins} min</span>
+      <span className="shrink-0 text-xs tabular-nums text-base-content/40">{t("{n} min", { n: mins })}</span>
       <button
         onClick={() => {
-          if (c.id != null && confirm("Delete this session?")) deleteConditioning(c.id);
+          if (c.id != null && confirm(t("Delete this session?"))) deleteConditioning(c.id);
         }}
         className="grid h-7 w-7 shrink-0 place-items-center rounded-full text-base-content/30 hover:bg-base-300/60 hover:text-error"
-        aria-label={`Delete ${c.name}`}
+        aria-label={t("Delete {name}", { name: c.name })}
       >
         ✕
       </button>
@@ -276,6 +280,7 @@ function ConditioningCard({
   icon: React.ReactNode;
   accent: string;
 }) {
+  const t = useT();
   return (
     <Link
       href={href}
@@ -283,8 +288,8 @@ function ConditioningCard({
     >
       <span className={`grid h-9 w-9 place-items-center rounded-full bg-base-200 ${accent}`}>{icon}</span>
       <span>
-        <span className="block text-sm font-semibold leading-tight">{title}</span>
-        <span className="block text-xs text-base-content/50">{desc}</span>
+        <span className="block text-sm font-semibold leading-tight">{t(title)}</span>
+        <span className="block text-xs text-base-content/50">{t(desc)}</span>
       </span>
     </Link>
   );
@@ -299,6 +304,7 @@ function MesoCard({
   onStart: () => void;
   onEnd: () => void;
 }) {
+  const t = useT();
   const today = localDate();
   const active = meso ? isBlockActive(meso, today) : false;
   if (meso && active) {
@@ -313,17 +319,17 @@ function MesoCard({
         <div className="flex items-start justify-between gap-2">
           <div className="min-w-0">
             <div className="text-[10px] font-semibold uppercase tracking-wide text-base-content/40">
-              Training block
+              {t("Training block")}
             </div>
             <div className="truncate font-semibold">{meso.name}</div>
           </div>
           <button
             onClick={() => {
-              if (confirm("End this training block?")) onEnd();
+              if (confirm(t("End this training block?"))) onEnd();
             }}
             className="shrink-0 text-xs text-base-content/40 hover:text-error"
           >
-            End
+            {t("End")}
           </button>
         </div>
         <div className="mt-2.5 flex gap-1">
@@ -349,9 +355,11 @@ function MesoCard({
         </div>
         <div className="mt-1.5 text-xs text-base-content/60">
           <span className={`font-semibold ${deloading ? "text-amber-500" : "text-secondary"}`}>
-            {w.label}
+            {deloading
+              ? t("Deload · week {n} of {total}", { n: w.index + 1, total: w.total })
+              : t("Week {n} of {total}", { n: w.index + 1, total: w.total })}
           </span>{" "}
-          · {deloading ? "recover — volume halved, load eased" : "volume ramping toward your peak week"}
+          · {deloading ? t("recover — volume halved, load eased") : t("volume ramping toward your peak week")}
         </div>
       </div>
     );
@@ -367,9 +375,9 @@ function MesoCard({
         </svg>
       </span>
       <span className="min-w-0">
-        <span className="block text-sm font-semibold">Start a training block</span>
+        <span className="block text-sm font-semibold">{t("Start a training block")}</span>
         <span className="block text-xs text-base-content/50">
-          Auto-ramp weekly volume, then deload — RP-style
+          {t("Auto-ramp weekly volume, then deload — RP-style")}
         </span>
       </span>
     </button>
@@ -377,27 +385,28 @@ function MesoCard({
 }
 
 function PastBlockRow({ b }: { b: Mesocycle }) {
+  const { lang, t } = useLang();
   const end = new Date(b.startDate + "T00:00:00");
   end.setDate(end.getDate() + b.weeks * 7 - 1);
-  const range = `${dayLabel(b.startDate)} – ${end.toLocaleDateString("en-GB", { day: "numeric", month: "short" })}`;
+  const range = `${dayLabel(b.startDate, lang)} – ${end.toLocaleDateString(lang === "it" ? "it-IT" : "en-GB", { day: "numeric", month: "short" })}`;
   return (
     <li className="flex items-center gap-2 rounded-xl bg-base-200/40 px-3 py-2">
       <Link href="/progress" className="min-w-0 flex-1">
-        <span className="block truncate text-sm">{b.name ?? "Block"}</span>
+        <span className="block truncate text-sm">{b.name ?? t("Block")}</span>
         <span className="block text-xs text-base-content/40">
-          {range} · {b.weeks} weeks{b.endedAt ? " · ended early" : ""}
+          {range} · {t("{n} weeks", { n: b.weeks })}{b.endedAt ? ` · ${t("ended early")}` : ""}
         </span>
       </Link>
       <Link href="/progress" className="shrink-0 rounded-full bg-primary/15 px-3 py-1 text-xs font-semibold text-primary hover:bg-primary/25">
-        View
+        {t("View")}
       </Link>
       <button
         onClick={() => {
-          if (b.id != null && confirm("Delete this block? Your logged workouts are kept — only the plan is removed."))
+          if (b.id != null && confirm(t("Delete this block? Your logged workouts are kept — only the plan is removed.")))
             deleteMesocycle(b.id);
         }}
         className="grid h-7 w-7 shrink-0 place-items-center rounded-full text-base-content/30 hover:bg-base-300/60 hover:text-error"
-        aria-label="Delete block"
+        aria-label={t("Delete block")}
       >
         ✕
       </button>
@@ -406,27 +415,28 @@ function PastBlockRow({ b }: { b: Mesocycle }) {
 }
 
 function TrashRow({ s }: { s: WorkoutSession }) {
+  const { lang, t } = useLang();
   const sets = s.exercises.reduce((n, e) => n + workingSets(e.sets).length, 0);
   return (
     <li className="flex items-center gap-2 rounded-xl bg-base-200/40 px-3 py-2">
       <span className="min-w-0 flex-1">
-        <span className="block truncate text-sm">{s.routineName ?? "Workout"}</span>
+        <span className="block truncate text-sm">{s.routineName ?? t("Workout")}</span>
         <span className="block text-xs text-base-content/40">
-          {dayLabel(s.date)} · {sets} sets
+          {dayLabel(s.date, lang)} · {t("{n} sets", { n: sets })}
         </span>
       </span>
       <button
         onClick={() => s.id != null && restoreSession(s.id)}
         className="shrink-0 rounded-full bg-primary/15 px-3 py-1 text-xs font-semibold text-primary hover:bg-primary/25"
       >
-        Restore
+        {t("Restore")}
       </button>
       <button
         onClick={() => {
-          if (s.id != null && confirm("Permanently delete this workout? This cannot be undone.")) purgeSession(s.id);
+          if (s.id != null && confirm(t("Permanently delete this workout? This cannot be undone."))) purgeSession(s.id);
         }}
         className="grid h-7 w-7 shrink-0 place-items-center rounded-full text-base-content/30 hover:bg-base-300/60 hover:text-error"
-        aria-label="Delete permanently"
+        aria-label={t("Delete permanently")}
       >
         ✕
       </button>
@@ -435,6 +445,7 @@ function TrashRow({ s }: { s: WorkoutSession }) {
 }
 
 function RoutineCard({ r }: { r: Routine }) {
+  const t = useT();
   const groups = [...new Set(r.exercises.map((e) => groupOfMuscle(e.primaryMuscles[0])))];
   return (
     <li className="flex items-center gap-1 rounded-2xl border border-base-300/60 bg-base-100 pr-2 transition-colors hover:border-primary/40">
@@ -442,18 +453,18 @@ function RoutineCard({ r }: { r: Routine }) {
         <span className="min-w-0">
           <span className="block truncate font-medium">{r.name}</span>
           <span className="mt-0.5 block truncate text-xs text-base-content/50">
-            {r.exercises.length} exercise{r.exercises.length === 1 ? "" : "s"}
+            {t(r.exercises.length === 1 ? "{n} exercise" : "{n} exercises", { n: r.exercises.length })}
             {groups.length ? ` · ${groups.join(", ")}` : ""}
           </span>
         </span>
         <span className="shrink-0 rounded-full bg-primary/15 px-3 py-1 text-xs font-semibold text-primary">
-          Start
+          {t("Start")}
         </span>
       </Link>
       <Link
         href={`/routine?id=${r.id}`}
         className="grid h-8 w-8 shrink-0 place-items-center rounded-full text-base-content/40 hover:bg-base-300/60 hover:text-base-content"
-        aria-label={`Edit ${r.name}`}
+        aria-label={t("Edit {name}", { name: r.name })}
       >
         <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth={2}>
           <path d="M12 20h9" strokeLinecap="round" />
@@ -465,6 +476,7 @@ function RoutineCard({ r }: { r: Routine }) {
 }
 
 function RecentRow({ s }: { s: WorkoutSession }) {
+  const { lang, t } = useLang();
   const sets = s.exercises.reduce((n, e) => n + workingSets(e.sets).length, 0);
   const vol = Math.round(sessionVolume(s));
   return (
@@ -474,12 +486,12 @@ function RecentRow({ s }: { s: WorkoutSession }) {
         className="flex min-w-0 flex-1 items-center gap-2 py-2.5 pl-4"
       >
         <span className="min-w-0 flex-1">
-          <span className="block truncate text-sm font-medium">{s.routineName ?? "Workout"}</span>
-          <span className="block text-xs text-base-content/50">{dayLabel(s.date)}</span>
+          <span className="block truncate text-sm font-medium">{s.routineName ?? t("Workout")}</span>
+          <span className="block text-xs text-base-content/50">{dayLabel(s.date, lang)}</span>
         </span>
         <span className="shrink-0 text-right text-xs tabular-nums text-base-content/50">
-          {sets} sets
-          <span className="block text-base-content/35">{vol.toLocaleString()} kg vol</span>
+          {t("{n} sets", { n: sets })}
+          <span className="block text-base-content/35">{t("{n} kg vol", { n: vol.toLocaleString() })}</span>
         </span>
         <svg viewBox="0 0 24 24" className="h-4 w-4 shrink-0 text-base-content/25" fill="none" stroke="currentColor" strokeWidth={2}>
           <path d="M9 6l6 6-6 6" strokeLinecap="round" strokeLinejoin="round" />
@@ -488,7 +500,7 @@ function RecentRow({ s }: { s: WorkoutSession }) {
       <button
         onClick={() => s.id != null && deleteSession(s.id)}
         className="grid h-8 w-8 shrink-0 place-items-center rounded-full text-base-content/30 hover:bg-base-300/60 hover:text-error"
-        aria-label={`Delete ${s.routineName ?? "workout"} from ${dayLabel(s.date)}`}
+        aria-label={t("Delete {name} from {date}", { name: s.routineName ?? t("workout"), date: dayLabel(s.date, lang) })}
       >
         ✕
       </button>

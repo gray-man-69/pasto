@@ -1,16 +1,20 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { useLang, useT } from "@/components/LanguageProvider";
 import { useAuth } from "@/components/SyncProvider";
+import { LANGS, LANG_LABEL } from "@/lib/i18n";
 import { exportData, importData, localDate } from "@/lib/db";
 import { disableReminders, enableReminders, pushSupported, remindersEnabled } from "@/lib/push";
 
 // App & account settings: cross-device sync, water reminders, and local backup.
 // These used to live at the bottom of Goals — they aren't goals, they're config.
 export default function SettingsPage() {
+  const t = useT();
   return (
     <div className="mx-auto flex w-full max-w-xl flex-col gap-4">
-      <h1 className="text-xl font-bold">Settings</h1>
+      <h1 className="text-xl font-bold">{t("Settings")}</h1>
+      <LanguageCard />
       <SyncCard />
       <RemindersCard />
       <BackupCard />
@@ -18,7 +22,38 @@ export default function SettingsPage() {
   );
 }
 
+function LanguageCard() {
+  const { lang, setLang, t } = useLang();
+  return (
+    <div className="card bg-base-100 shadow-sm">
+      <div className="card-body gap-3 py-5">
+        <span className="font-medium">{t("Language")}</span>
+        <div className="flex overflow-hidden rounded-xl border border-base-300 text-sm">
+          {LANGS.map((l) => (
+            <button
+              key={l}
+              type="button"
+              onClick={() => setLang(l)}
+              className={`flex-1 px-3 py-2 font-medium transition-colors ${
+                lang === l
+                  ? "bg-primary text-primary-content"
+                  : "text-base-content/60 hover:bg-base-200"
+              }`}
+            >
+              {LANG_LABEL[l]}
+            </button>
+          ))}
+        </div>
+        <p className="text-xs text-base-content/50">
+          {t("Changes the app's language. Your food names and notes stay as you wrote them.")}
+        </p>
+      </div>
+    </div>
+  );
+}
+
 function RemindersCard() {
+  const t = useT();
   const { user } = useAuth();
   const [on, setOn] = useState(false);
   const [busy, setBusy] = useState(false);
@@ -43,7 +78,7 @@ function RemindersCard() {
         setOn(true);
       }
     } catch (e) {
-      setErr(e instanceof Error ? e.message : "Couldn't change reminders.");
+      setErr(e instanceof Error ? e.message : t("Couldn't change reminders."));
     } finally {
       setBusy(false);
     }
@@ -53,23 +88,21 @@ function RemindersCard() {
     <div className="card bg-base-100 shadow-sm">
       <div className="card-body gap-3 py-5">
         <div className="flex items-center justify-between">
-          <span className="font-medium">💧 Water reminders</span>
-          {on && <span className="text-xs text-success">on ✓</span>}
+          <span className="font-medium">{t("💧 Water reminders")}</span>
+          {on && <span className="text-xs text-success">{t("on ✓")}</span>}
         </div>
         {!supported ? (
           <p className="text-xs text-base-content/50">
-            This device doesn&apos;t support notifications. On iPhone, add Pasto to your Home Screen
-            (Share → Add to Home Screen) and open it from there.
+            {t("This device doesn't support notifications. On iPhone, add Pasto to your Home Screen (Share → Add to Home Screen) and open it from there.")}
           </p>
         ) : !user ? (
           <p className="text-xs text-base-content/50">
-            Sign in above first — reminders need an account so they can be sent across the day.
+            {t("Sign in above first — reminders need an account so they can be sent across the day.")}
           </p>
         ) : (
           <>
             <p className="text-xs text-base-content/50">
-              Get a gentle nudge a few times a day when you&apos;re behind on water. Tap the
-              notification to open the app and log a glass.
+              {t("Get a gentle nudge a few times a day when you're behind on water. Tap the notification to open the app and log a glass.")}
             </p>
             {err && <div className="text-xs text-error">{err}</div>}
             <button
@@ -77,7 +110,7 @@ function RemindersCard() {
               onClick={toggle}
               disabled={busy}
             >
-              {busy ? "…" : on ? "Turn off reminders" : "Turn on reminders"}
+              {busy ? "…" : on ? t("Turn off reminders") : t("Turn on reminders")}
             </button>
           </>
         )}
@@ -87,6 +120,7 @@ function RemindersCard() {
 }
 
 function SyncCard() {
+  const t = useT();
   const { user, ready, signIn, signUp, resetPassword, signOut } = useAuth();
   const [email, setEmail] = useState("");
   const [pw, setPw] = useState("");
@@ -101,7 +135,7 @@ function SyncCard() {
     try {
       await fn();
     } catch (e) {
-      setErr(prettyAuthError(e));
+      setErr(prettyAuthError(e, t));
     } finally {
       setBusy(false);
     }
@@ -109,12 +143,12 @@ function SyncCard() {
 
   async function forgotPassword() {
     if (!email) {
-      setErr("Enter your email above first, then tap “Forgot password”.");
+      setErr(t("Enter your email above first, then tap “Forgot password”."));
       return;
     }
     await run(async () => {
       await resetPassword(email);
-      setMsg(`Password-reset link sent to ${email.trim()}. Check your inbox (and spam).`);
+      setMsg(t("Password-reset link sent to {email}. Check your inbox (and spam).", { email: email.trim() }));
     });
   }
 
@@ -122,8 +156,8 @@ function SyncCard() {
     <div className="card bg-base-100 shadow-sm">
       <div className="card-body gap-3 py-5">
         <div className="flex items-center justify-between">
-          <span className="font-medium">Sync across devices</span>
-          {user && <span className="text-xs text-success">on ✓</span>}
+          <span className="font-medium">{t("Sync across devices")}</span>
+          {user && <span className="text-xs text-success">{t("on ✓")}</span>}
         </div>
 
         {!ready ? (
@@ -131,27 +165,26 @@ function SyncCard() {
         ) : user ? (
           <>
             <p className="text-xs text-base-content/50">
-              Signed in as <span className="text-base-content/80">{user.email}</span>. Your log,
-              meals, custom foods and goals sync automatically to every device where you sign in.
+              {t("Signed in as")} <span className="text-base-content/80">{user.email}</span>.{" "}
+              {t("Your log, meals, custom foods and goals sync automatically to every device where you sign in.")}
             </p>
             <button
               className="btn btn-outline btn-sm self-start"
               onClick={() => run(signOut)}
               disabled={busy}
             >
-              Sign out
+              {t("Sign out")}
             </button>
           </>
         ) : (
           <>
             <p className="text-xs text-base-content/50">
-              Sign in on your Mac and your phone with the same account to keep everything in sync.
-              Your current data uploads on first sign-in — nothing is lost.
+              {t("Sign in on your Mac and your phone with the same account to keep everything in sync. Your current data uploads on first sign-in — nothing is lost.")}
             </p>
             <input
               type="email"
               autoComplete="email"
-              placeholder="Email"
+              placeholder={t("Email")}
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               className="input input-bordered input-sm w-full"
@@ -159,7 +192,7 @@ function SyncCard() {
             <input
               type="password"
               autoComplete="current-password"
-              placeholder="Password (min 6 characters)"
+              placeholder={t("Password (min 6 characters)")}
               value={pw}
               onChange={(e) => setPw(e.target.value)}
               className="input input-bordered input-sm w-full"
@@ -172,14 +205,14 @@ function SyncCard() {
                 disabled={busy || !email || pw.length < 6}
                 onClick={() => run(() => signIn(email, pw))}
               >
-                Sign in
+                {t("Sign in")}
               </button>
               <button
                 className="btn btn-outline btn-sm flex-1"
                 disabled={busy || !email || pw.length < 6}
                 onClick={() => run(() => signUp(email, pw))}
               >
-                Create account
+                {t("Create account")}
               </button>
             </div>
             <button
@@ -187,7 +220,7 @@ function SyncCard() {
               disabled={busy}
               onClick={forgotPassword}
             >
-              Forgot password?
+              {t("Forgot password?")}
             </button>
           </>
         )}
@@ -196,21 +229,22 @@ function SyncCard() {
   );
 }
 
-function prettyAuthError(e: unknown): string {
+function prettyAuthError(e: unknown, t: (k: string) => string): string {
   const code = (e as { code?: string })?.code ?? "";
   if (code.includes("invalid-credential") || code.includes("wrong-password"))
-    return "Wrong email or password.";
+    return t("Wrong email or password.");
   if (code.includes("email-already-in-use"))
-    return "That email already has an account — use Sign in.";
-  if (code.includes("weak-password")) return "Password must be at least 6 characters.";
-  if (code.includes("invalid-email")) return "That doesn't look like a valid email.";
-  if (code.includes("user-not-found")) return "No account found for that email.";
-  if (code.includes("too-many-requests")) return "Too many attempts — wait a bit and try again.";
-  if (code.includes("network")) return "Network error — check your connection.";
-  return "Couldn't complete that. Please try again.";
+    return t("That email already has an account — use Sign in.");
+  if (code.includes("weak-password")) return t("Password must be at least 6 characters.");
+  if (code.includes("invalid-email")) return t("That doesn't look like a valid email.");
+  if (code.includes("user-not-found")) return t("No account found for that email.");
+  if (code.includes("too-many-requests")) return t("Too many attempts — wait a bit and try again.");
+  if (code.includes("network")) return t("Network error — check your connection.");
+  return t("Couldn't complete that. Please try again.");
 }
 
 function BackupCard() {
+  const t = useT();
   const fileRef = useRef<HTMLInputElement>(null);
   const [msg, setMsg] = useState<string | null>(null);
   const [persistent, setPersistent] = useState<boolean | null>(null);
@@ -229,7 +263,11 @@ function BackupCard() {
     a.click();
     URL.revokeObjectURL(url);
     setMsg(
-      `Backed up ${data.entries.length} log entries, ${data.meals.length} meals, ${data.customFoods.length} custom foods.`,
+      t("Backed up {entries} log entries, {meals} meals, {foods} custom foods.", {
+        entries: data.entries.length,
+        meals: data.meals.length,
+        foods: data.customFoods.length,
+      }),
     );
   }
 
@@ -243,7 +281,7 @@ function BackupCard() {
       // Reload so every page reflects the restored data.
       window.location.reload();
     } catch {
-      setMsg("Couldn't read that file — is it a Pasto backup?");
+      setMsg(t("Couldn't read that file — is it a Pasto backup?"));
     }
   }
 
@@ -251,23 +289,22 @@ function BackupCard() {
     <div className="card bg-base-100 shadow-sm">
       <div className="card-body gap-3 py-5">
         <div className="flex items-center justify-between">
-          <span className="font-medium">Backup &amp; restore</span>
+          <span className="font-medium">{t("Backup & restore")}</span>
           {persistent !== null && (
             <span className={`text-xs ${persistent ? "text-success" : "text-warning"}`}>
-              storage: {persistent ? "persistent ✓" : "best-effort"}
+              {t("storage:")} {persistent ? t("persistent ✓") : t("best-effort")}
             </span>
           )}
         </div>
         <p className="text-xs text-base-content/50">
-          Your data lives only in this browser. Export a backup file to keep it safe or move it to
-          another browser or device.
+          {t("Your data lives only in this browser. Export a backup file to keep it safe or move it to another browser or device.")}
         </p>
         <div className="flex gap-2">
           <button className="btn btn-primary btn-sm flex-1" onClick={doExport}>
-            Export backup
+            {t("Export backup")}
           </button>
           <button className="btn btn-outline btn-sm flex-1" onClick={() => fileRef.current?.click()}>
-            Restore…
+            {t("Restore…")}
           </button>
           <input
             ref={fileRef}

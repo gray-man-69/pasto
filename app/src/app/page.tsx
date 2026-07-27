@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useLiveQuery } from "dexie-react-hooks";
+import { useLang, useT } from "@/components/LanguageProvider";
 import Ring from "@/components/Ring";
 import WeekStrip from "@/components/WeekStrip";
 import EntryEditor from "@/components/EntryEditor";
@@ -34,6 +35,7 @@ const MACROS = [
 ] as const;
 
 export default function TodayPage() {
+  const { lang, t } = useLang();
   const [selected, setSelected] = useState(() => localDate());
   const [editing, setEditing] = useState<LogEntry | null>(null);
   const [today, setToday] = useState(() => localDate());
@@ -97,8 +99,8 @@ export default function TodayPage() {
 
   const dateLabel =
     selected === today
-      ? "Today"
-      : new Date(selected + "T00:00:00").toLocaleDateString("en-GB", {
+      ? t("Today")
+      : new Date(selected + "T00:00:00").toLocaleDateString(lang === "it" ? "it-IT" : "en-GB", {
           weekday: "long",
           day: "numeric",
           month: "long",
@@ -137,7 +139,7 @@ export default function TodayPage() {
                 {consumed}
               </span>
               <span className="mt-1.5 text-xs text-base-content/40">
-                of {goalKcal || 2000} kcal
+                {t("of {n} kcal", { n: goalKcal || 2000 })}
               </span>
             </span>
           </Ring>
@@ -147,7 +149,7 @@ export default function TodayPage() {
               over ? "bg-red-500/15 text-red-500" : "bg-primary/10 text-primary"
             }`}
           >
-            {over ? `${consumed - goalKcal} over` : `${remaining} left`}
+            {over ? t("{n} over", { n: consumed - goalKcal }) : t("{n} left", { n: remaining })}
           </span>
 
           {goals && (
@@ -161,7 +163,7 @@ export default function TodayPage() {
                       <span className="text-base font-semibold tabular-nums">{fmtNum(value)}</span>
                     </Ring>
                     <span className="text-center text-[11px] leading-tight text-base-content/50">
-                      <span className="block font-medium text-base-content/70">{m.label}</span>
+                      <span className="block font-medium text-base-content/70">{t(m.label)}</span>
                       <span className="text-base-content/35">/ {goal} g</span>
                     </span>
                   </div>
@@ -173,16 +175,16 @@ export default function TodayPage() {
           {/* Water — one-tap logging */}
           <div className="mt-1 flex w-full max-w-sm flex-col gap-2.5 rounded-2xl border border-base-300/70 bg-base-200/40 p-3">
             <div className="flex items-center justify-between">
-              <span className="text-sm font-semibold">💧 Water</span>
+              <span className="text-sm font-semibold">{t("💧 Water")}</span>
               <span className="text-sm tabular-nums text-base-content/60">
-                {glasses} / {waterGoal} glasses
+                {t("{n} / {goal} glasses", { n: glasses, goal: waterGoal })}
               </span>
             </div>
             <div className="flex flex-wrap gap-1.5">
               {Array.from({ length: Math.max(waterGoal, glasses) }).map((_, i) => (
                 <button
                   key={i}
-                  aria-label={`Set ${i + 1} glasses`}
+                  aria-label={t("Set {n} glasses", { n: i + 1 })}
                   onClick={() => addGlasses(selected, i + 1 - glasses)}
                   className={`h-6 w-6 rounded-full transition-colors ${
                     i < glasses ? "bg-sky-400" : "bg-base-300 hover:bg-base-content/20"
@@ -195,13 +197,13 @@ export default function TodayPage() {
                 onClick={() => addGlasses(selected, 1)}
                 className="btn btn-primary btn-sm flex-1"
               >
-                ＋ Glass
+                {t("＋ Glass")}
               </button>
               <button
                 onClick={() => addGlasses(selected, -1)}
                 disabled={glasses <= 0}
                 className="btn btn-ghost btn-sm"
-                aria-label="Remove a glass"
+                aria-label={t("Remove a glass")}
               >
                 −
               </button>
@@ -213,12 +215,12 @@ export default function TodayPage() {
         <section className="flex flex-col gap-4">
           <div className="flex items-center justify-between px-1">
             <h2 className="text-xs font-semibold uppercase tracking-wide text-base-content/40">
-              Logged
+              {t("Logged")}
             </h2>
           </div>
 
           {entries === undefined ? (
-            <div className="py-10 text-center text-base-content/30">Loading…</div>
+            <div className="py-10 text-center text-base-content/30">{t("Loading…")}</div>
           ) : (
             <>
               {MEAL_SLOTS.map((s) => (
@@ -263,6 +265,7 @@ function MealSection({
   date: string;
   onEdit: (e: LogEntry) => void;
 }) {
+  const t = useT();
   // Collapsible; collapsed by default — tap a meal to expand it.
   const [open, setOpen] = useState(false);
   const kcal = entries.reduce((s, e) => s + Math.round(scaleSnapshot(e).kcal), 0);
@@ -281,11 +284,11 @@ function MealSection({
             <MealIcon slot={slot} />
           </span>
           <span className="min-w-0">
-            <span className="block text-sm font-semibold">{label}</span>
+            <span className="block text-sm font-semibold">{t(label)}</span>
             {entries.length > 0 ? (
               <>
                 <span className="block text-[11px] tabular-nums text-base-content/40">
-                  {entries.length} item{entries.length > 1 ? "s" : ""} · {kcal} kcal
+                  {t(entries.length === 1 ? "{n} item" : "{n} items", { n: entries.length })} · {kcal} kcal
                 </span>
                 <span className="block text-[11px] tabular-nums text-base-content/35">
                   P {fmtNum(macros.protein_g)} · C {fmtNum(macros.carbs_g)} · F{" "}
@@ -293,7 +296,7 @@ function MealSection({
                 </span>
               </>
             ) : (
-              <span className="block text-[11px] text-base-content/40">empty</span>
+              <span className="block text-[11px] text-base-content/40">{t("empty")}</span>
             )}
           </span>
           <svg
@@ -311,7 +314,7 @@ function MealSection({
         {slot && (
           <Link
             href={addHref}
-            aria-label={`Add to ${label}`}
+            aria-label={t("Add to {label}", { label: t(label) })}
             className="grid h-8 w-8 shrink-0 place-items-center rounded-full text-lg leading-none text-primary hover:bg-primary/10"
           >
             ＋
@@ -331,7 +334,7 @@ function MealSection({
             href={addHref}
             className="mx-2 mb-2 block rounded-xl border border-dashed border-base-300/70 px-4 py-2.5 text-center text-xs text-base-content/35 transition-colors hover:border-primary/40 hover:text-base-content/60"
           >
-            Add {label.toLowerCase()}…
+            {t("Add {label}…", { label: t(label).toLowerCase() })}
           </Link>
         ))}
     </div>
@@ -339,24 +342,25 @@ function MealSection({
 }
 
 function EntryRow({ entry, onEdit }: { entry: LogEntry; onEdit: (e: LogEntry) => void }) {
+  const t = useT();
   const mm = scaleSnapshot(entry);
   return (
     <li className="flex items-center justify-between gap-2 rounded-xl bg-base-200/40 px-3 py-2.5">
       <button
         className="min-w-0 flex-1 text-left"
         onClick={() => onEdit(entry)}
-        aria-label={`Edit ${entry.foodName}`}
+        aria-label={t("Edit {name}", { name: entry.foodName })}
       >
         <div className="truncate text-sm font-medium">{entry.foodName}</div>
         <div className="mt-0.5 text-[11px] text-base-content/40">
-          {entry.mealId ? "meal" : `${entry.grams} ${entry.unit ?? "g"}`} · {Math.round(mm.kcal)}{" "}
+          {entry.mealId ? t("meal") : `${entry.grams} ${entry.unit ?? "g"}`} · {Math.round(mm.kcal)}{" "}
           kcal · P {mm.protein_g} / C {mm.carbs_g} / F {mm.fat_g} / Fib {mm.fiber_g}
         </div>
       </button>
       <button
         className="grid h-8 w-8 shrink-0 place-items-center rounded-full text-base-content/30 hover:bg-base-300/60 hover:text-error"
         onClick={() => entry.id != null && deleteEntry(entry.id)}
-        aria-label={`Remove ${entry.foodName}`}
+        aria-label={t("Remove {name}", { name: entry.foodName })}
       >
         ✕
       </button>
