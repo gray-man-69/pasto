@@ -2,25 +2,27 @@
 
 import { useMemo, useState } from "react";
 import { useLiveQuery } from "dexie-react-hooks";
+import { useLang } from "@/components/LanguageProvider";
+import type { TParams } from "@/lib/i18n";
 import WeekSummary from "@/components/WeekSummary";
 import { addDays, dailyTotalsBetween, getGoals, localDate, weekStart } from "@/lib/db";
 
-function fmtRange(from: string, to: string): string {
+function fmtRange(from: string, to: string, locale: string): string {
   const opts: Intl.DateTimeFormatOptions = { day: "numeric", month: "short" };
-  const s = new Date(from + "T00:00:00").toLocaleDateString("en-GB", opts);
-  const e = new Date(to + "T00:00:00").toLocaleDateString("en-GB", opts);
+  const s = new Date(from + "T00:00:00").toLocaleDateString(locale, opts);
+  const e = new Date(to + "T00:00:00").toLocaleDateString(locale, opts);
   return from === to ? s : `${s} – ${e}`;
 }
 
-function relWeek(from: string, thisWeek: string): string {
+function relWeek(from: string, thisWeek: string, t: (k: string, p?: TParams) => string): string {
   const diff = Math.round(
     (new Date(from + "T00:00:00").getTime() - new Date(thisWeek + "T00:00:00").getTime()) /
       (7 * 86_400_000),
   );
-  if (diff === 0) return "This week";
-  if (diff === -1) return "Last week";
-  if (diff === 1) return "Next week";
-  return diff < 0 ? `${-diff} weeks ago` : `In ${diff} weeks`;
+  if (diff === 0) return t("This week");
+  if (diff === -1) return t("Last week");
+  if (diff === 1) return t("Next week");
+  return diff < 0 ? t("{n} weeks ago", { n: -diff }) : t("In {n} weeks", { n: diff });
 }
 
 function daysArr(from: string, to: string): string[] {
@@ -36,6 +38,8 @@ const PRESETS = [
 ] as const;
 
 export default function WeekPage() {
+  const { lang, t } = useLang();
+  const locale = lang === "it" ? "it-IT" : "en-GB";
   const today = localDate();
   const curWeek = weekStart(today);
   const [from, setFrom] = useState(() => curWeek);
@@ -77,16 +81,16 @@ export default function WeekPage() {
   return (
     <div className="mx-auto flex w-full max-w-2xl flex-col gap-4">
       <div className="flex items-center justify-between gap-2">
-        <button onClick={() => shift(-1)} className="btn btn-ghost btn-sm btn-circle text-lg" aria-label="Previous range">
+        <button onClick={() => shift(-1)} className="btn btn-ghost btn-sm btn-circle text-lg" aria-label={t("Previous range")}>
           ‹
         </button>
         <div className="text-center">
-          <h1 className="text-lg font-bold">{fmtRange(from, to)}</h1>
+          <h1 className="text-lg font-bold">{fmtRange(from, to, locale)}</h1>
           <div className="text-xs text-base-content/50">
-            {isThisWeek ? relWeek(from, curWeek) : `${len} days`}
+            {isThisWeek ? relWeek(from, curWeek, t) : t("{n} days", { n: len })}
           </div>
         </div>
-        <button onClick={() => shift(1)} className="btn btn-ghost btn-sm btn-circle text-lg" aria-label="Next range">
+        <button onClick={() => shift(1)} className="btn btn-ghost btn-sm btn-circle text-lg" aria-label={t("Next range")}>
           ›
         </button>
       </div>
@@ -103,7 +107,7 @@ export default function WeekPage() {
                 : "bg-base-200 text-base-content/60 hover:bg-base-300"
             }`}
           >
-            {p.label}
+            {t(p.label)}
           </button>
         ))}
         <span
@@ -111,7 +115,7 @@ export default function WeekPage() {
             active === "custom" ? "bg-primary text-primary-content" : "bg-base-200 text-base-content/40"
           }`}
         >
-          Custom
+          {t("Custom")}
         </span>
       </div>
 
@@ -137,14 +141,14 @@ export default function WeekPage() {
 
       {!isThisWeek && (
         <button onClick={() => applyPreset("week")} className="self-center text-xs text-primary hover:underline">
-          Back to this week
+          {t("Back to this week")}
         </button>
       )}
 
       {goals && dayTotals ? (
         <WeekSummary days={days} dayTotals={dayTotals} goals={goals} today={today} />
       ) : (
-        <div className="py-10 text-center text-base-content/40">Loading…</div>
+        <div className="py-10 text-center text-base-content/40">{t("Loading…")}</div>
       )}
     </div>
   );

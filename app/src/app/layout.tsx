@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import "./globals.css";
 import BottomNav from "@/components/BottomNav";
 import InstallBanner from "@/components/InstallBanner";
+import LanguageProvider from "@/components/LanguageProvider";
 import SideNav from "@/components/SideNav";
 import ServiceWorkerRegister from "@/components/ServiceWorkerRegister";
 import SyncProvider from "@/components/SyncProvider";
@@ -30,20 +31,22 @@ export default function RootLayout({
     <html lang="it" data-theme="pasto">
       <body className="antialiased" suppressHydrationWarning>
         <SyncProvider>
-          {/* App shell: sidebar + content on desktop, single column + bottom tab
-              bar on phones. The content area owns the scroll. */}
-          <div className="flex h-dvh w-full overflow-hidden bg-base-200 text-base-content">
-            <SideNav />
-            <div className="flex min-w-0 flex-1 flex-col">
-              <main className="app-glow flex-1 overflow-y-auto">
-                <div className="mx-auto w-full max-w-6xl px-4 py-6 lg:px-10 lg:py-8">
-                  <InstallBanner />
-                  {children}
-                </div>
-              </main>
-              <BottomNav />
+          <LanguageProvider>
+            {/* App shell: sidebar + content on desktop, single column + bottom tab
+                bar on phones. The content area owns the scroll. */}
+            <div className="flex h-dvh w-full overflow-hidden bg-base-200 text-base-content">
+              <SideNav />
+              <div className="flex min-w-0 flex-1 flex-col">
+                <main className="app-glow flex-1 overflow-y-auto">
+                  <div className="mx-auto w-full max-w-6xl px-4 py-6 lg:px-10 lg:py-8">
+                    <InstallBanner />
+                    {children}
+                  </div>
+                </main>
+                <BottomNav />
+              </div>
             </div>
-          </div>
+          </LanguageProvider>
         </SyncProvider>
         <ServiceWorkerRegister />
       </body>

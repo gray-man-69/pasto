@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import type { ReactNode } from "react";
+import { useT } from "@/components/LanguageProvider";
 
 // A simple hub for everything that isn't a primary daily destination: goals,
 // settings, saved meals, history and the day planner. Keeps the bottom bar to
@@ -91,9 +92,10 @@ const ENTRIES: Entry[] = [
 ];
 
 export default function MorePage() {
+  const t = useT();
   return (
     <div className="mx-auto flex w-full max-w-xl flex-col gap-4">
-      <h1 className="text-xl font-bold">More</h1>
+      <h1 className="text-xl font-bold">{t("More")}</h1>
       <ul className="flex flex-col gap-2">
         {ENTRIES.map((e) =>
           e.disabled ? (
@@ -106,8 +108,8 @@ export default function MorePage() {
                   {e.icon}
                 </span>
                 <span className="min-w-0 flex-1">
-                  <span className="block font-medium text-base-content/50">{e.label}</span>
-                  <span className="block truncate text-xs text-base-content/40">{e.desc}</span>
+                  <span className="block font-medium text-base-content/50">{t(e.label)}</span>
+                  <span className="block truncate text-xs text-base-content/40">{t(e.desc)}</span>
                 </span>
               </div>
             </li>
@@ -121,8 +123,8 @@ export default function MorePage() {
                   {e.icon}
                 </span>
                 <span className="min-w-0 flex-1">
-                  <span className="block font-medium">{e.label}</span>
-                  <span className="block truncate text-xs text-base-content/50">{e.desc}</span>
+                  <span className="block font-medium">{t(e.label)}</span>
+                  <span className="block truncate text-xs text-base-content/50">{t(e.desc)}</span>
                 </span>
                 <span className="text-base-content/30">
                   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="h-4 w-4">
