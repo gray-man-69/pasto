@@ -47,6 +47,7 @@ export default function TrainingPage() {
   const [showAllCond, setShowAllCond] = useState(false);
   const [startingBlock, setStartingBlock] = useState(false);
   const [showAllRecent, setShowAllRecent] = useState(false);
+  const [view, setView] = useState<"strength" | "conditioning">("strength");
   const pastBlocks = (blocks ?? []).filter((b) => b.id !== meso?.id);
 
   return (
@@ -63,6 +64,7 @@ export default function TrainingPage() {
         </div>
       </div>
 
+      {/* An in-progress workout stays visible above the sub-tabs. */}
       {active && (
         <Link
           href={`/workout?id=${active.id}`}
@@ -76,150 +78,154 @@ export default function TrainingPage() {
         </Link>
       )}
 
-      <MesoCard
-        meso={meso ?? null}
-        onStart={() => setStartingBlock(true)}
-        onEnd={() => meso?.id != null && endMesocycle(meso.id)}
-      />
-
-      {pastBlocks.length > 0 && (
-        <details className="rounded-2xl border border-base-300/60 bg-base-100/50">
-          <summary className="cursor-pointer list-none px-4 py-2.5 text-xs font-semibold uppercase tracking-wide text-base-content/40">
-            {t("Past blocks")} · {pastBlocks.length}
-          </summary>
-          <ul className="flex flex-col gap-1.5 px-2 pb-2">
-            {pastBlocks.map((b) => (
-              <PastBlockRow key={b.id} b={b} />
-            ))}
-          </ul>
-        </details>
-      )}
-
-      <div className="px-1">
-        <h2 className="text-xs font-semibold uppercase tracking-wide text-base-content/40">
-          {t("Conditioning & core")}
-        </h2>
-      </div>
-      <div className="grid grid-cols-2 gap-2">
-        <ConditioningCard
-          href="/hiit"
-          title="Norwegian 4×4"
-          desc="HIIT interval timer"
-          accent="text-primary"
-          icon={
-            <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth={2}>
-              <path d="M13 2 4.5 13.5H12l-1 8L19.5 10H12l1-8Z" strokeLinejoin="round" />
-            </svg>
-          }
-        />
-        <ConditioningCard
-          href="/core"
-          title="McGill Big Three"
-          desc="Spine-safe core timer"
-          accent="text-sky-400"
-          icon={
-            <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth={2}>
-              <path d="M6.5 3v6M6.5 15v6M17.5 3v6M17.5 15v6M4.5 9h4M15.5 9h4M4.5 15h4M15.5 15h4M8.5 12h7" strokeLinecap="round" />
-            </svg>
-          }
-        />
+      {/* Sub-tabs: strength work vs conditioning & core. */}
+      <div className="flex rounded-xl border border-base-300 bg-base-100 p-0.5 text-sm">
+        {(["strength", "conditioning"] as const).map((v) => (
+          <button
+            key={v}
+            onClick={() => setView(v)}
+            className={`flex-1 rounded-lg px-3 py-2 font-medium transition-colors ${
+              view === v ? "bg-primary text-primary-content" : "text-base-content/60 hover:bg-base-200"
+            }`}
+          >
+            {v === "strength" ? t("Strength") : t("Conditioning")}
+          </button>
+        ))}
       </div>
 
-      {conditioning && conditioning.length > 0 && (
-        <div className="flex flex-col gap-1.5">
-          <h2 className="px-1 text-xs font-semibold uppercase tracking-wide text-base-content/40">
-            {t("Recent conditioning")}
-          </h2>
-          <ul className="flex flex-col gap-1.5">
-            {(showAllCond ? conditioning : conditioning.slice(0, 4)).map((c) => (
-              <ConditioningRow key={c.id} c={c} />
-            ))}
-          </ul>
-          {conditioning.length > 4 && (
-            <button
-              onClick={() => setShowAllCond((v) => !v)}
-              className="self-center py-1 text-xs font-medium text-primary hover:underline"
-            >
-              {showAllCond ? t("Show less") : t("Show all {n}", { n: conditioning.length })}
-            </button>
+      {view === "strength" ? (
+        <>
+          <MesoCard
+            meso={meso ?? null}
+            onStart={() => setStartingBlock(true)}
+            onEnd={() => meso?.id != null && endMesocycle(meso.id)}
+          />
+
+          {pastBlocks.length > 0 && (
+            <details className="rounded-2xl border border-base-300/60 bg-base-100/50">
+              <summary className="cursor-pointer list-none px-4 py-2.5 text-xs font-semibold uppercase tracking-wide text-base-content/40">
+                {t("Past blocks")} · {pastBlocks.length}
+              </summary>
+              <ul className="flex flex-col gap-1.5 px-2 pb-2">
+                {pastBlocks.map((b) => (
+                  <PastBlockRow key={b.id} b={b} />
+                ))}
+              </ul>
+            </details>
           )}
-        </div>
-      )}
 
-      <Link
-        href="/generate"
-        className="flex items-center gap-3 rounded-2xl border border-primary/40 bg-primary/10 px-4 py-3.5 transition-colors hover:bg-primary/15"
-      >
-        <span className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-primary/20 text-primary">
-          <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
-            <path d="M12 3v4M12 17v4M3 12h4M17 12h4M6 6l2.5 2.5M15.5 15.5 18 18M18 6l-2.5 2.5M8.5 15.5 6 18" />
-          </svg>
-        </span>
-        <span className="min-w-0 flex-1">
-          <span className="block text-sm font-semibold">{t("Generate a plan")}</span>
-          <span className="block text-xs text-base-content/50">{t("Tailored to your goals & schedule — science-based")}</span>
-        </span>
-        <span className="shrink-0 text-primary">→</span>
-      </Link>
+          <div className="flex items-center justify-between px-1">
+            <h2 className="text-xs font-semibold uppercase tracking-wide text-base-content/40">
+              {t("Your routines")}
+            </h2>
+            <Link href="/routine" className="btn btn-primary btn-sm rounded-full px-4 shadow-lg shadow-primary/20">
+              {t("＋ New")}
+            </Link>
+          </div>
 
-      <div className="flex items-center justify-between px-1">
-        <h2 className="text-xs font-semibold uppercase tracking-wide text-base-content/40">
-          {t("Your routines")}
-        </h2>
-        <Link href="/routine" className="btn btn-primary btn-sm rounded-full px-4 shadow-lg shadow-primary/20">
-          {t("＋ New")}
-        </Link>
-      </div>
+          {routines === undefined ? (
+            <div className="py-10 text-center text-base-content/30">{t("Loading…")}</div>
+          ) : routines.length === 0 ? (
+            <div className="flex flex-col items-center gap-2 rounded-2xl border border-dashed border-base-300 py-12 text-center">
+              <div className="text-sm text-base-content/50">{t("No routines yet.")}</div>
+              <Link href="/routine" className="text-sm font-medium text-primary hover:underline">
+                {t("Create your first split day →")}
+              </Link>
+            </div>
+          ) : (
+            <ul className="flex flex-col gap-2">
+              {routines.map((r) => (
+                <RoutineCard key={r.id} r={r} />
+              ))}
+            </ul>
+          )}
 
-      {routines === undefined ? (
-        <div className="py-10 text-center text-base-content/30">{t("Loading…")}</div>
-      ) : routines.length === 0 ? (
-        <div className="flex flex-col items-center gap-2 rounded-2xl border border-dashed border-base-300 py-12 text-center">
-          <div className="text-sm text-base-content/50">{t("No routines yet.")}</div>
-          <Link href="/routine" className="text-sm font-medium text-primary hover:underline">
-            {t("Create your first split day →")}
-          </Link>
-        </div>
+          {recent && recent.length > 0 && (
+            <div className="mt-2 flex flex-col gap-2">
+              <h2 className="px-1 text-xs font-semibold uppercase tracking-wide text-base-content/40">
+                {t("Past workouts · tap to edit")}
+              </h2>
+              <ul className="flex flex-col gap-1.5">
+                {(showAllRecent ? recent : recent.slice(0, 5)).map((s) => (
+                  <RecentRow key={s.id} s={s} />
+                ))}
+              </ul>
+              {recent.length > 5 && (
+                <button
+                  onClick={() => setShowAllRecent((v) => !v)}
+                  className="self-center py-1 text-xs font-medium text-primary hover:underline"
+                >
+                  {showAllRecent ? t("Show less") : t("Show all {n}", { n: recent.length })}
+                </button>
+              )}
+            </div>
+          )}
+
+          {trashed && trashed.length > 0 && (
+            <details className="mt-2 rounded-2xl border border-base-300/60 bg-base-100/50">
+              <summary className="cursor-pointer list-none px-4 py-2.5 text-xs font-semibold uppercase tracking-wide text-base-content/40">
+                {t("🗑 Recently deleted")} · {trashed.length}
+              </summary>
+              <ul className="flex flex-col gap-1.5 px-2 pb-2">
+                {trashed.map((s) => (
+                  <TrashRow key={s.id} s={s} />
+                ))}
+              </ul>
+            </details>
+          )}
+        </>
       ) : (
-        <ul className="flex flex-col gap-2">
-          {routines.map((r) => (
-            <RoutineCard key={r.id} r={r} />
-          ))}
-        </ul>
-      )}
+        <>
+          <div className="grid grid-cols-2 gap-2">
+            <ConditioningCard
+              href="/hiit"
+              title="Norwegian 4×4"
+              desc="HIIT interval timer"
+              accent="text-primary"
+              icon={
+                <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth={2}>
+                  <path d="M13 2 4.5 13.5H12l-1 8L19.5 10H12l1-8Z" strokeLinejoin="round" />
+                </svg>
+              }
+            />
+            <ConditioningCard
+              href="/core"
+              title="McGill Big Three"
+              desc="Spine-safe core timer"
+              accent="text-sky-400"
+              icon={
+                <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth={2}>
+                  <path d="M6.5 3v6M6.5 15v6M17.5 3v6M17.5 15v6M4.5 9h4M15.5 9h4M4.5 15h4M15.5 15h4M8.5 12h7" strokeLinecap="round" />
+                </svg>
+              }
+            />
+          </div>
 
-      {recent && recent.length > 0 && (
-        <div className="mt-2 flex flex-col gap-2">
-          <h2 className="px-1 text-xs font-semibold uppercase tracking-wide text-base-content/40">
-            {t("Past workouts · tap to edit")}
-          </h2>
-          <ul className="flex flex-col gap-1.5">
-            {(showAllRecent ? recent : recent.slice(0, 5)).map((s) => (
-              <RecentRow key={s.id} s={s} />
-            ))}
-          </ul>
-          {recent.length > 5 && (
-            <button
-              onClick={() => setShowAllRecent((v) => !v)}
-              className="self-center py-1 text-xs font-medium text-primary hover:underline"
-            >
-              {showAllRecent ? t("Show less") : t("Show all {n}", { n: recent.length })}
-            </button>
+          {conditioning && conditioning.length > 0 ? (
+            <div className="flex flex-col gap-1.5">
+              <h2 className="px-1 text-xs font-semibold uppercase tracking-wide text-base-content/40">
+                {t("Recent conditioning")}
+              </h2>
+              <ul className="flex flex-col gap-1.5">
+                {(showAllCond ? conditioning : conditioning.slice(0, 4)).map((c) => (
+                  <ConditioningRow key={c.id} c={c} />
+                ))}
+              </ul>
+              {conditioning.length > 4 && (
+                <button
+                  onClick={() => setShowAllCond((v) => !v)}
+                  className="self-center py-1 text-xs font-medium text-primary hover:underline"
+                >
+                  {showAllCond ? t("Show less") : t("Show all {n}", { n: conditioning.length })}
+                </button>
+              )}
+            </div>
+          ) : (
+            <p className="px-1 text-xs text-base-content/40">
+              {t("Finish a Norwegian 4×4 or McGill Big Three session and it shows up here.")}
+            </p>
           )}
-        </div>
-      )}
-
-      {trashed && trashed.length > 0 && (
-        <details className="mt-2 rounded-2xl border border-base-300/60 bg-base-100/50">
-          <summary className="cursor-pointer list-none px-4 py-2.5 text-xs font-semibold uppercase tracking-wide text-base-content/40">
-            {t("🗑 Recently deleted")} · {trashed.length}
-          </summary>
-          <ul className="flex flex-col gap-1.5 px-2 pb-2">
-            {trashed.map((s) => (
-              <TrashRow key={s.id} s={s} />
-            ))}
-          </ul>
-        </details>
+        </>
       )}
 
       {startingBlock && <MesocycleForm onClose={() => setStartingBlock(false)} />}
