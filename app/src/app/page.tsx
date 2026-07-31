@@ -176,28 +176,37 @@ export default function TodayPage() {
             </div>
           )}
 
-          {/* Activity — Apple Health numbers (steps / active burn / net kcal),
-              present only when the Shortcut has delivered data for this day. */}
-          {health && (health.steps != null || health.activeKcal != null) && (
-            <div className="mt-1 grid w-full max-w-sm grid-cols-3 gap-2 rounded-2xl border border-base-300/70 bg-base-200/40 p-3">
+          {/* Activity — Apple Health numbers, present only when the Shortcut has
+              delivered data for this day. Burned/net only when there IS a burn —
+              with 0 burned, net === eaten and would just duplicate the big ring. */}
+          {health && (health.steps != null || (health.activeKcal ?? 0) > 0) && (
+            <div
+              className={`mt-1 grid w-full max-w-sm gap-2 rounded-2xl border border-base-300/70 bg-base-200/40 p-3 ${
+                (health.activeKcal ?? 0) > 0 ? "grid-cols-3" : "grid-cols-1"
+              }`}
+            >
               <div className="flex flex-col items-center gap-0.5">
                 <span className="text-base font-semibold tabular-nums">
                   {(health.steps ?? 0).toLocaleString()}
                 </span>
                 <span className="text-[11px] text-base-content/50">{t("steps")}</span>
               </div>
-              <div className="flex flex-col items-center gap-0.5">
-                <span className="text-base font-semibold tabular-nums text-amber-400">
-                  {Math.round(health.activeKcal ?? 0)}
-                </span>
-                <span className="text-[11px] text-base-content/50">{t("kcal burned")}</span>
-              </div>
-              <div className="flex flex-col items-center gap-0.5">
-                <span className="text-base font-semibold tabular-nums text-primary">
-                  {consumed - Math.round(health.activeKcal ?? 0)}
-                </span>
-                <span className="text-[11px] text-base-content/50">{t("net kcal")}</span>
-              </div>
+              {(health.activeKcal ?? 0) > 0 && (
+                <>
+                  <div className="flex flex-col items-center gap-0.5">
+                    <span className="text-base font-semibold tabular-nums text-amber-400">
+                      {Math.round(health.activeKcal ?? 0)}
+                    </span>
+                    <span className="text-[11px] text-base-content/50">{t("kcal burned")}</span>
+                  </div>
+                  <div className="flex flex-col items-center gap-0.5">
+                    <span className="text-base font-semibold tabular-nums text-primary">
+                      {consumed - Math.round(health.activeKcal ?? 0)}
+                    </span>
+                    <span className="text-[11px] text-base-content/50">{t("net kcal")}</span>
+                  </div>
+                </>
+              )}
             </div>
           )}
 
