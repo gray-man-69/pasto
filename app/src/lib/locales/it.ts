@@ -88,6 +88,9 @@ export const it: Record<string, string> = {
     "Ricevi un promemoria gentile qualche volta al giorno quando sei indietro con l'acqua. Tocca la notifica per aprire l'app e registrare un bicchiere.",
   "Turn off reminders": "Disattiva i promemoria",
   "Turn on reminders": "Attiva i promemoria",
+  "🧱 Big 3 reminders": "🧱 Promemoria Big 3",
+  "Every 2h from 10:00 to 22:00 until today's Big 3 is logged.":
+    "Ogni 2 ore dalle 10:00 alle 22:00 finché i Big 3 di oggi non sono registrati.",
   "Couldn't change reminders.": "Impossibile modificare i promemoria.",
   "Sync across devices": "Sincronizza tra dispositivi",
   "Signed in as": "Accesso effettuato come",

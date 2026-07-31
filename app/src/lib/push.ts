@@ -42,15 +42,20 @@ export async function enableReminders(uid: string): Promise<void> {
       applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY),
     });
   }
-  await setDoc(subDoc(uid), {
-    uid,
-    enabled: true,
-    tz: Intl.DateTimeFormat().resolvedOptions().timeZone || "UTC",
-    wakeStart: 8,
-    wakeEnd: 22,
-    subscription: sub.toJSON(),
-    updatedAt: Date.now(),
-  });
+  // merge: keep per-reminder flags (e.g. big3Enabled) across re-enables.
+  await setDoc(
+    subDoc(uid),
+    {
+      uid,
+      enabled: true,
+      tz: Intl.DateTimeFormat().resolvedOptions().timeZone || "UTC",
+      wakeStart: 8,
+      wakeEnd: 22,
+      subscription: sub.toJSON(),
+      updatedAt: Date.now(),
+    },
+    { merge: true },
+  );
 }
 
 /** Stop reminders for this device. */
@@ -70,6 +75,20 @@ export async function remindersEnabled(uid: string): Promise<boolean> {
     if (Notification.permission !== "granted") return false;
     const snap = await getDoc(subDoc(uid));
     return snap.exists() && snap.data().enabled === true;
+  } catch {
+    return false;
+  }
+}
+
+/** Toggle the McGill Big 3 reminder (needs the main reminders to be enabled). */
+export async function setBig3Reminders(uid: string, on: boolean): Promise<void> {
+  await setDoc(subDoc(uid), { big3Enabled: on, updatedAt: Date.now() }, { merge: true });
+}
+
+export async function big3RemindersEnabled(uid: string): Promise<boolean> {
+  try {
+    const snap = await getDoc(subDoc(uid));
+    return snap.exists() && snap.data().big3Enabled === true;
   } catch {
     return false;
   }

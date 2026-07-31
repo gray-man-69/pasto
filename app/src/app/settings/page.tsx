@@ -5,7 +5,14 @@ import { useLang, useT } from "@/components/LanguageProvider";
 import { useAuth } from "@/components/SyncProvider";
 import { LANGS, LANG_LABEL } from "@/lib/i18n";
 import { exportData, importData, localDate } from "@/lib/db";
-import { disableReminders, enableReminders, pushSupported, remindersEnabled } from "@/lib/push";
+import {
+  big3RemindersEnabled,
+  disableReminders,
+  enableReminders,
+  pushSupported,
+  remindersEnabled,
+  setBig3Reminders,
+} from "@/lib/push";
 
 // App & account settings: cross-device sync, water reminders, and local backup.
 // These used to live at the bottom of Goals — they aren't goals, they're config.
@@ -56,14 +63,34 @@ function RemindersCard() {
   const t = useT();
   const { user } = useAuth();
   const [on, setOn] = useState(false);
+  const [big3On, setBig3On] = useState(false);
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
   const supported = pushSupported();
 
   useEffect(() => {
-    if (user) remindersEnabled(user.uid).then(setOn);
-    else setOn(false);
+    if (user) {
+      remindersEnabled(user.uid).then(setOn);
+      big3RemindersEnabled(user.uid).then(setBig3On);
+    } else {
+      setOn(false);
+      setBig3On(false);
+    }
   }, [user]);
+
+  async function toggleBig3() {
+    if (!user) return;
+    setBusy(true);
+    setErr(null);
+    try {
+      await setBig3Reminders(user.uid, !big3On);
+      setBig3On(!big3On);
+    } catch (e) {
+      setErr(e instanceof Error ? e.message : t("Couldn't change reminders."));
+    } finally {
+      setBusy(false);
+    }
+  }
 
   async function toggle() {
     if (!user) return;
@@ -112,6 +139,24 @@ function RemindersCard() {
             >
               {busy ? "…" : on ? t("Turn off reminders") : t("Turn on reminders")}
             </button>
+            {on && (
+              <div className="mt-1 flex items-center justify-between rounded-xl border border-base-300/70 bg-base-200/40 p-3">
+                <div className="flex flex-col">
+                  <span className="text-sm font-medium">{t("🧱 Big 3 reminders")}</span>
+                  <span className="text-[11px] text-base-content/50">
+                    {t("Every 2h from 10:00 to 22:00 until today's Big 3 is logged.")}
+                  </span>
+                </div>
+                <input
+                  type="checkbox"
+                  className="toggle toggle-primary"
+                  checked={big3On}
+                  onChange={toggleBig3}
+                  disabled={busy}
+                  aria-label={t("🧱 Big 3 reminders")}
+                />
+              </div>
+            )}
           </>
         )}
       </div>

@@ -113,10 +113,12 @@ for (const docSnap of subs.docs) {
     }
 
     // --- McGill Big 3 --------------------------------------------------------
+    // Opt-in per user (big3Enabled on the subscriber doc — Settings toggle).
     // Done = a McGill conditioning session logged today (the in-app Big 3 timer
     // records one on completion — see ConditioningSession kind "mcgill").
     const big3Done = (state?.conditioning || []).some((c) => c.kind === "mcgill" && c.date === date);
-    const big3Due = TEST || (hour >= BIG3_START && hour <= BIG3_END && !big3Done);
+    const big3Due =
+      s.big3Enabled === true && (TEST || (hour >= BIG3_START && hour <= BIG3_END && !big3Done));
     if (big3Due) {
       await push({
         title: "🧱 McGill Big 3",
