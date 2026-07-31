@@ -28,7 +28,14 @@ function ctx(): AudioContext | null {
   if (typeof window === "undefined") return null;
   try {
     const AC = window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
-    audioCtx = audioCtx ?? new AC();
+    if (!audioCtx) {
+      audioCtx = new AC();
+      // Self-heal: iOS flips the context to suspended/"interrupted" whenever
+      // another sound (e.g. a spoken announcement) takes the audio session.
+      audioCtx.onstatechange = () => {
+        if (audioCtx && audioCtx.state !== "running") audioCtx.resume().catch(() => {});
+      };
+    }
     return audioCtx;
   } catch {
     return null;
@@ -42,6 +49,11 @@ export function primeAudio() {
 function beep(freq: number, ms: number, gain = 0.15) {
   const c = ctx();
   if (!c) return;
+  // iOS suspends/"interrupts" the context when something else takes the audio
+  // session (notably the speech announcements) — after which every tone is
+  // silently dropped. Revive it before playing; resume() after a prior user
+  // gesture is allowed, so the 3-2-1 countdown keeps beeping.
+  if (c.state !== "running") c.resume().catch(() => {});
   const osc = c.createOscillator();
   const g = c.createGain();
   osc.frequency.value = freq;
