@@ -61,7 +61,7 @@ self.addEventListener("push", (event) => {
     self.registration.showNotification(title, {
       body: data.body || "",
       icon: `${BASE}/icon-192.png`,
-      badge: `${BASE}/icon-192.png`,
+      badge: `${BASE}/badge-96.png`, // monochrome mark (full-color icons render as a blob here)
       tag: data.tag || "water-reminder",
       renotify: true,
       data: { url: data.url || `${BASE}/` },

@@ -63,10 +63,10 @@ const BIG3_START = 10;
 const BIG3_END = 22; // inclusive — last nudge at the 22:00 run
 
 const BIG3_MESSAGES = [
-  "Curl-up, side plank, bird dog — la schiena ringrazia 🧱",
-  "Non ancora fatti oggi: 10 minuti per i Big 3 💪",
-  "Promemoria Big 3: core stabile, schiena protetta 🧱",
-  "È ora dei Big 3 di McGill — falli adesso, poi spunta ✓",
+  "Curl-up · Side plank · Bird dog — 10 minuti per la tua schiena.",
+  "I Big 3 di oggi ti aspettano. Apri il timer e falli ora.",
+  "Core stabile, schiena protetta. È ora dei Big 3.",
+  "Ancora da fare oggi: i tuoi Big 3. Bastano 10 minuti.",
 ];
 
 const subs = await db.collection("pushSubscribers").where("enabled", "==", true).get();
@@ -153,7 +153,7 @@ for (const docSnap of subs.docs) {
   const big3Due = big3On && (TEST || (hour >= BIG3_START && hour <= BIG3_END && !big3Done));
   if (big3Due) {
     await push({
-      title: "🧱 McGill Big 3",
+      title: "McGill Big 3",
       body: BIG3_MESSAGES[Math.floor(Math.random() * BIG3_MESSAGES.length)],
       url: "https://gray-man-69.github.io/pasto/",
       tag: "big3-reminder", // separate tag: doesn't replace the water notification
