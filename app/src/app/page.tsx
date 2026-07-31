@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useLiveQuery } from "dexie-react-hooks";
 import { useLang, useT } from "@/components/LanguageProvider";
 import { useAuth } from "@/components/SyncProvider";
-import { useHealthDay } from "@/lib/health";
+import { useHealthDay, useHealthRange } from "@/lib/health";
 import Ring from "@/components/Ring";
 import WeekStrip from "@/components/WeekStrip";
 import EntryEditor from "@/components/EntryEditor";
@@ -81,6 +81,10 @@ export default function TodayPage() {
   const { user } = useAuth();
   const health = useHealthDay(user?.uid, selected);
   const burned = Math.round(health?.activeKcal ?? 0);
+  const weekHealth = useHealthRange(user?.uid, ws, addDays(ws, 6));
+  const dayBurn = new Map(
+    [...weekHealth].map(([date, h]) => [date, Math.round(h.activeKcal ?? 0)]),
+  );
 
   const scaled = (entries ?? []).map(scaleSnapshot);
   const totals = sum(scaled);
@@ -118,6 +122,7 @@ export default function TodayPage() {
         onSelect={setSelected}
         goalKcal={goalKcal || 2000}
         dayKcal={dayKcal ?? new Map()}
+        dayBurn={dayBurn}
       />
 
       {/* Desktop: summary panel beside the log. Mobile: stacked single column. */}

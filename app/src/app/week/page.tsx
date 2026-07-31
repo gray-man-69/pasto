@@ -3,8 +3,10 @@
 import { useMemo, useState } from "react";
 import { useLiveQuery } from "dexie-react-hooks";
 import { useLang } from "@/components/LanguageProvider";
+import { useAuth } from "@/components/SyncProvider";
 import type { TParams } from "@/lib/i18n";
 import WeekSummary from "@/components/WeekSummary";
+import { useHealthRange } from "@/lib/health";
 import { addDays, dailyTotalsBetween, getGoals, localDate, weekStart } from "@/lib/db";
 
 function fmtRange(from: string, to: string, locale: string): string {
@@ -49,6 +51,23 @@ export default function WeekPage() {
   const dayTotals = useLiveQuery(() => dailyTotalsBetween(from, to), [from, to]);
   const days = useMemo(() => daysArr(from, to), [from, to]);
   const len = days.length;
+
+  // Apple Health rows (steps / burned) join the same scoreboard + sparklines;
+  // rows with no data in the range hide themselves.
+  const { user } = useAuth();
+  const healthDays = useHealthRange(user?.uid, from, to);
+  const extras = useMemo(() => {
+    const steps = new Map<string, number>();
+    const burned = new Map<string, number>();
+    for (const [date, h] of healthDays) {
+      if (h.steps != null) steps.set(date, h.steps);
+      if ((h.activeKcal ?? 0) > 0) burned.set(date, Math.round(h.activeKcal!));
+    }
+    return [
+      { key: "steps", label: "Steps", cls: "text-base-content/70", dot: "bg-base-content/40", unit: "", goal: 10000, values: steps },
+      { key: "burned", label: "Burned", cls: "text-amber-400", dot: "bg-amber-400", unit: " kcal", values: burned },
+    ];
+  }, [healthDays]);
 
   // Which preset (if any) the current window exactly matches — for chip state.
   const active =
@@ -146,7 +165,7 @@ export default function WeekPage() {
       )}
 
       {goals && dayTotals ? (
-        <WeekSummary days={days} dayTotals={dayTotals} goals={goals} today={today} />
+        <WeekSummary days={days} dayTotals={dayTotals} goals={goals} today={today} extras={extras} />
       ) : (
         <div className="py-10 text-center text-base-content/40">{t("Loading…")}</div>
       )}

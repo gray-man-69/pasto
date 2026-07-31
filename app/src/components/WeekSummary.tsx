@@ -1,6 +1,6 @@
 "use client";
 
-import MetricsTrend from "@/components/MetricsTrend";
+import MetricsTrend, { type ExtraMetric } from "@/components/MetricsTrend";
 import type { Goals, Nutrients } from "@/lib/types";
 
 // Nutrition summary for a date range: a small-multiples daily trend (one
@@ -11,11 +11,13 @@ export default function WeekSummary({
   days,
   dayTotals,
   goals,
+  extras,
 }: {
   days: string[];
   dayTotals: Map<string, Nutrients>;
   goals: Goals;
   today: string;
+  extras?: ExtraMetric[];
 }) {
   const logged = days.filter((d) => (dayTotals.get(d)?.kcal ?? 0) > 0);
   const n = logged.length;
@@ -39,6 +41,7 @@ export default function WeekSummary({
         days={days}
         dayTotals={dayTotals}
         goals={goals}
+        extras={extras}
         caption={`over ${n} logged ${n === 1 ? "day" : "days"}`}
       />
     </section>

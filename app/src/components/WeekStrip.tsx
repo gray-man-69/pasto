@@ -11,11 +11,13 @@ export default function WeekStrip({
   onSelect,
   goalKcal,
   dayKcal,
+  dayBurn,
 }: {
   selected: string;
   onSelect: (date: string) => void;
   goalKcal: number;
   dayKcal: Map<string, number>;
+  dayBurn?: Map<string, number>; // active kcal per day → thin amber inner arc
 }) {
   const ws = weekStart(selected);
   const days = Array.from({ length: 7 }, (_, i) => addDays(ws, i));
@@ -71,13 +73,26 @@ export default function WeekStrip({
                 stroke={8}
                 colorClass={kcal > goalKcal && goalKcal > 0 ? "text-red-500" : "text-primary"}
               >
-                <span
-                  className={`text-xs tabular-nums ${
-                    isSel ? "font-bold text-base-content" : "text-base-content/70"
-                  }`}
-                >
-                  {dayNum}
-                </span>
+                {(() => {
+                  const burn = dayBurn?.get(d) ?? 0;
+                  const num = (
+                    <span
+                      className={`text-xs tabular-nums ${
+                        isSel ? "font-bold text-base-content" : "text-base-content/70"
+                      }`}
+                    >
+                      {dayNum}
+                    </span>
+                  );
+                  // Same language as the main ring: burn = thin amber arc inside.
+                  return burn > 0 ? (
+                    <Ring value={burn} max={goalKcal} size="1.8rem" stroke={6} colorClass="text-amber-400">
+                      {num}
+                    </Ring>
+                  ) : (
+                    num
+                  );
+                })()}
               </Ring>
               <span
                 className={`h-1 w-1 rounded-full ${isToday ? "bg-primary" : "bg-transparent"}`}

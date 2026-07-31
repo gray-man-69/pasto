@@ -8,6 +8,8 @@ import type { Goals, Nutrients } from "@/lib/types";
 //  • "Trend" — small multiples: one sparkline per metric (own scale, real units).
 // They share a hover: pointing at a day on the trend updates the scoreboard's
 // numbers + bars to that day. Averages are over logged days only.
+// Besides the nutrition metrics, callers can pass `extras` (e.g. Apple Health
+// steps/burn) — same rows, same sparklines, their own per-day presence mask.
 
 type Key = "kcal" | "protein_g" | "carbs_g" | "fat_g" | "fiber_g";
 const METRICS: { key: Key; label: string; cls: string; dot: string; unit: string }[] = [
@@ -17,6 +19,28 @@ const METRICS: { key: Key; label: string; cls: string; dot: string; unit: string
   { key: "fat_g", label: "Fat", cls: "text-orange-400", dot: "bg-orange-400", unit: "g" },
   { key: "fiber_g", label: "Fiber", cls: "text-emerald-400", dot: "bg-emerald-400", unit: "g" },
 ];
+
+export interface ExtraMetric {
+  key: string;
+  label: string;
+  cls: string; // text-* color class (sparkline)
+  dot: string; // bg-* color class (scoreboard dot/bar)
+  unit: string;
+  goal?: number; // omit → no goal line, no bar, plain average
+  values: Map<string, number>; // by date; a missing date = no data that day
+}
+
+// A unified row model so nutrition and extras render identically.
+type Row = {
+  id: string;
+  label: string;
+  cls: string;
+  dot: string;
+  unit: string;
+  goal: number;
+  get: (d: string) => number;
+  mask: boolean[]; // which days count for this row
+};
 
 const W = 320;
 const HH = 36;
@@ -32,11 +56,13 @@ export default function MetricsTrend({
   dayTotals,
   goals,
   caption,
+  extras = [],
 }: {
   days: string[];
   dayTotals: Map<string, Nutrients>;
   goals: Goals;
   caption?: string;
+  extras?: ExtraMetric[];
 }) {
   const wrapRef = useRef<HTMLDivElement>(null);
   const [hover, setHover] = useState<number | null>(null);
@@ -44,6 +70,31 @@ export default function MetricsTrend({
   const n = days.length;
   const logged = days.map((d) => (dayTotals.get(d)?.kcal ?? 0) > 0);
   const anyLogged = logged.some(Boolean);
+
+  const rows: Row[] = [
+    ...METRICS.map((m) => ({
+      id: m.key,
+      label: m.label,
+      cls: m.cls,
+      dot: m.dot,
+      unit: m.unit,
+      goal: goals[m.key] || 0,
+      get: (d: string) => val(dayTotals.get(d), m.key),
+      mask: logged,
+    })),
+    ...extras
+      .map((e) => ({
+        id: e.key,
+        label: e.label,
+        cls: e.cls,
+        dot: e.dot,
+        unit: e.unit,
+        goal: e.goal ?? 0,
+        get: (d: string) => e.values.get(d) ?? 0,
+        mask: days.map((d) => e.values.has(d)),
+      }))
+      .filter((r) => r.mask.some(Boolean)), // hide extras with no data in range
+  ];
 
   function locate(e: React.PointerEvent) {
     const rect = wrapRef.current?.getBoundingClientRect();
@@ -87,16 +138,8 @@ export default function MetricsTrend({
           </span>
         </div>
         <div className="flex flex-col gap-3">
-          {METRICS.map((m) => (
-            <AvgRow
-              key={m.key}
-              m={m}
-              days={days}
-              dayTotals={dayTotals}
-              goal={goals[m.key] || 0}
-              logged={logged}
-              hover={hover}
-            />
+          {rows.map((r) => (
+            <AvgRow key={r.id} r={r} days={days} hover={hover} />
           ))}
         </div>
       </div>
@@ -113,17 +156,8 @@ export default function MetricsTrend({
           onPointerLeave={() => setHover(null)}
           className="flex flex-col gap-2"
         >
-          {METRICS.map((m) => (
-            <Spark
-              key={m.key}
-              m={m}
-              days={days}
-              dayTotals={dayTotals}
-              goal={goals[m.key] || 0}
-              logged={logged}
-              hover={hover}
-              n={n}
-            />
+          {rows.map((r) => (
+            <Spark key={r.id} r={r} days={days} hover={hover} n={n} />
           ))}
         </div>
       </div>
@@ -131,75 +165,48 @@ export default function MetricsTrend({
   );
 }
 
-function avgOf(days: string[], logged: boolean[], dayTotals: Map<string, Nutrients>, key: Key) {
-  const vals = days.filter((_, i) => logged[i]).map((d) => val(dayTotals.get(d), key));
+function avgOf(r: Row, days: string[]) {
+  const vals = days.filter((_, i) => r.mask[i]).map(r.get);
   return vals.length ? vals.reduce((a, b) => a + b, 0) / vals.length : 0;
 }
 
-function AvgRow({
-  m,
-  days,
-  dayTotals,
-  goal,
-  logged,
-  hover,
-}: {
-  m: (typeof METRICS)[number];
-  days: string[];
-  dayTotals: Map<string, Nutrients>;
-  goal: number;
-  logged: boolean[];
-  hover: number | null;
-}) {
-  const onDay = hover != null && logged[hover];
-  const shown = onDay ? val(dayTotals.get(days[hover!]), m.key) : avgOf(days, logged, dayTotals, m.key);
-  const pct = goal > 0 ? Math.min(100, (shown / goal) * 100) : 0;
+function AvgRow({ r, days, hover }: { r: Row; days: string[]; hover: number | null }) {
+  const onDay = hover != null && r.mask[hover];
+  const shown = onDay ? r.get(days[hover!]) : avgOf(r, days);
+  const pct = r.goal > 0 ? Math.min(100, (shown / r.goal) * 100) : 0;
   return (
     <div>
       <div className="flex items-center justify-between text-sm">
         <span className="flex items-center gap-2">
-          <span className={`h-2 w-2 rounded-full ${m.dot}`} />
-          <span className="font-medium">{m.label}</span>
+          <span className={`h-2 w-2 rounded-full ${r.dot}`} />
+          <span className="font-medium">{r.label}</span>
         </span>
         <span className="tabular-nums">
           {!onDay && <span className="text-base-content/35">avg </span>}
           <span className="font-semibold">
-            {Math.round(shown)}
-            {m.unit}
+            {Math.round(shown).toLocaleString()}
+            {r.unit}
           </span>
-          <span className="text-base-content/40"> / {Math.round(goal)}</span>
+          {r.goal > 0 && (
+            <span className="text-base-content/40"> / {Math.round(r.goal).toLocaleString()}</span>
+          )}
         </span>
       </div>
-      <div className="mt-1.5 h-1.5 overflow-hidden rounded-full bg-base-300/60">
-        <div className={`h-full rounded-full ${m.dot}`} style={{ width: `${pct}%` }} />
-      </div>
+      {r.goal > 0 && (
+        <div className="mt-1.5 h-1.5 overflow-hidden rounded-full bg-base-300/60">
+          <div className={`h-full rounded-full ${r.dot}`} style={{ width: `${pct}%` }} />
+        </div>
+      )}
     </div>
   );
 }
 
-function Spark({
-  m,
-  days,
-  dayTotals,
-  goal,
-  logged,
-  hover,
-  n,
-}: {
-  m: (typeof METRICS)[number];
-  days: string[];
-  dayTotals: Map<string, Nutrients>;
-  goal: number;
-  logged: boolean[];
-  hover: number | null;
-  n: number;
-}) {
-  const v = (d: string) => val(dayTotals.get(d), m.key);
-  const loggedVals = days.filter((_, i) => logged[i]).map(v);
+function Spark({ r, days, hover, n }: { r: Row; days: string[]; hover: number | null; n: number }) {
+  const maskedVals = days.filter((_, i) => r.mask[i]).map(r.get);
   // Zoom the y-axis into the data's own range (not 0-based) so the trend is
   // visible — magnitude-vs-goal is the scoreboard's job, not the sparkline's.
-  const dataMin = loggedVals.length ? Math.min(...loggedVals) : 0;
-  const dataMax = loggedVals.length ? Math.max(...loggedVals) : 1;
+  const dataMin = maskedVals.length ? Math.min(...maskedVals) : 0;
+  const dataMax = maskedVals.length ? Math.max(...maskedVals) : 1;
   const span = dataMax - dataMin || Math.max(dataMax * 0.1, 1);
   const lo = Math.max(0, dataMin - span * 0.2);
   const hi = dataMax + span * 0.2;
@@ -211,20 +218,20 @@ function Spark({
   let d = "";
   let pen = false;
   days.forEach((day, i) => {
-    if (!logged[i]) {
+    if (!r.mask[i]) {
       pen = false;
       return;
     }
-    d += `${pen ? "L" : "M"}${x(i).toFixed(1)} ${y(v(day)).toFixed(1)} `;
+    d += `${pen ? "L" : "M"}${x(i).toFixed(1)} ${y(r.get(day)).toFixed(1)} `;
     pen = true;
   });
 
   // Only draw the goal line when it falls within the zoomed range.
-  const goalY = goal > 0 && goal >= lo && goal <= hi ? y(goal) : null;
-  const onDay = hover != null && logged[hover];
+  const goalY = r.goal > 0 && r.goal >= lo && r.goal <= hi ? y(r.goal) : null;
+  const onDay = hover != null && r.mask[hover];
 
   return (
-    <svg viewBox={`0 0 ${W} ${HH}`} width="100%" className={m.cls}>
+    <svg viewBox={`0 0 ${W} ${HH}`} width="100%" className={r.cls}>
       {goalY != null && (
         <line
           x1={PADX}
@@ -257,9 +264,7 @@ function Spark({
         strokeLinejoin="round"
         vectorEffect="non-scaling-stroke"
       />
-      {onDay && (
-        <circle cx={x(hover!)} cy={y(v(days[hover!]))} r={3.5} fill="currentColor" />
-      )}
+      {onDay && <circle cx={x(hover!)} cy={y(r.get(days[hover!]))} r={3.5} fill="currentColor" />}
     </svg>
   );
 }
