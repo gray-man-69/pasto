@@ -223,6 +223,16 @@ function SyncCard() {
             >
               {t("Sign out")}
             </button>
+            <p className="text-[11px] text-base-content/40">
+              {t("User ID (for the Health shortcut)")}:{" "}
+              <button
+                className="break-all font-mono text-base-content/60 hover:text-base-content"
+                onClick={() => navigator.clipboard?.writeText(user.uid).catch(() => {})}
+                title={t("Tap to copy")}
+              >
+                {user.uid}
+              </button>
+            </p>
           </>
         ) : (
           <>

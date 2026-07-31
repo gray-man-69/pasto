@@ -4,6 +4,8 @@ import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useLiveQuery } from "dexie-react-hooks";
 import { useLang, useT } from "@/components/LanguageProvider";
+import { useAuth } from "@/components/SyncProvider";
+import { useHealthDay } from "@/lib/health";
 import Ring from "@/components/Ring";
 import WeekStrip from "@/components/WeekStrip";
 import EntryEditor from "@/components/EntryEditor";
@@ -76,6 +78,8 @@ export default function TodayPage() {
   const water = useLiveQuery(() => waterForDate(selected), [selected]);
   const glasses = water?.glasses ?? 0;
   const waterGoal = goals?.water_glasses ?? 8;
+  const { user } = useAuth();
+  const health = useHealthDay(user?.uid, selected);
 
   const scaled = (entries ?? []).map(scaleSnapshot);
   const totals = sum(scaled);
@@ -169,6 +173,31 @@ export default function TodayPage() {
                   </div>
                 );
               })}
+            </div>
+          )}
+
+          {/* Activity — Apple Health numbers (steps / active burn / net kcal),
+              present only when the Shortcut has delivered data for this day. */}
+          {health && (health.steps != null || health.activeKcal != null) && (
+            <div className="mt-1 grid w-full max-w-sm grid-cols-3 gap-2 rounded-2xl border border-base-300/70 bg-base-200/40 p-3">
+              <div className="flex flex-col items-center gap-0.5">
+                <span className="text-base font-semibold tabular-nums">
+                  {(health.steps ?? 0).toLocaleString()}
+                </span>
+                <span className="text-[11px] text-base-content/50">{t("steps")}</span>
+              </div>
+              <div className="flex flex-col items-center gap-0.5">
+                <span className="text-base font-semibold tabular-nums text-amber-400">
+                  {Math.round(health.activeKcal ?? 0)}
+                </span>
+                <span className="text-[11px] text-base-content/50">{t("kcal burned")}</span>
+              </div>
+              <div className="flex flex-col items-center gap-0.5">
+                <span className="text-base font-semibold tabular-nums text-primary">
+                  {consumed - Math.round(health.activeKcal ?? 0)}
+                </span>
+                <span className="text-[11px] text-base-content/50">{t("net kcal")}</span>
+              </div>
             </div>
           )}
 

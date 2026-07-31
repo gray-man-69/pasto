@@ -95,6 +95,11 @@ export const it: Record<string, string> = {
     "Ogni 2 ore dalle 10:00 alle 22:00 finché i Big 3 di oggi non sono registrati.",
   "A nudge a few times a day when you're behind on water.":
     "Qualche promemoria al giorno quando sei indietro con l'acqua.",
+  "steps": "passi",
+  "kcal burned": "kcal bruciate",
+  "net kcal": "kcal nette",
+  "User ID (for the Health shortcut)": "ID utente (per il comando Salute)",
+  "Tap to copy": "Tocca per copiare",
   "Couldn't change reminders.": "Impossibile modificare i promemoria.",
   "Sync across devices": "Sincronizza tra dispositivi",
   "Signed in as": "Accesso effettuato come",
