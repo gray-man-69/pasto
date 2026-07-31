@@ -80,6 +80,26 @@ for (const docSnap of subs.docs) {
   const wakeStart = s.wakeStart ?? 8;
   const wakeEnd = s.wakeEnd ?? 22;
   const { date, hour } = localNow(tz);
+  const who = uid.slice(0, 6);
+
+  // The cron runs hourly (GitHub delays/skips make a 2-hourly cron unreliable);
+  // sending only on even LOCAL hours keeps the every-2-hours cadence.
+  if (!TEST && Math.floor(hour) % 2 !== 0) {
+    skipped++;
+    continue;
+  }
+
+  // Every device the user enabled reminders from (new per-device map), plus the
+  // legacy single `subscription` field from older docs (deduped by endpoint).
+  const devices = Object.entries(s.subscriptions || {}).map(([key, sub]) => ({ key, sub }));
+  if (s.subscription && !devices.some((d) => d.sub?.endpoint === s.subscription.endpoint)) {
+    devices.push({ key: null, sub: s.subscription });
+  }
+  if (devices.length === 0) {
+    console.log(`${who}: no subscriptions — skipping`);
+    skipped++;
+    continue;
+  }
 
   // Today's progress + goal from the synced state doc.
   const stateSnap = await db.doc(`users/${uid}/state/main`).get();
@@ -88,52 +108,72 @@ for (const docSnap of subs.docs) {
   const today = (state?.water || []).find((w) => w.date === date);
   const glasses = today?.glasses ?? 0;
 
+  // Send a payload to every device; prune subscriptions that are gone (404/410).
+  const dead = new Set();
   const push = async (payload) => {
-    await webpush.sendNotification(s.subscription, JSON.stringify(payload));
-    sent++;
-  };
-
-  try {
-    // --- Water ---------------------------------------------------------------
-    // Per-user flag; legacy docs (only `enabled`) mean water on. Independent of
-    // the Big 3 flag below — each account picks its own mix.
-    let waterDue = (s.waterEnabled ?? true) === true;
-    if (waterDue && !TEST) {
-      // Only during waking hours, and only if behind the linear pace.
-      if (hour < wakeStart || hour >= wakeEnd) waterDue = false;
-      else {
-        const frac = Math.min(1, (hour - wakeStart) / (wakeEnd - wakeStart));
-        const expected = Math.ceil(goal * frac);
-        if (glasses >= expected || glasses >= goal) waterDue = false;
+    for (const d of devices) {
+      if (dead.has(d)) continue;
+      try {
+        await webpush.sendNotification(d.sub, JSON.stringify(payload));
+        sent++;
+      } catch (e) {
+        console.error(`${who}: send failed (device ${d.key ?? "legacy"}):`, e.statusCode);
+        if (e.statusCode === 404 || e.statusCode === 410) dead.add(d);
       }
     }
-    if (waterDue) {
-      const { title, body } = buildMessage(glasses, goal);
-      await push({ title, body, url: APP_URL });
-    } else {
-      skipped++;
-    }
+  };
 
-    // --- McGill Big 3 --------------------------------------------------------
-    // Opt-in per user (big3Enabled on the subscriber doc — Settings toggle).
-    // Done = a McGill conditioning session logged today (the in-app Big 3 timer
-    // records one on completion — see ConditioningSession kind "mcgill").
-    const big3Done = (state?.conditioning || []).some((c) => c.kind === "mcgill" && c.date === date);
-    const big3Due =
-      s.big3Enabled === true && (TEST || (hour >= BIG3_START && hour <= BIG3_END && !big3Done));
-    if (big3Due) {
-      await push({
-        title: "🧱 McGill Big 3",
-        body: BIG3_MESSAGES[Math.floor(Math.random() * BIG3_MESSAGES.length)],
-        url: "https://gray-man-69.github.io/pasto/",
-        tag: "big3-reminder", // separate tag: doesn't replace the water notification
-      });
+  // --- Water -----------------------------------------------------------------
+  // Per-user flag; legacy docs (only `enabled`) mean water on. Independent of
+  // the Big 3 flag below — each account picks its own mix.
+  const waterOn = (s.waterEnabled ?? true) === true;
+  let waterDue = waterOn;
+  if (waterDue && !TEST) {
+    // Only during waking hours, and only if behind the linear pace.
+    if (hour < wakeStart || hour >= wakeEnd) waterDue = false;
+    else {
+      const frac = Math.min(1, (hour - wakeStart) / (wakeEnd - wakeStart));
+      const expected = Math.ceil(goal * frac);
+      if (glasses >= expected || glasses >= goal) waterDue = false;
     }
-  } catch (e) {
-    console.error(`send failed for ${uid}:`, e.statusCode);
-    if (e.statusCode === 404 || e.statusCode === 410) {
-      await docSnap.ref.set({ enabled: false }, { merge: true }); // subscription gone
+  }
+  if (waterDue) {
+    const { title, body } = buildMessage(glasses, goal);
+    await push({ title, body, url: APP_URL });
+  } else {
+    skipped++;
+  }
+
+  // --- McGill Big 3 ------------------------------------------------------------
+  // Opt-in per user (big3Enabled on the subscriber doc — Settings toggle).
+  // Done = a McGill conditioning session logged today (the in-app Big 3 timer
+  // records one on completion — see ConditioningSession kind "mcgill").
+  const big3On = s.big3Enabled === true;
+  const big3Done = (state?.conditioning || []).some((c) => c.kind === "mcgill" && c.date === date);
+  const big3Due = big3On && (TEST || (hour >= BIG3_START && hour <= BIG3_END && !big3Done));
+  if (big3Due) {
+    await push({
+      title: "🧱 McGill Big 3",
+      body: BIG3_MESSAGES[Math.floor(Math.random() * BIG3_MESSAGES.length)],
+      url: "https://gray-man-69.github.io/pasto/",
+      tag: "big3-reminder", // separate tag: doesn't replace the water notification
+    });
+  }
+
+  console.log(
+    `${who}: tz=${tz} hour=${hour.toFixed(2)} devices=${devices.length} ` +
+      `water(on=${waterOn} due=${waterDue}) big3(on=${big3On} done=${big3Done} due=${big3Due})`,
+  );
+
+  // Prune dead device subscriptions so we stop retrying them.
+  if (dead.size) {
+    const update = {};
+    for (const d of dead) {
+      if (d.key) update[`subscriptions.${d.key}`] = admin.firestore.FieldValue.delete();
+      else update.subscription = admin.firestore.FieldValue.delete();
     }
+    if (dead.size === devices.length) update.enabled = false; // nothing left to reach
+    await docSnap.ref.update(update);
   }
 }
 

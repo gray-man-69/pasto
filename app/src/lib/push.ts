@@ -56,8 +56,17 @@ export async function reminderFlags(uid: string): Promise<ReminderFlags> {
   }
 }
 
-/** Turn one reminder type on: asks permission, subscribes this device, and
- * flips just that flag (the other type is untouched). */
+// Stable key for a device's subscription (hash of the push endpoint) so each
+// device gets its own slot in the `subscriptions` map — enabling on a second
+// device must ADD it, never replace the first one's.
+function subKey(endpoint: string): string {
+  let h = 5381;
+  for (let i = 0; i < endpoint.length; i++) h = ((h << 5) + h + endpoint.charCodeAt(i)) >>> 0;
+  return h.toString(36);
+}
+
+/** Turn one reminder type on: asks permission, subscribes THIS device (added
+ * alongside any other devices), and flips just that flag. */
 export async function enableReminderType(uid: string, type: ReminderType): Promise<void> {
   const permission = await Notification.requestPermission();
   if (permission !== "granted") {
@@ -80,7 +89,7 @@ export async function enableReminderType(uid: string, type: ReminderType): Promi
       tz: Intl.DateTimeFormat().resolvedOptions().timeZone || "UTC",
       wakeStart: 8,
       wakeEnd: 22,
-      subscription: sub.toJSON(),
+      subscriptions: { [subKey(sub.endpoint)]: sub.toJSON() },
       updatedAt: Date.now(),
     },
     { merge: true },

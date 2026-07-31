@@ -2,7 +2,10 @@ name: Water reminders
 
 on:
   schedule:
-    - cron: "0 */2 * * *" # every 2 hours (UTC); the sender filters to each user's waking hours
+    # Hourly on purpose: GitHub delays/skips scheduled runs, so a 2-hourly cron
+    # degrades to ~4-hourly in practice. The sender only sends on even LOCAL
+    # hours, keeping the every-2-hours cadence per user.
+    - cron: "0 * * * *"
   workflow_dispatch:
     inputs:
       test:
