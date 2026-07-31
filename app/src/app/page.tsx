@@ -209,6 +209,7 @@ export default function TodayPage() {
               </button>
             </div>
           </div>
+
         </section>
 
         {/* Log — grouped into meals */}

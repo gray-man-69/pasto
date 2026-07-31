@@ -62,7 +62,7 @@ self.addEventListener("push", (event) => {
       body: data.body || "",
       icon: `${BASE}/icon-192.png`,
       badge: `${BASE}/icon-192.png`,
-      tag: "water-reminder",
+      tag: data.tag || "water-reminder",
       renotify: true,
       data: { url: data.url || `${BASE}/` },
     }),

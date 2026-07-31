@@ -57,6 +57,18 @@ function buildMessage(glasses, goal) {
   return { title: "💧 Promemoria acqua", body: options[Math.floor(Math.random() * options.length)] };
 }
 
+// McGill Big 3 nudge window (local hours): every run inside it reminds until
+// the day's check-off is marked done in the app.
+const BIG3_START = 10;
+const BIG3_END = 22; // inclusive — last nudge at the 22:00 run
+
+const BIG3_MESSAGES = [
+  "Curl-up, side plank, bird dog — la schiena ringrazia 🧱",
+  "Non ancora fatti oggi: 10 minuti per i Big 3 💪",
+  "Promemoria Big 3: core stabile, schiena protetta 🧱",
+  "È ora dei Big 3 di McGill — falli adesso, poi spunta ✓",
+];
+
 const subs = await db.collection("pushSubscribers").where("enabled", "==", true).get();
 let sent = 0,
   skipped = 0;
@@ -76,24 +88,43 @@ for (const docSnap of subs.docs) {
   const today = (state?.water || []).find((w) => w.date === date);
   const glasses = today?.glasses ?? 0;
 
-  if (!TEST) {
-    // Only during waking hours, and only if behind the linear pace.
-    if (hour < wakeStart || hour >= wakeEnd) {
-      skipped++;
-      continue;
-    }
-    const frac = Math.min(1, (hour - wakeStart) / (wakeEnd - wakeStart));
-    const expected = Math.ceil(goal * frac);
-    if (glasses >= expected || glasses >= goal) {
-      skipped++;
-      continue;
-    }
-  }
-
-  const { title, body } = buildMessage(glasses, goal);
-  try {
-    await webpush.sendNotification(s.subscription, JSON.stringify({ title, body, url: APP_URL }));
+  const push = async (payload) => {
+    await webpush.sendNotification(s.subscription, JSON.stringify(payload));
     sent++;
+  };
+
+  try {
+    // --- Water ---------------------------------------------------------------
+    let waterDue = true;
+    if (!TEST) {
+      // Only during waking hours, and only if behind the linear pace.
+      if (hour < wakeStart || hour >= wakeEnd) waterDue = false;
+      else {
+        const frac = Math.min(1, (hour - wakeStart) / (wakeEnd - wakeStart));
+        const expected = Math.ceil(goal * frac);
+        if (glasses >= expected || glasses >= goal) waterDue = false;
+      }
+    }
+    if (waterDue) {
+      const { title, body } = buildMessage(glasses, goal);
+      await push({ title, body, url: APP_URL });
+    } else {
+      skipped++;
+    }
+
+    // --- McGill Big 3 --------------------------------------------------------
+    // Done = a McGill conditioning session logged today (the in-app Big 3 timer
+    // records one on completion — see ConditioningSession kind "mcgill").
+    const big3Done = (state?.conditioning || []).some((c) => c.kind === "mcgill" && c.date === date);
+    const big3Due = TEST || (hour >= BIG3_START && hour <= BIG3_END && !big3Done);
+    if (big3Due) {
+      await push({
+        title: "🧱 McGill Big 3",
+        body: BIG3_MESSAGES[Math.floor(Math.random() * BIG3_MESSAGES.length)],
+        url: "https://gray-man-69.github.io/pasto/",
+        tag: "big3-reminder", // separate tag: doesn't replace the water notification
+      });
+    }
   } catch (e) {
     console.error(`send failed for ${uid}:`, e.statusCode);
     if (e.statusCode === 404 || e.statusCode === 410) {
@@ -102,4 +133,4 @@ for (const docSnap of subs.docs) {
   }
 }
 
-console.log(`water-reminders: sent=${sent} skipped=${skipped} total=${subs.size}`);
+console.log(`reminders: sent=${sent} skipped=${skipped} total=${subs.size}`);
