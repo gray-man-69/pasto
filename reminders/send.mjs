@@ -95,8 +95,10 @@ for (const docSnap of subs.docs) {
 
   try {
     // --- Water ---------------------------------------------------------------
-    let waterDue = true;
-    if (!TEST) {
+    // Per-user flag; legacy docs (only `enabled`) mean water on. Independent of
+    // the Big 3 flag below — each account picks its own mix.
+    let waterDue = (s.waterEnabled ?? true) === true;
+    if (waterDue && !TEST) {
       // Only during waking hours, and only if behind the linear pace.
       if (hour < wakeStart || hour >= wakeEnd) waterDue = false;
       else {

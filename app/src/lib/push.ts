@@ -28,8 +28,37 @@ export function pushSupported(): boolean {
 
 const subDoc = (uid: string) => doc(firestore, "pushSubscribers", uid);
 
-/** Ask permission, subscribe this device to push, and store it for `uid`. */
-export async function enableReminders(uid: string): Promise<void> {
+// Each reminder type is an independent account-level flag on the subscriber
+// doc (waterEnabled / big3Enabled). `enabled` stays as the master switch the
+// sender queries on: true while ANY type is on. Legacy docs that predate the
+// flags have only `enabled` — that means water on, big3 off.
+export type ReminderType = "water" | "big3";
+export interface ReminderFlags {
+  water: boolean;
+  big3: boolean;
+}
+
+function flagsOf(d: Record<string, unknown> | undefined): ReminderFlags {
+  const base = d?.enabled === true;
+  return {
+    water: (d?.waterEnabled as boolean | undefined) ?? base,
+    big3: d?.big3Enabled === true,
+  };
+}
+
+/** The account's reminder toggles (independent of this device's permission). */
+export async function reminderFlags(uid: string): Promise<ReminderFlags> {
+  try {
+    const snap = await getDoc(subDoc(uid));
+    return flagsOf(snap.exists() ? snap.data() : undefined);
+  } catch {
+    return { water: false, big3: false };
+  }
+}
+
+/** Turn one reminder type on: asks permission, subscribes this device, and
+ * flips just that flag (the other type is untouched). */
+export async function enableReminderType(uid: string, type: ReminderType): Promise<void> {
   const permission = await Notification.requestPermission();
   if (permission !== "granted") {
     throw new Error("Notifications are blocked — allow them for this app in your phone settings.");
@@ -42,12 +71,12 @@ export async function enableReminders(uid: string): Promise<void> {
       applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY),
     });
   }
-  // merge: keep per-reminder flags (e.g. big3Enabled) across re-enables.
   await setDoc(
     subDoc(uid),
     {
       uid,
       enabled: true,
+      [`${type}Enabled`]: true,
       tz: Intl.DateTimeFormat().resolvedOptions().timeZone || "UTC",
       wakeStart: 8,
       wakeEnd: 22,
@@ -58,50 +87,19 @@ export async function enableReminders(uid: string): Promise<void> {
   );
 }
 
-/** Stop reminders for this device. */
-export async function disableReminders(uid: string): Promise<void> {
-  try {
-    const reg = await navigator.serviceWorker.ready;
-    const sub = await reg.pushManager.getSubscription();
-    if (sub) await sub.unsubscribe();
-  } catch {
-    /* ignore */
-  }
-  await setDoc(subDoc(uid), { enabled: false, updatedAt: Date.now() }, { merge: true });
-}
-
-export async function remindersEnabled(uid: string): Promise<boolean> {
-  try {
-    if (Notification.permission !== "granted") return false;
-    const snap = await getDoc(subDoc(uid));
-    return snap.exists() && snap.data().enabled === true;
-  } catch {
-    return false;
-  }
-}
-
-/** Whether the ACCOUNT has an active reminders subscription (any device).
- * Unlike remindersEnabled, ignores this device's notification permission —
- * used to show account-level per-reminder toggles on every signed-in device. */
-export async function accountRemindersEnabled(uid: string): Promise<boolean> {
-  try {
-    const snap = await getDoc(subDoc(uid));
-    return snap.exists() && snap.data().enabled === true;
-  } catch {
-    return false;
-  }
-}
-
-/** Toggle the McGill Big 3 reminder (needs the main reminders to be enabled). */
-export async function setBig3Reminders(uid: string, on: boolean): Promise<void> {
-  await setDoc(subDoc(uid), { big3Enabled: on, updatedAt: Date.now() }, { merge: true });
-}
-
-export async function big3RemindersEnabled(uid: string): Promise<boolean> {
-  try {
-    const snap = await getDoc(subDoc(uid));
-    return snap.exists() && snap.data().big3Enabled === true;
-  } catch {
-    return false;
-  }
+/** Turn one reminder type off. The push subscription stays; when both types
+ * are off the master `enabled` goes false so the sender skips the doc. */
+export async function disableReminderType(uid: string, type: ReminderType): Promise<void> {
+  const snap = await getDoc(subDoc(uid));
+  const next = { ...flagsOf(snap.exists() ? snap.data() : undefined), [type]: false };
+  await setDoc(
+    subDoc(uid),
+    {
+      waterEnabled: next.water,
+      big3Enabled: next.big3,
+      enabled: next.water || next.big3,
+      updatedAt: Date.now(),
+    },
+    { merge: true },
+  );
 }

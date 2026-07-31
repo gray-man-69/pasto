@@ -6,13 +6,11 @@ import { useAuth } from "@/components/SyncProvider";
 import { LANGS, LANG_LABEL } from "@/lib/i18n";
 import { exportData, importData, localDate } from "@/lib/db";
 import {
-  accountRemindersEnabled,
-  big3RemindersEnabled,
-  disableReminders,
-  enableReminders,
+  disableReminderType,
+  enableReminderType,
   pushSupported,
-  remindersEnabled,
-  setBig3Reminders,
+  reminderFlags,
+  type ReminderType,
 } from "@/lib/push";
 
 // App & account settings: cross-device sync, water reminders, and local backup.
@@ -63,32 +61,25 @@ function LanguageCard() {
 function RemindersCard() {
   const t = useT();
   const { user } = useAuth();
-  const [on, setOn] = useState(false);
-  const [accountOn, setAccountOn] = useState(false);
-  const [big3On, setBig3On] = useState(false);
+  const [flags, setFlags] = useState({ water: false, big3: false });
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
   const supported = pushSupported();
 
   useEffect(() => {
-    if (user) {
-      remindersEnabled(user.uid).then(setOn);
-      accountRemindersEnabled(user.uid).then(setAccountOn);
-      big3RemindersEnabled(user.uid).then(setBig3On);
-    } else {
-      setOn(false);
-      setAccountOn(false);
-      setBig3On(false);
-    }
+    if (user) reminderFlags(user.uid).then(setFlags);
+    else setFlags({ water: false, big3: false });
   }, [user]);
 
-  async function toggleBig3() {
+  async function toggle(type: ReminderType) {
     if (!user) return;
     setBusy(true);
     setErr(null);
     try {
-      await setBig3Reminders(user.uid, !big3On);
-      setBig3On(!big3On);
+      const next = !flags[type];
+      if (next) await enableReminderType(user.uid, type);
+      else await disableReminderType(user.uid, type);
+      setFlags({ ...flags, [type]: next });
     } catch (e) {
       setErr(e instanceof Error ? e.message : t("Couldn't change reminders."));
     } finally {
@@ -96,32 +87,23 @@ function RemindersCard() {
     }
   }
 
-  async function toggle() {
-    if (!user) return;
-    setBusy(true);
-    setErr(null);
-    try {
-      if (on) {
-        await disableReminders(user.uid);
-        setOn(false);
-      } else {
-        await enableReminders(user.uid);
-        setOn(true);
-      }
-    } catch (e) {
-      setErr(e instanceof Error ? e.message : t("Couldn't change reminders."));
-    } finally {
-      setBusy(false);
-    }
-  }
+  const ROWS: { type: ReminderType; label: string; hint: string }[] = [
+    {
+      type: "water",
+      label: t("💧 Water reminders"),
+      hint: t("A nudge a few times a day when you're behind on water."),
+    },
+    {
+      type: "big3",
+      label: t("🧱 Big 3 reminders"),
+      hint: t("Every 2h from 10:00 to 22:00 until today's Big 3 is logged."),
+    },
+  ];
 
   return (
     <div className="card bg-base-100 shadow-sm">
       <div className="card-body gap-3 py-5">
-        <div className="flex items-center justify-between">
-          <span className="font-medium">{t("💧 Water reminders")}</span>
-          {on && <span className="text-xs text-success">{t("on ✓")}</span>}
-        </div>
+        <span className="font-medium">{t("🔔 Reminders")}</span>
         {!supported ? (
           <p className="text-xs text-base-content/50">
             {t("This device doesn't support notifications. On iPhone, add Pasto to your Home Screen (Share → Add to Home Screen) and open it from there.")}
@@ -132,35 +114,26 @@ function RemindersCard() {
           </p>
         ) : (
           <>
-            <p className="text-xs text-base-content/50">
-              {t("Get a gentle nudge a few times a day when you're behind on water. Tap the notification to open the app and log a glass.")}
-            </p>
             {err && <div className="text-xs text-error">{err}</div>}
-            <button
-              className={`btn btn-sm self-start ${on ? "btn-outline" : "btn-primary"}`}
-              onClick={toggle}
-              disabled={busy}
-            >
-              {busy ? "…" : on ? t("Turn off reminders") : t("Turn on reminders")}
-            </button>
-            {(on || accountOn) && (
-              <div className="mt-1 flex items-center justify-between rounded-xl border border-base-300/70 bg-base-200/40 p-3">
+            {ROWS.map((r) => (
+              <div
+                key={r.type}
+                className="flex items-center justify-between gap-3 rounded-xl border border-base-300/70 bg-base-200/40 p-3"
+              >
                 <div className="flex flex-col">
-                  <span className="text-sm font-medium">{t("🧱 Big 3 reminders")}</span>
-                  <span className="text-[11px] text-base-content/50">
-                    {t("Every 2h from 10:00 to 22:00 until today's Big 3 is logged.")}
-                  </span>
+                  <span className="text-sm font-medium">{r.label}</span>
+                  <span className="text-[11px] text-base-content/50">{r.hint}</span>
                 </div>
                 <input
                   type="checkbox"
                   className="toggle toggle-primary"
-                  checked={big3On}
-                  onChange={toggleBig3}
+                  checked={flags[r.type]}
+                  onChange={() => toggle(r.type)}
                   disabled={busy}
-                  aria-label={t("🧱 Big 3 reminders")}
+                  aria-label={r.label}
                 />
               </div>
-            )}
+            ))}
           </>
         )}
       </div>

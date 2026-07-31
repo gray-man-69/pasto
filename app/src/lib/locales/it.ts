@@ -91,6 +91,9 @@ export const it: Record<string, string> = {
   "🧱 Big 3 reminders": "🧱 Promemoria Big 3",
   "Every 2h from 10:00 to 22:00 until today's Big 3 is logged.":
     "Ogni 2 ore dalle 10:00 alle 22:00 finché i Big 3 di oggi non sono registrati.",
+  "🔔 Reminders": "🔔 Promemoria",
+  "A nudge a few times a day when you're behind on water.":
+    "Qualche promemoria al giorno quando sei indietro con l'acqua.",
   "Couldn't change reminders.": "Impossibile modificare i promemoria.",
   "Sync across devices": "Sincronizza tra dispositivi",
   "Signed in as": "Accesso effettuato come",
