@@ -107,7 +107,12 @@ async function handleHealth(request, env) {
   const uid = typeof body.uid === "string" ? body.uid.trim() : "";
   if (!/^[A-Za-z0-9]{10,64}$/.test(uid)) return json({ error: "Bad uid." }, 400, {});
 
-  const days = body.days && typeof body.days === "object" ? Object.entries(body.days) : [];
+  let days = body.days && typeof body.days === "object" ? Object.entries(body.days) : [];
+  // Flat single-day shape too — much easier to build in the iOS Shortcut:
+  //   { token, uid, date: "2026-07-31", steps: 8214, activeKcal: 512 }
+  if (days.length === 0 && typeof body.date === "string") {
+    days = [[body.date.trim(), body]];
+  }
   if (days.length === 0 || days.length > 7) return json({ error: "Send 1–7 days." }, 400, {});
 
   let token;
