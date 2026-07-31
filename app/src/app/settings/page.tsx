@@ -87,23 +87,46 @@ function RemindersCard() {
     }
   }
 
-  const ROWS: { type: ReminderType; label: string; hint: string }[] = [
+  // Thin-stroke line icons matching the nav/meal icons (no emoji). The Big 3
+  // one is the same mark as the McGill card on the Training tab.
+  const iconProps = {
+    viewBox: "0 0 24 24",
+    fill: "none",
+    stroke: "currentColor",
+    strokeWidth: 1.8,
+    strokeLinecap: "round" as const,
+    strokeLinejoin: "round" as const,
+    className: "h-5 w-5",
+  };
+  const ROWS: { type: ReminderType; label: string; hint: string; accent: string; icon: React.ReactNode }[] = [
     {
       type: "water",
-      label: t("💧 Water reminders"),
+      label: t("Water reminders"),
       hint: t("A nudge a few times a day when you're behind on water."),
+      accent: "text-sky-400",
+      icon: (
+        <svg {...iconProps}>
+          <path d="M12 3.5c3.5 4.2 6 7.2 6 10.2a6 6 0 0 1-12 0c0-3 2.5-6 6-10.2Z" />
+        </svg>
+      ),
     },
     {
       type: "big3",
-      label: t("🧱 Big 3 reminders"),
+      label: t("Big 3 reminders"),
       hint: t("Every 2h from 10:00 to 22:00 until today's Big 3 is logged."),
+      accent: "text-primary",
+      icon: (
+        <svg {...iconProps} strokeWidth={2}>
+          <path d="M6.5 3v6M6.5 15v6M17.5 3v6M17.5 15v6M4.5 9h4M15.5 9h4M4.5 15h4M15.5 15h4M8.5 12h7" />
+        </svg>
+      ),
     },
   ];
 
   return (
     <div className="card bg-base-100 shadow-sm">
       <div className="card-body gap-3 py-5">
-        <span className="font-medium">{t("🔔 Reminders")}</span>
+        <span className="font-medium">{t("Reminders")}</span>
         {!supported ? (
           <p className="text-xs text-base-content/50">
             {t("This device doesn't support notifications. On iPhone, add Pasto to your Home Screen (Share → Add to Home Screen) and open it from there.")}
@@ -120,9 +143,12 @@ function RemindersCard() {
                 key={r.type}
                 className="flex items-center justify-between gap-3 rounded-xl border border-base-300/70 bg-base-200/40 p-3"
               >
-                <div className="flex flex-col">
-                  <span className="text-sm font-medium">{r.label}</span>
-                  <span className="text-[11px] text-base-content/50">{r.hint}</span>
+                <div className="flex items-center gap-3">
+                  <span className={r.accent}>{r.icon}</span>
+                  <div className="flex flex-col">
+                    <span className="text-sm font-medium">{r.label}</span>
+                    <span className="text-[11px] text-base-content/50">{r.hint}</span>
+                  </div>
                 </div>
                 <input
                   type="checkbox"
