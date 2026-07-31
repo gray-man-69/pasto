@@ -80,6 +80,18 @@ export async function remindersEnabled(uid: string): Promise<boolean> {
   }
 }
 
+/** Whether the ACCOUNT has an active reminders subscription (any device).
+ * Unlike remindersEnabled, ignores this device's notification permission —
+ * used to show account-level per-reminder toggles on every signed-in device. */
+export async function accountRemindersEnabled(uid: string): Promise<boolean> {
+  try {
+    const snap = await getDoc(subDoc(uid));
+    return snap.exists() && snap.data().enabled === true;
+  } catch {
+    return false;
+  }
+}
+
 /** Toggle the McGill Big 3 reminder (needs the main reminders to be enabled). */
 export async function setBig3Reminders(uid: string, on: boolean): Promise<void> {
   await setDoc(subDoc(uid), { big3Enabled: on, updatedAt: Date.now() }, { merge: true });

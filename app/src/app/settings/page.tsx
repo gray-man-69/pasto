@@ -6,6 +6,7 @@ import { useAuth } from "@/components/SyncProvider";
 import { LANGS, LANG_LABEL } from "@/lib/i18n";
 import { exportData, importData, localDate } from "@/lib/db";
 import {
+  accountRemindersEnabled,
   big3RemindersEnabled,
   disableReminders,
   enableReminders,
@@ -63,6 +64,7 @@ function RemindersCard() {
   const t = useT();
   const { user } = useAuth();
   const [on, setOn] = useState(false);
+  const [accountOn, setAccountOn] = useState(false);
   const [big3On, setBig3On] = useState(false);
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
@@ -71,9 +73,11 @@ function RemindersCard() {
   useEffect(() => {
     if (user) {
       remindersEnabled(user.uid).then(setOn);
+      accountRemindersEnabled(user.uid).then(setAccountOn);
       big3RemindersEnabled(user.uid).then(setBig3On);
     } else {
       setOn(false);
+      setAccountOn(false);
       setBig3On(false);
     }
   }, [user]);
@@ -139,7 +143,7 @@ function RemindersCard() {
             >
               {busy ? "…" : on ? t("Turn off reminders") : t("Turn on reminders")}
             </button>
-            {on && (
+            {(on || accountOn) && (
               <div className="mt-1 flex items-center justify-between rounded-xl border border-base-300/70 bg-base-200/40 p-3">
                 <div className="flex flex-col">
                   <span className="text-sm font-medium">{t("🧱 Big 3 reminders")}</span>
