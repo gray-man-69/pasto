@@ -80,6 +80,7 @@ export default function TodayPage() {
   const waterGoal = goals?.water_glasses ?? 8;
   const { user } = useAuth();
   const health = useHealthDay(user?.uid, selected);
+  const burned = Math.round(health?.activeKcal ?? 0);
 
   const scaled = (entries ?? []).map(scaleSnapshot);
   const totals = sum(scaled);
@@ -127,6 +128,8 @@ export default function TodayPage() {
             {dateLabel}
           </div>
 
+          {/* Eaten (lime, outer) with the day's burn as a thin amber arc inside
+              (design C) — energy in vs out in one glance, no repeated numbers. */}
           <Ring
             value={consumed}
             max={goalKcal || 2000}
@@ -134,18 +137,29 @@ export default function TodayPage() {
             stroke={7}
             colorClass={over ? "text-red-500" : "text-primary"}
           >
-            <span className="flex flex-col items-center">
-              <span
-                className={`text-5xl font-bold leading-none tracking-tight tabular-nums ${
-                  over ? "text-red-500" : ""
-                }`}
-              >
-                {consumed}
-              </span>
-              <span className="mt-1.5 text-xs text-base-content/40">
-                {t("of {n} kcal", { n: goalKcal || 2000 })}
-              </span>
-            </span>
+            {(() => {
+              const label = (
+                <span className="flex flex-col items-center">
+                  <span
+                    className={`text-5xl font-bold leading-none tracking-tight tabular-nums ${
+                      over ? "text-red-500" : ""
+                    }`}
+                  >
+                    {consumed}
+                  </span>
+                  <span className="mt-1.5 text-xs text-base-content/40">
+                    {t("of {n} kcal", { n: goalKcal || 2000 })}
+                  </span>
+                </span>
+              );
+              return burned > 0 ? (
+                <Ring value={burned} max={goalKcal || 2000} size="10.4rem" stroke={4.5} colorClass="text-amber-400">
+                  {label}
+                </Ring>
+              ) : (
+                label
+              );
+            })()}
           </Ring>
 
           <span
@@ -155,6 +169,13 @@ export default function TodayPage() {
           >
             {over ? t("{n} over", { n: consumed - goalKcal }) : t("{n} left", { n: remaining })}
           </span>
+
+          {burned > 0 && (
+            <span className="-mt-2 flex items-center gap-1.5 text-xs tabular-nums text-base-content/50">
+              <span className="h-2 w-2 rounded-full bg-amber-400" />
+              {t("{b} burned · {n} net", { b: burned, n: consumed - burned })}
+            </span>
+          )}
 
           {goals && (
             <div className="mt-1 grid w-full max-w-sm grid-cols-4 gap-2">
@@ -176,75 +197,52 @@ export default function TodayPage() {
             </div>
           )}
 
-          {/* Activity — Apple Health numbers, present only when the Shortcut has
-              delivered data for this day. Burned/net only when there IS a burn —
-              with 0 burned, net === eaten and would just duplicate the big ring. */}
-          {health && (health.steps != null || (health.activeKcal ?? 0) > 0) && (
+          {/* Steps + Water tiles (design C). Water keeps its tap-the-dots editor;
+              the steps tile appears once Apple Health data lands for the day. */}
+          <div className="mt-1 grid w-full max-w-sm grid-cols-2 gap-2">
+            {health?.steps != null && (
+              <div className="flex flex-col gap-1 rounded-2xl border border-base-300/70 bg-base-200/40 p-3">
+                <span className="flex items-center gap-1.5 text-xs text-base-content/50">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4">
+                    <path d="M4 16v-2.4C4 11.5 3 10.5 3 8c0-2.7 1.5-6 4.5-6C9.4 2 10 3.8 10 5.5c0 3.1-2 5.7-2 8.7V16a2 2 0 1 1-4 0Z" />
+                    <path d="M20 20v-2.4c0-2.1 1-3.1 1-5.6 0-2.7-1.5-6-4.5-6C14.6 6 14 7.8 14 9.5c0 3.1 2 5.7 2 8.7V20a2 2 0 1 0 4 0Z" />
+                  </svg>
+                  {t("Steps")}
+                </span>
+                <span className="text-xl font-bold tabular-nums">{health.steps.toLocaleString()}</span>
+                <span className="text-[11px] text-base-content/40">{t("today")}</span>
+              </div>
+            )}
             <div
-              className={`mt-1 grid w-full max-w-sm gap-2 rounded-2xl border border-base-300/70 bg-base-200/40 p-3 ${
-                (health.activeKcal ?? 0) > 0 ? "grid-cols-3" : "grid-cols-1"
+              className={`flex flex-col gap-1.5 rounded-2xl border border-base-300/70 bg-base-200/40 p-3 ${
+                health?.steps != null ? "" : "col-span-2"
               }`}
             >
-              <div className="flex flex-col items-center gap-0.5">
-                <span className="text-base font-semibold tabular-nums">
-                  {(health.steps ?? 0).toLocaleString()}
-                </span>
-                <span className="text-[11px] text-base-content/50">{t("steps")}</span>
-              </div>
-              {(health.activeKcal ?? 0) > 0 && (
-                <>
-                  <div className="flex flex-col items-center gap-0.5">
-                    <span className="text-base font-semibold tabular-nums text-amber-400">
-                      {Math.round(health.activeKcal ?? 0)}
-                    </span>
-                    <span className="text-[11px] text-base-content/50">{t("kcal burned")}</span>
-                  </div>
-                  <div className="flex flex-col items-center gap-0.5">
-                    <span className="text-base font-semibold tabular-nums text-primary">
-                      {consumed - Math.round(health.activeKcal ?? 0)}
-                    </span>
-                    <span className="text-[11px] text-base-content/50">{t("net kcal")}</span>
-                  </div>
-                </>
-              )}
-            </div>
-          )}
-
-          {/* Water — one-tap logging */}
-          <div className="mt-1 flex w-full max-w-sm flex-col gap-2.5 rounded-2xl border border-base-300/70 bg-base-200/40 p-3">
-            <div className="flex items-center justify-between">
-              <span className="text-sm font-semibold">{t("💧 Water")}</span>
-              <span className="text-sm tabular-nums text-base-content/60">
-                {t("{n} / {goal} glasses", { n: glasses, goal: waterGoal })}
+              <span className="flex items-center gap-1.5 text-xs text-base-content/50">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4 text-sky-400">
+                  <path d="M12 3.5c3.5 4.2 6 7.2 6 10.2a6 6 0 0 1-12 0c0-3 2.5-6 6-10.2Z" />
+                </svg>
+                {t("Water")}
               </span>
-            </div>
-            <div className="flex flex-wrap gap-1.5">
-              {Array.from({ length: Math.max(waterGoal, glasses) }).map((_, i) => (
+              <span className="text-xl font-bold tabular-nums">
+                {glasses} <span className="text-xs font-semibold text-base-content/40">/ {waterGoal}</span>
+              </span>
+              <div className="flex gap-1.5">
                 <button
-                  key={i}
-                  aria-label={t("Set {n} glasses", { n: i + 1 })}
-                  onClick={() => addGlasses(selected, i + 1 - glasses)}
-                  className={`h-6 w-6 rounded-full transition-colors ${
-                    i < glasses ? "bg-sky-400" : "bg-base-300 hover:bg-base-content/20"
-                  }`}
-                />
-              ))}
-            </div>
-            <div className="flex gap-2">
-              <button
-                onClick={() => addGlasses(selected, 1)}
-                className="btn btn-primary btn-sm flex-1"
-              >
-                {t("＋ Glass")}
-              </button>
-              <button
-                onClick={() => addGlasses(selected, -1)}
-                disabled={glasses <= 0}
-                className="btn btn-ghost btn-sm"
-                aria-label={t("Remove a glass")}
-              >
-                −
-              </button>
+                  onClick={() => addGlasses(selected, 1)}
+                  className="btn btn-primary btn-xs flex-1"
+                >
+                  {t("＋ Glass")}
+                </button>
+                <button
+                  onClick={() => addGlasses(selected, -1)}
+                  disabled={glasses <= 0}
+                  className="btn btn-ghost btn-xs"
+                  aria-label={t("Remove a glass")}
+                >
+                  −
+                </button>
+              </div>
             </div>
           </div>
 
