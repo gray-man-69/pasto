@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useLiveQuery } from "dexie-react-hooks";
 import CustomExerciseForm from "@/components/CustomExerciseForm";
+import ExerciseDemo from "@/components/ExerciseDemo";
 import MuscleMap, { MuscleThumb } from "@/components/MuscleMap";
 import { allCustomExercises } from "@/lib/db";
 import { MUSCLE_GROUPS, groupOf, loadExercises } from "@/lib/exercises";
@@ -164,6 +165,7 @@ export default function ExercisePicker({
                 ✕
               </button>
             </div>
+            <ExerciseDemo id={detail.id} />
             <div className="my-3 rounded-2xl bg-base-200/40 py-3">
               <MuscleMap primary={detail.primaryMuscles} secondary={detail.secondaryMuscles ?? []} height="15rem" />
             </div>
