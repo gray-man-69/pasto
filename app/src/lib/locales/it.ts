@@ -149,6 +149,7 @@ export const it: Record<string, string> = {
   Strength: "Forza",
   Conditioning: "Condizionamento",
   "Watch demo": "Guarda la dimostrazione",
+  "Opens a video on YouTube": "Apre un video su YouTube",
   "Finish a Norwegian 4×4 or McGill Big Three session and it shows up here.":
     "Completa una sessione Norwegian 4×4 o McGill Big Three e comparirà qui.",
   "Workout in progress": "Allenamento in corso",
