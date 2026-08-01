@@ -116,7 +116,18 @@ export default function ExercisePicker({
                 {row(ex)}
               </button>
             ) : (
-              <div className="flex items-center gap-3 rounded-2xl border border-base-300/60 bg-base-100 px-3 py-2">
+              <div
+                role="button"
+                tabIndex={0}
+                onClick={() => setDetail(ex)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" || e.key === " ") {
+                    e.preventDefault();
+                    setDetail(ex);
+                  }
+                }}
+                className="flex cursor-pointer items-center gap-3 rounded-2xl border border-base-300/60 bg-base-100 px-3 py-2 transition-colors hover:border-primary/40"
+              >
                 {row(ex)}
               </div>
             )}
