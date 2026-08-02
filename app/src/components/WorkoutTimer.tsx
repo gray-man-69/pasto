@@ -59,6 +59,7 @@ export default function WorkoutTimer({
   const running = runningSince != null && !finished;
   const [, tick] = useState(0);
   const [editing, setEditing] = useState(false);
+  const [hrs, setHrs] = useState("");
   const [mins, setMins] = useState("");
 
   // Re-render each second while the clock runs.
@@ -77,33 +78,48 @@ export default function WorkoutTimer({
     onChange({ elapsedSec: base, timerRunningSince: Date.now() });
   }
   function openEdit() {
-    setMins(String(Math.round(elapsed / 60)));
+    const total = Math.round(elapsed);
+    setHrs(String(Math.floor(total / 3600)));
+    setMins(String(Math.round((total % 3600) / 60)));
     setEditing(true);
   }
   function saveEdit() {
-    const v = parseFloat(mins.replace(",", "."));
-    if (!isNaN(v) && v >= 0) {
-      const sec = Math.round(v * 60);
+    const h = parseFloat(hrs.replace(",", ".")) || 0;
+    const m = parseFloat(mins.replace(",", ".")) || 0;
+    if (h >= 0 && m >= 0) {
+      const sec = Math.round(h * 3600 + m * 60);
       onChange({ elapsedSec: sec, timerRunningSince: running ? Date.now() : undefined });
     }
     setEditing(false);
   }
 
   if (editing) {
+    const key = (e: React.KeyboardEvent) => {
+      if (e.key === "Enter") saveEdit();
+      if (e.key === "Escape") setEditing(false);
+    };
     return (
       <span className="inline-flex items-center gap-1">
         <input
           type="number"
           inputMode="numeric"
           min={0}
-          value={mins}
+          value={hrs}
           autoFocus
+          onChange={(e) => setHrs(e.target.value)}
+          onKeyDown={key}
+          className="input input-bordered input-xs w-11 tabular-nums"
+        />
+        <span className="text-[11px]">{t("h")}</span>
+        <input
+          type="number"
+          inputMode="numeric"
+          min={0}
+          max={59}
+          value={mins}
           onChange={(e) => setMins(e.target.value)}
-          onKeyDown={(e) => {
-            if (e.key === "Enter") saveEdit();
-            if (e.key === "Escape") setEditing(false);
-          }}
-          className="input input-bordered input-xs w-14 tabular-nums"
+          onKeyDown={key}
+          className="input input-bordered input-xs w-11 tabular-nums"
         />
         <span className="text-[11px]">{t("min")}</span>
         <button onClick={saveEdit} aria-label={t("Set duration")} className="text-success hover:opacity-80">
