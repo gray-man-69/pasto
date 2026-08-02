@@ -151,6 +151,7 @@ export const it: Record<string, string> = {
   "Watch demo": "Guarda la dimostrazione",
   "Opens a video on YouTube": "Apre un video su YouTube",
   // --- Workout timer ---
+  h: "h",
   min: "min",
   Pause: "Pausa",
   Resume: "Riprendi",
