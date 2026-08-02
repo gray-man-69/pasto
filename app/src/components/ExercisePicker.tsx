@@ -5,6 +5,7 @@ import { useLiveQuery } from "dexie-react-hooks";
 import CustomExerciseForm from "@/components/CustomExerciseForm";
 import ExerciseDemo from "@/components/ExerciseDemo";
 import MuscleMap, { MuscleThumb } from "@/components/MuscleMap";
+import { musclesFor } from "@/lib/muscleData";
 import { allCustomExercises } from "@/lib/db";
 import { MUSCLE_GROUPS, groupOf, loadExercises } from "@/lib/exercises";
 import type { Exercise } from "@/lib/types";
@@ -177,21 +178,28 @@ export default function ExercisePicker({
               </button>
             </div>
             <ExerciseDemo id={detail.id} />
-            <div className="my-3 rounded-2xl bg-base-200/40 py-3">
-              <MuscleMap primary={detail.primaryMuscles} secondary={detail.secondaryMuscles ?? []} height="15rem" />
-            </div>
-            <div className="flex flex-wrap items-center justify-center gap-x-4 gap-y-1 text-xs">
-              <span className="flex items-center gap-1.5">
-                <span className="h-2.5 w-2.5 rounded-sm" style={{ backgroundColor: "#bef264" }} />
-                <span className="capitalize">{detail.primaryMuscles.join(", ")}</span>
-              </span>
-              {detail.secondaryMuscles?.length ? (
-                <span className="flex items-center gap-1.5 text-base-content/50">
-                  <span className="h-2.5 w-2.5 rounded-sm" style={{ backgroundColor: "#4d7c0f" }} />
-                  <span className="capitalize">{detail.secondaryMuscles.join(", ")}</span>
-                </span>
-              ) : null}
-            </div>
+            {(() => {
+              const roles = musclesFor(detail.id, detail.primaryMuscles, detail.secondaryMuscles ?? []);
+              return (
+                <>
+                  <div className="my-3 rounded-2xl bg-base-200/40 py-3">
+                    <MuscleMap primary={roles.primary} secondary={roles.synergist} height="15rem" />
+                  </div>
+                  <div className="flex flex-wrap items-center justify-center gap-x-4 gap-y-1 text-xs">
+                    <span className="flex items-center gap-1.5">
+                      <span className="h-2.5 w-2.5 rounded-sm" style={{ backgroundColor: "#bef264" }} />
+                      <span className="capitalize">{roles.primary.join(", ")}</span>
+                    </span>
+                    {roles.synergist.length ? (
+                      <span className="flex items-center gap-1.5 text-base-content/50">
+                        <span className="h-2.5 w-2.5 rounded-sm" style={{ backgroundColor: "#4d7c0f" }} />
+                        <span className="capitalize">{roles.synergist.join(", ")}</span>
+                      </span>
+                    ) : null}
+                  </div>
+                </>
+              );
+            })()}
           </div>
         </div>
       )}

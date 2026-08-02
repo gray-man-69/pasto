@@ -19,6 +19,7 @@ import {
   weekStart,
 } from "@/lib/db";
 import { volumeByMuscle } from "@/lib/progress";
+import { musclesFor } from "@/lib/muscleData";
 import { defaultRoutineExercise } from "@/lib/exercises";
 import { DELOAD_LOAD_FACTOR, isBlockActive, mesoWeek, rampedSetCounts, rirTarget } from "@/lib/mesocycle";
 import {
@@ -466,7 +467,7 @@ export default function WorkoutPage() {
         const inSuperset = !!grp && (prevSame || nextSame);
         const stats = volumeStatsForExercise(history, ex.exerciseId);
         const liveVol = Math.round(volumeOf(ex.sets));
-        const primaryMuscle = ex.primaryMuscles?.[0];
+        const primaryMuscle = musclesFor(ex.exerciseId, ex.primaryMuscles, ex.secondaryMuscles).primary[0];
         const muscleSets = primaryMuscle ? muscleWeek.get(primaryMuscle) ?? 0 : 0;
         const prescription: RoutineExercise = {
           exerciseId: ex.exerciseId,

@@ -8,6 +8,9 @@ import { ATLAS_VIEWBOX, MUSCLE_ATLAS } from "@/lib/muscleAtlas";
 const HIGHLIGHT: Record<string, string[]> = {
   chest: ["chest-"],
   shoulders: ["shoulder-", "deltoid-"],
+  "front delts": ["shoulder-front-"],
+  "side delts": ["shoulder-side-"],
+  "rear delts": ["deltoid-rear-"],
   biceps: ["biceps-"],
   triceps: ["triceps-"],
   forearms: ["forearm-"],
@@ -32,6 +35,7 @@ const POSTERIOR = new Set([
   "hamstrings",
   "calves",
   "triceps",
+  "rear delts",
 ]);
 
 const BODY = "#39413b"; // muted body on the dark surface
