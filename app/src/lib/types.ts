@@ -236,5 +236,11 @@ export interface WorkoutSession extends Synced {
   startedAt?: number;
   endedAt?: number; // set when finished; absent = in progress
   deletedAt?: number; // soft-deleted → in Trash, recoverable (absent = live)
+  // Workout stopwatch. elapsedSec is accumulated paused time; timerRunningSince
+  // is the epoch-ms the clock was last started (absent = paused). Live elapsed =
+  // elapsedSec + (now - timerRunningSince). Both are non-indexed, so they ride
+  // along in backup/sync with no schema change.
+  elapsedSec?: number;
+  timerRunningSince?: number;
   exercises: SessionExercise[];
 }

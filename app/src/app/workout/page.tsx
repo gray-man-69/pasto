@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import ExercisePicker from "@/components/ExercisePicker";
 import { MuscleThumb } from "@/components/MuscleMap";
 import NumberField from "@/components/NumberField";
+import WorkoutTimer, { currentElapsedSec } from "@/components/WorkoutTimer";
 import {
   activeMesocycle,
   activeSession,
@@ -181,11 +182,14 @@ export default function WorkoutPage() {
             sets,
           };
         });
+        const now = Date.now();
         const built: WorkoutSession = {
           date: localDate(),
           routineId: routine.id,
           routineName: routine.name,
-          startedAt: Date.now(),
+          startedAt: now,
+          elapsedSec: 0,
+          timerRunningSince: now, // stopwatch runs from the start
           exercises,
         };
         const newId = await saveSession(built);
@@ -356,7 +360,13 @@ export default function WorkoutPage() {
   }
   async function finish() {
     if (!session) return;
-    await saveSession({ ...session, endedAt: endedAtForDate(session.date) });
+    // Freeze the stopwatch: bank the elapsed time and stop it running.
+    await saveSession({
+      ...session,
+      endedAt: endedAtForDate(session.date),
+      elapsedSec: currentElapsedSec(session),
+      timerRunningSince: undefined,
+    });
     router.push("/training");
   }
   async function discard() {
@@ -416,6 +426,11 @@ export default function WorkoutPage() {
             <span>
               {doneCount}/{totalSets} sets
             </span>
+            <WorkoutTimer
+              session={session}
+              finished={isFinished}
+              onChange={(patch) => persist({ ...session, ...patch })}
+            />
             {mesoInfo && (
               <span
                 className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 font-medium ${
