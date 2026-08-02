@@ -1,5 +1,6 @@
 // Progress analytics over logged workouts: weekly volume per muscle (the
 // science-based hypertrophy driver) and per-exercise strength progression / PRs.
+import { musclesFor } from "./muscleData";
 import { e1rm, volumeOf, workingSets } from "./progression";
 import type { WorkoutSession } from "./types";
 
@@ -12,10 +13,12 @@ export function volumeByMuscle(sessions: WorkoutSession[]): { muscle: string; se
       const c = workingSets(ex.sets).length;
       if (!c) continue;
       // Fractional volume, per the convention the MEV/MRV landmarks assume:
-      // a muscle counts fully when it's the primary target and as a half-set
-      // when it's a synergist (e.g. a press adds ½ to triceps & front delts).
-      for (const mus of ex.primaryMuscles ?? []) m.set(mus, (m.get(mus) ?? 0) + c);
-      for (const mus of ex.secondaryMuscles ?? []) m.set(mus, (m.get(mus) ?? 0) + c * 0.5);
+      // primary target counts fully, synergist as a half-set. Muscle roles come
+      // from the curated kinesiology data (accurate + delts split into heads),
+      // falling back to the exercise's stored tags when it isn't curated yet.
+      const roles = musclesFor(ex.exerciseId, ex.primaryMuscles, ex.secondaryMuscles);
+      for (const mus of roles.primary) m.set(mus, (m.get(mus) ?? 0) + c);
+      for (const mus of roles.synergist) m.set(mus, (m.get(mus) ?? 0) + c * 0.5);
     }
   }
   return [...m.entries()]
