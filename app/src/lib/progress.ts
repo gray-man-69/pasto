@@ -11,11 +11,15 @@ export function volumeByMuscle(sessions: WorkoutSession[]): { muscle: string; se
     for (const ex of s.exercises) {
       const c = workingSets(ex.sets).length;
       if (!c) continue;
+      // Fractional volume, per the convention the MEV/MRV landmarks assume:
+      // a muscle counts fully when it's the primary target and as a half-set
+      // when it's a synergist (e.g. a press adds ½ to triceps & front delts).
       for (const mus of ex.primaryMuscles ?? []) m.set(mus, (m.get(mus) ?? 0) + c);
+      for (const mus of ex.secondaryMuscles ?? []) m.set(mus, (m.get(mus) ?? 0) + c * 0.5);
     }
   }
   return [...m.entries()]
-    .map(([muscle, sets]) => ({ muscle, sets }))
+    .map(([muscle, sets]) => ({ muscle, sets: Math.round(sets) }))
     .sort((a, b) => b.sets - a.sets);
 }
 
