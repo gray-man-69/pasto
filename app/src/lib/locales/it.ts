@@ -150,6 +150,13 @@ export const it: Record<string, string> = {
   Conditioning: "Condizionamento",
   "Watch demo": "Guarda la dimostrazione",
   "Opens a video on YouTube": "Apre un video su YouTube",
+  // --- Workout timer ---
+  min: "min",
+  Pause: "Pausa",
+  Resume: "Riprendi",
+  Cancel: "Annulla",
+  "Set duration": "Imposta durata",
+  "Edit workout time": "Modifica il tempo di allenamento",
   "Finish a Norwegian 4×4 or McGill Big Three session and it shows up here.":
     "Completa una sessione Norwegian 4×4 o McGill Big Three e comparirà qui.",
   "Workout in progress": "Allenamento in corso",
