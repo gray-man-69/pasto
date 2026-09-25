@@ -6,10 +6,14 @@ It is a local-first PWA: it installs on the phone, works offline, and your data 
 **Live app:** <https://gray-man-69.github.io/pasto>
 
 <p>
-  <img src="docs/screenshots/today.png" width="200" alt="Today: calories and macros against goals">
-  <img src="docs/screenshots/add.png" width="200" alt="Add food: search, barcode scan, custom foods">
-  <img src="docs/screenshots/week.png" width="200" alt="Week: daily averages and trend">
-  <img src="docs/screenshots/body.png" width="200" alt="Body: weight trend with intake averages">
+  <img src="docs/screenshots/today.png" width="230" alt="Today: calories and macros against goals">
+  <img src="docs/screenshots/add.png" width="230" alt="Add food: search, barcode scan, custom foods">
+  <img src="docs/screenshots/week.png" width="230" alt="Week: daily averages and trend">
+</p>
+<p>
+  <img src="docs/screenshots/training.png" width="230" alt="Training: block progress and routines">
+  <img src="docs/screenshots/workout.png" width="230" alt="Workout: sets, RIR, session target and muscle map">
+  <img src="docs/screenshots/progress.png" width="230" alt="Progress: weekly coach and sets per muscle">
 </p>
 
 ## What it does
