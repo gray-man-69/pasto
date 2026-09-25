@@ -1,7 +1,7 @@
 # Pasto — repo guide for Claude
 
-Pasto is a **local-first Italian macro/nutrition + strength-training PWA** for a single user
-(the owner). Live at https://gray-man-69.github.io/pasto (GitHub Pages).
+Pasto is a **local-first Italian macro/nutrition + strength-training PWA**, built and used by
+its owner. Live at https://gray-man-69.github.io/pasto (GitHub Pages).
 
 ## Layout
 
@@ -51,8 +51,8 @@ Base path `/pasto` is applied in CI via `NEXT_PUBLIC_BASE_PATH`. There is no sta
 - Desktop must be a real desktop layout (left `SideNav`, multi-column dashboard) — never a
   centered phone column. Bottom tab bar is mobile-only (`lg:hidden`).
 - Match existing component idioms (DaisyUI + the custom `Ring.tsx`); keep UI copy short.
-- The owner trains with 2 herniated discs: training features must never recommend
-  spine-loading exercises (barbell squat/deadlift/RDL/good morning) as substitutions.
+- Spine-safe rule: training features must never recommend spine-loading exercises
+  (barbell squat/deadlift/RDL/good morning) as substitutions. Encoded in `app/src/lib/spineSafe.ts`.
 
 ## Working on bugs/todos (async agent workflow)
 
@@ -62,5 +62,5 @@ Base path `/pasto` is applied in CI via `NEXT_PUBLIC_BASE_PATH`. There is no sta
 - Never push to `main` directly: branch (`fix/<slug>`), commit, open a PR that references
   the issue (`Fixes #N`). Never merge PRs — the owner reviews everything.
 - Verify with `cd app && npm run build` (build must pass; postbuild stamp runs) and
-  `npx tsc --noEmit` for type checks. There is no test suite.
+  `npx tsc --noEmit` for type checks. The only tests are the macro-math unit tests (`cd app && npm test`).
 - Never commit secrets; never touch `FIREBASE_SERVICE_ACCOUNT`, VAPID keys, or the OCR key.
