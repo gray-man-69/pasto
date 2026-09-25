@@ -1,7 +1,7 @@
 // Spine-safe exercise policy.
 //
-// The owner trains with two herniated discs (see CLAUDE.md): training features
-// must never program axially spine-loading movements. Until now this rule lived
+// Project rule (see CLAUDE.md): training features must never program axially
+// spine-loading movements. Until now this rule lived
 // only as a project convention — this module is its first encoding in code, so
 // the plan generator (and anything else) can enforce it.
 //
@@ -19,7 +19,7 @@ export const SPINE_LOADING_IDS = new Set<string>([
   "barbell-squat",
   "front-squat",
   "good-morning",
-  "back-extension", // loaded lumbar extension — avoid with disc issues
+  "back-extension", // loaded lumbar extension
   "hyperextension",
 ]);
 

@@ -1,22 +1,43 @@
-# Pasto 🍽️
+# Pasto
 
-A local-first **macro tracker** built on **reliable Italian (CREA) nutritional
-values**. Set your daily macro goals, log what you eat, watch your totals.
-Installable as a PWA on your phone; works offline; all data stays on your device.
+Nutrition and strength-training tracker built on the official Italian food tables (CREA).
+It is a local-first PWA: it installs on the phone, works offline, and your data stays on your device.
 
-## How it works
+**Live app:** <https://gray-man-69.github.io/pasto>
+
+<p>
+  <img src="docs/screenshots/today.png" width="200" alt="Today: calories and macros against goals">
+  <img src="docs/screenshots/add.png" width="200" alt="Add food: search, barcode scan, custom foods">
+  <img src="docs/screenshots/week.png" width="200" alt="Week: daily averages and trend">
+  <img src="docs/screenshots/body.png" width="200" alt="Body: weight trend with intake averages">
+</p>
+
+## What it does
+
+- Log food per meal against daily calorie, macro, fibre and water goals. Goals can be set by hand or from the built-in TDEE calculator.
+- Food database from CREA, the official Italian food composition tables. Packaged products via barcode scan (Open Food Facts) or by photographing the nutrition label (OCR).
+- Saved meals, custom foods, day history, week / month / custom-range trends.
+- Body weight trend with calorie and protein averages over the same period, plus progress photos.
+- Strength training: routines, per-set weight / reps / RIR logging, mesocycle blocks that ramp weekly volume and deload, an exercise library with a muscle map, HIIT and core timers.
+- Water reminders by web push.
+- Optional sign-in to sync across devices (Firebase). Daily steps and active energy from Apple Health via an iOS Shortcut.
+- English and Italian interface.
+
+## How it is built
+
+- **App:** Next.js 16 static export, React 19, TypeScript, Tailwind 4 + DaisyUI, Dexie (IndexedDB), Fuse.js search, ZXing for barcodes, tesseract.js plus a small Cloudflare Worker for label OCR.
+- **Data:** a Python script turns the CREA CSV into the bundled `foods.json`. The app never calls a nutrition API at runtime except for barcode lookups.
+- **Automation:** GitHub Actions deploy to GitHub Pages on every push to `main`, run the hourly water-reminder sender, and run Claude Code on any issue or comment that mentions `@claude`: it reads the repo guide, makes the change on a branch and opens a pull request for review.
+- **Process:** the backlog is GitHub Issues; every change lands through a pull request.
 
 ```
-pipeline/  Python ETL: CREA food table (CSV)  ->  app/public/foods.json  (built once)
-app/       Next.js PWA: bundles foods.json, logs meals to IndexedDB on-device
+pipeline/    Python: CREA CSV  ->  app/public/foods.json
+app/         Next.js PWA
+worker/      Cloudflare Worker: label OCR proxy and Apple Health ingest
+reminders/   web-push sender for water reminders (GitHub Actions cron)
 ```
 
-- **No backend, no login.** The food database ships inside the app; your log and
-  goals live in your browser's IndexedDB (via Dexie).
-- Generic Italian foods come from **CREA** (the seed database). Packaged/branded
-  products can later be added via **Open Food Facts** barcode lookup.
-
-## Run it
+## Run it locally
 
 ```bash
 # 1. Build the food database (writes app/public/foods.json)
@@ -27,39 +48,30 @@ python3 build_foods.py
 cd ../app
 npm install
 npm run dev          # http://localhost:3000
-# or: npm run build && npm start   (production)
+npm run build        # production static export to out/
 npm test             # macro math unit tests
 ```
 
-Open the app, set your goals (Goals tab — manual or the TDEE calculator),
-then Add food → search → set grams → log. The Today tab shows totals vs goals.
+## Food data
 
-## Updating the food data
-
-`app/public/foods.json` is generated — never edit it by hand. Edit the source
-CSV and re-run the pipeline:
+`app/public/foods.json` is generated. Edit the source CSV and re-run the pipeline:
 
 ```bash
 cd pipeline
-python3 build_foods.py                  # uses data/crea_bootstrap.csv
-python3 build_foods.py --input crea_full.csv   # full CREA export
+python3 build_foods.py                          # uses data/crea_bootstrap.csv
+python3 build_foods.py --input crea_full.csv    # full CREA export
 ```
 
-The bundled `data/crea_bootstrap.csv` is a **curated starter set** of ~45 common
-Italian foods. To use the full CREA tables (~1,000 foods), download the export
-(e.g. the CREA food-composition Kaggle dataset), map its columns in
-`COLUMN_ALIASES` inside `build_foods.py`, and run with `--input`. **Verify values
-against the official portal** before trusting any export.
+The bundled `data/crea_bootstrap.csv` is a curated seed set of 82 common Italian foods.
+To use the full CREA tables (about 1,000 foods), download the export, map its columns in
+`COLUMN_ALIASES` inside `build_foods.py`, and run with `--input`. Verify values against
+the official portal before trusting any export.
 
-## Data sources & attribution
+## Data sources and attribution
 
-- **CREA — Tabelle di Composizione degli Alimenti** (ex-INRAN), the official
-  Italian food composition tables. Free to use with attribution.
-  <https://www.alimentinutrizione.it>
-- **Open Food Facts** (optional barcode lookups), open data under ODbL.
-  <https://world.openfoodfacts.org>
+- **CREA, Tabelle di Composizione degli Alimenti** (ex-INRAN), the official Italian food composition tables. Free to use with attribution. <https://www.alimentinutrizione.it>
+- **Open Food Facts** (barcode lookups), open data under ODbL. <https://world.openfoodfacts.org>
 
-## Stack
+## License
 
-Python (stdlib) pipeline · Next.js 16 + React 19 · Tailwind 4 + DaisyUI 5 ·
-Dexie (IndexedDB) · Fuse.js (search).
+MIT
